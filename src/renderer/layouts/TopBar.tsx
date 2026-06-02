@@ -47,7 +47,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
       <div className="flex items-center gap-2">
         <button
           onClick={toggleEditMode}
-          className={`p-2 rounded-lg transition ${isEditMode ? "bg-[#9147ff] text-white" : "text-[var(--text-secondary)] hover:bg-[var(--btn-secondary-bg)]"}`}
+          className={`p-2 hidden rounded-lg transition ${isEditMode ? "bg-[#9147ff] text-white" : "text-[var(--text-secondary)] hover:bg-[var(--btn-secondary-bg)]"}`}
           title="Rearrange dashboard"
         >
           <Edit2 className="w-4 h-4" />

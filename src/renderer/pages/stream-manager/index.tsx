@@ -15,11 +15,11 @@ import { StreamGoalsPreviewCard } from "./components/StreamGoalsPreviewCard";
 import { ErrorBoundary } from "../../components/UI/ErrorBoundary";
 import { ViewerListCard } from "./components/ViewerListCard";
 import { ActivePredictionCard } from "./components/ActivePredictionCard";
-import { useDashboardLayout } from "../../contexts/DashboardLayoutContext";
+// ❌ tanggalin: import { useDashboardLayout } from "../../contexts/DashboardLayoutContext";
 
 const StreamManagerPage: React.FC = () => {
   const { isLive, streamData, loading, refresh } = useLiveStatus();
-  const { layout, isEditMode, toggleEditMode } = useDashboardLayout();
+  // ❌ tanggalin: const { layout, isEditMode, toggleEditMode } = useDashboardLayout();
 
   if (loading) {
     return (
@@ -38,14 +38,7 @@ const StreamManagerPage: React.FC = () => {
 
   return (
     <div className="h-full min-h-full overflow-auto p-4 bg-[var(--background-color)]">
-      {/* 
-        Grid: 
-        - Single column on mobile.
-        - On large screens, each column is at least 350px wide and expands to fill remaining space.
-        - Columns automatically wrap to next row when needed.
-        - auto-rows-[1fr] makes rows of equal height (optional, can be removed).
-      */}
-      <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 auto-rows-[1fr] h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 h-full">
         {/* Column 1: Main Video Card */}
         <div className="flex flex-col gap-4 h-full">
           <ErrorBoundary>
@@ -56,7 +49,7 @@ const StreamManagerPage: React.FC = () => {
             />
           </ErrorBoundary>
           <ErrorBoundary>
-            <ActivePredictionCard broadcasterId={streamData?.user_id}/>
+            <ActivePredictionCard broadcasterId={streamData?.user_id} />
           </ErrorBoundary>
           <ErrorBoundary>
             <StreamGoalsPreviewCard onManageGoals={handleManageGoals} />
@@ -82,13 +75,16 @@ const StreamManagerPage: React.FC = () => {
           </ErrorBoundary>
         </div>
 
-        {/* Column 3: Stream Health + Chat */}
+        {/* Column 3: Stream Health + Viewer List + Chat */}
         <div className="flex flex-col gap-4 h-full">
           <ErrorBoundary>
             <StreamHealthCard isLive={isLive || false} />
           </ErrorBoundary>
           <ErrorBoundary>
-            <ViewerListCard broadcasterId={streamData?.user_id} moderatorId={streamData?.user_id}/>
+            <ViewerListCard
+              broadcasterId={streamData?.user_id || ""}
+              moderatorId={streamData?.user_id || ""}
+            />
           </ErrorBoundary>
           <ErrorBoundary>
             <ChatCard

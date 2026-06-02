@@ -8,19 +8,13 @@ type QueuedNotification = {
   type: string;
 };
 
-// Map backend notification types to toast types
 const mapType = (type: string): "success" | "error" | "warning" | "info" | "critical" => {
   switch (type) {
-    case "success":
-      return "success";
-    case "warning":
-      return "warning";
-    case "error":
-      return "error";
-    case "critical":
-      return "critical";
-    default:
-      return "info";
+    case "success": return "success";
+    case "warning": return "warning";
+    case "error": return "error";
+    case "critical": return "critical";
+    default: return "info";
   }
 };
 
@@ -39,18 +33,16 @@ export const NotificationToastListener = () => {
     isShowingRef.current = true;
     const { title, message, type } = next;
 
-    // Show the toast
     showToast(`${title}: ${message}`, mapType(type), {
       duration: 5000,
       autoClose: true,
     });
 
-    // After 5 seconds (or a bit more to allow animation), show next
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       isShowingRef.current = false;
-      showNext(); // Process next in queue
-    }, 5200); // 5s + 200ms buffer
+      showNext();
+    }, 5200);
   };
 
   const addToQueue = (notification: QueuedNotification) => {
@@ -59,12 +51,11 @@ export const NotificationToastListener = () => {
   };
 
   useEffect(() => {
-    const handleNotificationCreated = (_event: any, data: any) => {
-      console.log("Received notification from main process:", data);
+    const handleNotificationCreated = (data: any) => {
       addToQueue({
-        title: data.title,
-        message: data.message,
-        type: data.type,
+        title: data.title || 'Notification',
+        message: data.message || '',
+        type: data.type || 'info',
       });
     };
 

@@ -68,9 +68,9 @@ const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
     }
   };
 
-  if (!channelId) {
-    return <SkeletonCard lines={3} />;
-  }
+  // if (!channelId) {
+  //   return <SkeletonCard lines={3} />;
+  // }
 
   return (
     <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden flex-1 min-w-[300px]">
