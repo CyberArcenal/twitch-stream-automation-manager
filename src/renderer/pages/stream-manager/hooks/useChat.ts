@@ -119,7 +119,7 @@ export const useChat = (channelName?: string, broadcasterId?: string, isLive?: b
       return true;
     } catch (err) {
       console.error(err);
-      alert('Failed to send message.');
+      dialogs.error('Failed to send message.');
       return false;
     }
   };
@@ -130,7 +130,7 @@ export const useChat = (channelName?: string, broadcasterId?: string, isLive?: b
       await clearChat();
       setMessages([]);
     } catch (err) {
-      alert('Could not clear chat.');
+      dialogs.error('Could not clear chat.');
     }
   };
 

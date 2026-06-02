@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Target, Plus, Trash2, Edit3, Eye } from "lucide-react";
 import { streamManagerAPI, type Goal } from "../../../api/core/streamManager";
+import { dialogs } from "../../../utils/dialogs";
 
 interface StreamGoalsCardProps {
   broadcasterId: string;
@@ -59,7 +60,7 @@ export const StreamGoalsCard: React.FC<StreamGoalsCardProps> = () => {
       // No direct update method – we'll delete and re-add? Or use updateGoalProgress only.
       // For simplicity, we'll use the existing goal's current value and only update title/target/unit?
       // Actually there's no PATCH for goals. We'll just show that you can edit, but for now we'll re‑fetch.
-      alert("Editing not fully implemented; you can delete and recreate.");
+      dialogs.info("Editing not fully implemented; you can delete and recreate.");
       setEditingGoal(null);
     } catch (err) {
       console.error("Failed to update goal", err);

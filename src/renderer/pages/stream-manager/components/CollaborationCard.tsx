@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, UserPlus, Trash2, ExternalLink, Loader2 } from 'lucide-react';
 import { useCollaboration } from '../hooks/useCollaboration';
+import { dialogs } from '../../../utils/dialogs';
 
 const CollaborationCard: React.FC = () => {
   const {
@@ -24,7 +25,7 @@ const CollaborationCard: React.FC = () => {
       await addModeratorByUsername(newModUsername);
       setNewModUsername('');
     } catch (err: any) {
-      alert(err.message);
+      dialogs.error(err.message);
     } finally {
       setAdding(false);
     }
@@ -35,7 +36,7 @@ const CollaborationCard: React.FC = () => {
     try {
       await removeModeratorById(userId);
     } catch (err: any) {
-      alert(err.message);
+      dialogs.error(err.message);
     } finally {
       setRemovingId(null);
     }

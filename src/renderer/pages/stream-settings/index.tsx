@@ -5,6 +5,7 @@ import { streamManagerAPI } from "../../api/core/streamManager";
 import { streamSettingsAPI, type IngestServer } from "../../api/core/streamSettings";
 import { useAuth } from "../../hooks/useAuth";
 import LoadingSpinner from "../../components/Shared/LoadingSpinner";
+import { dialogs } from "../../utils/dialogs";
 
 const StreamSettingsPage: React.FC = () => {
   const { user } = useAuth();
@@ -60,10 +61,10 @@ const StreamSettingsPage: React.FC = () => {
     try {
       await streamManagerAPI.createStreamMarker(markerDescription);
       setMarkerDescription("");
-      alert("Marker created successfully!");
+      dialogs.success("Marker created successfully!");
     } catch (err) {
       console.error("Failed to create marker", err);
-      alert("Failed to create marker. Make sure you are live.");
+      dialogs.error("Failed to create marker. Make sure you are live.");
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, X, Plus, Info } from "lucide-react";
 import { gamesAPI } from "../../../api/core/games";
 import type { StreamInfo } from "../hooks/useStreamInfo";
+import { dialogs } from "../../../utils/dialogs";
 
 interface EditStreamModalProps {
   isOpen: boolean;
@@ -68,11 +69,11 @@ const EditStreamModal: React.FC<EditStreamModalProps> = ({
     const tag = tagInput.trim().toLowerCase();
     if (!tag) return;
     if (tag.length > 25) {
-      alert("Tag must be 25 characters or less");
+      dialogs.error("Tag must be 25 characters or less");
       return;
     }
     if (info.tags.length >= 10) {
-      alert("Maximum 10 tags allowed");
+      dialogs.error("Maximum 10 tags allowed");
       return;
     }
     if (!info.tags.includes(tag)) {

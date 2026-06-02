@@ -2,6 +2,7 @@ import React from "react";
 import { Download, Share2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
+import { dialogs } from "../../../utils/dialogs";
 
 export const ExportButtons: React.FC = () => {
   const exportAsPNG = async () => {
@@ -19,7 +20,7 @@ export const ExportButtons: React.FC = () => {
     // Example: collect all chart data (simplified)
     const rows = [["Date", "Followers"]];
     // In real implementation you would fetch current data from state or re‑fetch
-    alert("CSV export would collect all analytics data – implement as needed.");
+    dialogs.info("CSV export would collect all analytics data – implement as needed.");
   };
 
   return (

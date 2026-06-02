@@ -7,14 +7,14 @@ export const useRaid = () => {
     try {
       const res = await streamManagerAPI.startRaid(fromBroadcasterId, target);
       if (res.status) {
-        alert(`Raiding ${target}...`);
+        dialogs.info(`Raiding ${target}...`);
         return true;
       } else {
-        alert(`Raid failed: ${res.message}`);
+        dialogs.error(`Raid failed: ${res.message}`);
         return false;
       }
     } catch (err) {
-      alert('Error starting raid');
+      dialogs.error('Error starting raid');
       return false;
     }
   };

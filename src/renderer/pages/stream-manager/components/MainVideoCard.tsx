@@ -83,7 +83,7 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
       setNewGoalTitle("");
       setNewGoalTarget(100);
     } else {
-      alert("Failed to add goal");
+      dialogs.error("Failed to add goal");
     }
   };
 
@@ -100,7 +100,7 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
       await window.backendAPI.openStreamTogether(channelName);
     } catch (err) {
       console.error("Failed to open Stream Together:", err);
-      alert("Unable to open Stream Together. Please try again.");
+      dialogs.error("Unable to open Stream Together. Please try again.");
     }
   };
 

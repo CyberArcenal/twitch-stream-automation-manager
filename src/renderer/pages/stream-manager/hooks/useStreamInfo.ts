@@ -82,7 +82,7 @@ export const useStreamInfo = (streamData: any, onRefresh: () => void) => {
       onRefresh();
       return true;
     } catch (err) {
-      alert('Failed to update stream info');
+      dialogs.error('Failed to update stream info');
       return false;
     }
   };

@@ -40,7 +40,7 @@ const PredictionsPage: React.FC = () => {
   const handleCreate = async () => {
     if (!user?.id) return;
     if (!formData.title.trim() || formData.outcomes.some((o) => !o.trim())) {
-      alert("Please fill all fields");
+      dialogs.error("Please fill all fields");
       return;
     }
     setCreating(true);
@@ -56,7 +56,7 @@ const PredictionsPage: React.FC = () => {
       fetchPredictions();
     } catch (err) {
       console.error("Failed to create prediction", err);
-      alert(
+      dialogs.error(
         "Failed to create prediction. Make sure you have the required scope.",
       );
     } finally {
@@ -80,7 +80,7 @@ const PredictionsPage: React.FC = () => {
       fetchPredictions();
     } catch (err) {
       console.error("Failed to resolve prediction", err);
-      alert("Failed to resolve prediction");
+      dialogs.error("Failed to resolve prediction");
     }
   };
 

@@ -69,7 +69,7 @@ export const AccountsTab: React.FC = () => {
       const text = await file.text();
       const data = JSON.parse(text);
       await settingsAPI.importSettings(data);
-      alert("Settings imported. Please restart the app.");
+      dialogs.error("Settings imported. Please restart the app.");
     };
     input.click();
   };

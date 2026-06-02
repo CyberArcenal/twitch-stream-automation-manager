@@ -1,6 +1,7 @@
 // src/renderer/pages/stream-manager/hooks/useSceneManager.ts
 import { useState, useEffect, useRef } from 'react';
 import { streamManagerAPI } from '../../../api/core/streamManager';
+import { dialogs } from '../../../utils/dialogs';
 
 // Global state outside React to persist across component remounts
 let globalConnectionPromise: Promise<boolean> | null = null;
@@ -76,7 +77,7 @@ export const useSceneManager = () => {
           if (res.message === 'AUTH_REQUIRED') {
             if (isMounted.current) setShowPasswordModal(true);
           } else {
-            if (isMounted.current) alert(`Failed to connect: ${res.message}`);
+            if (isMounted.current) dialogs.error(`Failed to connect: ${res.message}`);
           }
           return false;
         }

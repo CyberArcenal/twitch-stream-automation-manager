@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Monitor, Wifi, WifiOff } from "lucide-react";
 import { streamManagerAPI } from "../../../api/core/streamManager";
+import { dialogs } from "../../../utils/dialogs";
 
 export const OBSWebSocketTab: React.FC = () => {
   const [host, setHost] = useState("localhost");
@@ -44,10 +45,10 @@ export const OBSWebSocketTab: React.FC = () => {
     setTesting(true);
     try {
       const success = await streamManagerAPI.obsTestConnection(host, port, password);
-      if (success.status) alert("Connection successful!");
-      else alert("Connection failed");
+      if (success.status) dialogs.info("Connection successful!");
+      else dialogs.error("Connection failed");
     } catch (err) {
-      alert(`Connection failed: ${err}`);
+      dialogs.error(`Connection failed: ${err}`);
     } finally {
       setTesting(false);
     }
@@ -58,7 +59,7 @@ export const OBSWebSocketTab: React.FC = () => {
       await streamManagerAPI.obsConnect(host, port, password);
       setConnected(true);
     } catch (err) {
-      alert("Connection failed");
+      dialogs.error("Connection failed");
     }
   };
 

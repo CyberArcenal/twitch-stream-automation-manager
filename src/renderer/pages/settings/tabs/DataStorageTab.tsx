@@ -9,21 +9,21 @@ export const DataStorageTab: React.FC = () => {
   const clearWatchHistory = async () => {
     if (await dialogs.confirm({title: "Clear all watch history?"})) {
       await historyAPI.clear();
-      alert("Watch history cleared");
+      dialogs.info("Watch history cleared");
     }
   };
 
   const clearNotifications = async () => {
     if (await dialogs.confirm({title: "Clear all notification history?"})) {
       await notificationStoreAPI.clearAll();
-      alert("Notification history cleared");
+      dialogs.info("Notification history cleared");
     }
   };
 
   const resetSettings = async () => {
     if (await dialogs.confirm({title: "Reset all settings to defaults? This action cannot be undone."})) {
       await settingsAPI.reset();
-      alert("Settings reset. Please restart the app.");
+      dialogs.info("Settings reset. Please restart the app.");
     }
   };
 
