@@ -1,6 +1,7 @@
 import React from 'react';
 import { Radio, Zap, Target, Megaphone } from 'lucide-react';
 import { useQuickActions } from '../hooks/useQuickActions';
+import { CommercialCooldownTimer } from './CommercialCooldownTimer';
 
 interface QuickActionsCardProps {
   isLive: boolean;
@@ -17,8 +18,10 @@ const QuickActionsCard: React.FC<QuickActionsCardProps> = ({ isLive }) => {
   ];
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl p-4 shadow-lg border border-[var(--card-bg)] min-w-[350px]">
+    <div className="bg-[var(--card-bg)] rounded-xl p-4 shadow-lg border border-[var(--border-color)] min-w-[350px]">
       <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Quick Actions</h3>
+      {/* ✅ Commercial cooldown timer added here */}
+      <CommercialCooldownTimer />
       <div className="grid grid-cols-2 gap-3">
         {actions.map((action, idx) => (
           <button

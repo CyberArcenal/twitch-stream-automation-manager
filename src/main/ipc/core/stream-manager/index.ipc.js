@@ -243,11 +243,16 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
         params.port,
         params.password,
       );
-      case 'getAutomationConfig':
-  return automationService.getConfig();
-case 'updateAutomationConfig':
-  automationService.start(params.config);
-  return true;
+    case "getAutomationConfig":
+      return automationService.getConfig();
+    case "updateAutomationConfig":
+      automationService.start(params.config);
+      return true;
+    case "getChatters":
+      return await twitchApiService.getChatters(
+        params.broadcasterId,
+        params.moderatorId,
+      );
     default:
       throw new Error(`Unknown stream-manager method: ${method}`);
   }

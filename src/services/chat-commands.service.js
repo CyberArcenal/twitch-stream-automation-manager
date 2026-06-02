@@ -89,6 +89,7 @@ class ChatCommandsService {
 
   attachListener() {
     if (this.listenerAttached) return;
+    if (!twitchChatService?.chatClient)return;
     twitchChatService.chatClient?.onMessage(
       async (channel, user, message, msg) => {
         const lowerMsg = message.trim().toLowerCase();

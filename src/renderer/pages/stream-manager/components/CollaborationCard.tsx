@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Users, UserPlus, Trash2, ExternalLink, Loader2 } from 'lucide-react';
-import { useCollaboration } from '../hooks/useCollaboration';
-import { dialogs } from '../../../utils/dialogs';
+import React, { useState, useMemo } from "react";
+import { Users, UserPlus, Trash2, ExternalLink, Loader2, Search, Shield } from "lucide-react";
+import { useCollaboration } from "../hooks/useCollaboration";
 
 const CollaborationCard: React.FC = () => {
   const {
@@ -14,18 +13,30 @@ const CollaborationCard: React.FC = () => {
     streamTogetherUrl,
   } = useCollaboration();
 
-  const [newModUsername, setNewModUsername] = useState('');
+  const [newModUsername, setNewModUsername] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // Filter moderators based on search term
+  const filteredModerators = useMemo(() => {
+    if (!searchTerm.trim()) return moderators;
+    const term = searchTerm.toLowerCase();
+    return moderators.filter(
+      (mod) =>
+        mod.user_name.toLowerCase().includes(term) ||
+        mod.user_login.toLowerCase().includes(term)
+    );
+  }, [moderators, searchTerm]);
 
   const handleAddModerator = async () => {
     if (!newModUsername.trim()) return;
     setAdding(true);
     try {
       await addModeratorByUsername(newModUsername);
-      setNewModUsername('');
+      setNewModUsername("");
     } catch (err: any) {
-      dialogs.error(err.message);
+      alert(err.message);
     } finally {
       setAdding(false);
     }
@@ -36,7 +47,7 @@ const CollaborationCard: React.FC = () => {
     try {
       await removeModeratorById(userId);
     } catch (err: any) {
-      dialogs.error(err.message);
+      alert(err.message);
     } finally {
       setRemovingId(null);
     }
@@ -49,20 +60,29 @@ const CollaborationCard: React.FC = () => {
   };
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden min-w-[300px]">
+    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden min-w-[350px] min-h-[200px]">
       <div className="p-3 border-b border-[var(--border-color)] flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#9147ff]" />
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Collaboration</h3>
         </div>
-        {streamTogetherUrl && (
+        <div className="flex gap-2">
           <button
-            onClick={openStreamTogether}
-            className="flex items-center gap-1 bg-[var(--btn-secondary-bg)] px-2 py-1 rounded text-xs hover:bg-[var(--btn-secondary-hover)]"
+            onClick={refreshModerators}
+            className="p-1 rounded hover:bg-[var(--btn-secondary-bg)]"
+            title="Refresh moderators"
           >
-            <ExternalLink className="w-3 h-3" /> Stream Together
+            <Loader2 className="w-3 h-3 text-[var(--text-secondary)]" />
           </button>
-        )}
+          {streamTogetherUrl && (
+            <button
+              onClick={openStreamTogether}
+              className="flex items-center gap-1 bg-[var(--btn-secondary-bg)] px-2 py-1 rounded text-xs hover:bg-[var(--btn-secondary-hover)]"
+            >
+              <ExternalLink className="w-3 h-3" /> Stream Together
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="p-3 space-y-3">
@@ -85,16 +105,39 @@ const CollaborationCard: React.FC = () => {
           </button>
         </div>
 
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-[var(--text-tertiary)]" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search moderators..."
+            className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded pl-7 pr-2 py-1 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)]"
+          />
+        </div>
+
         {/* Moderator list */}
         {loading && <div className="text-center text-[var(--text-secondary)] text-sm">Loading moderators...</div>}
         {error && <div className="text-center text-red-400 text-sm">{error}</div>}
-        {!loading && moderators.length === 0 && (
-          <div className="text-center text-[var(--text-secondary)] text-sm">No moderators yet</div>
+        {!loading && filteredModerators.length === 0 && (
+          <div className="text-center text-[var(--text-secondary)] text-sm">
+            {searchTerm ? "No matching moderators" : "No moderators yet"}
+          </div>
         )}
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {moderators.map((mod) => (
-            <div key={mod.user_id} className="flex items-center justify-between bg-[var(--input-bg)] p-2 rounded">
-              <span className="text-sm text-[var(--text-primary)]">{mod.user_name}</span>
+          {filteredModerators.map((mod) => (
+            <div
+              key={mod.user_id}
+              className="flex items-center justify-between bg-[var(--input-bg)] p-2 rounded"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-3 h-3 text-[#9147ff]" />
+                <span className="text-sm text-[var(--text-primary)]">{mod.user_name}</span>
+                <span className="text-[10px] bg-[var(--btn-secondary-bg)] px-1 rounded text-[var(--text-secondary)]">
+                  Moderator
+                </span>
+              </div>
               <button
                 onClick={() => handleRemoveModerator(mod.user_id)}
                 disabled={removingId === mod.user_id}

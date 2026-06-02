@@ -339,11 +339,24 @@ class StreamManagerAPI {
   }
 
   async obsStopStream(): Promise<BaseResponse<boolean>> {
-    return await window.backendAPI["stream-manager"]({ method: "obsStopStream" });
+    return await window.backendAPI["stream-manager"]({
+      method: "obsStopStream",
+    });
   }
 
   async obsStartStream(): Promise<BaseResponse<boolean>> {
-    return await window.backendAPI["stream-manager"]({ method: "obsStartStream" });
+    return await window.backendAPI["stream-manager"]({
+      method: "obsStartStream",
+    });
+  }
+  async getChatters(
+    broadcasterId: string,
+    moderatorId: string,
+  ): Promise<BaseResponse<any>> {
+    return window.backendAPI["stream-manager"]({
+      method: "getChatters",
+      params: { broadcasterId, moderatorId },
+    });
   }
 }
 

@@ -1,35 +1,39 @@
 //@ts-check
-const { ipcMain } = require('electron');
-const { eventSubService } = require('../../../../services/eventsub.service');
+const { ipcMain } = require("electron");
+const { eventSubService } = require("../../../../services/eventsub.service");
 
 async function handleEventSubRequest(event, payload) {
   const { method, params = {} } = payload;
 
   switch (method) {
-    case 'start':
+    case "start":
       eventSubService.start();
       return true;
-    case 'stop':
+    case "stop":
       eventSubService.stop();
       return true;
-    case 'subscribeStream':
+    case "subscribeStream":
       return await eventSubService.subscribeToStream(params.userId);
-    case 'subscribeFollows':
+    case "subscribeFollows":
       return await eventSubService.subscribeToFollows(params.userId);
-    case 'subscribeSubscriptions':
+    case "subscribeSubscriptions":
       return await eventSubService.subscribeToSubscriptions(params.userId);
+    case "subscribeRaidEvents":
+      return await eventSubService.subscribeToRaidEvents(params.userId);
+    case "subscribeHypeTrainEvents":
+      return await eventSubService.subscribeToHypeTrainEvents(params.userId);
     default:
       throw new Error(`Unknown eventsub method: ${method}`);
   }
 }
 
-ipcMain.handle('eventsub', async (event, payload) => {
+ipcMain.handle("eventsub", async (event, payload) => {
   try {
     const result = await handleEventSubRequest(event, payload);
-    return { status: true, message: 'OK', data: result };
+    return { status: true, message: "OK", data: result };
   } catch (err) {
-    console.error('[IPC:eventsub]', err);
+    console.error("[IPC:eventsub]", err);
     return { status: false, message: err.message, data: null };
   }
 });
-console.log('[IPC] EventSub handler registered');
+console.log("[IPC] EventSub handler registered");

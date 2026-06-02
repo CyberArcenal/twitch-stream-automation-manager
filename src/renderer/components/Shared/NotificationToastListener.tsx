@@ -11,9 +11,9 @@ type QueuedNotification = {
 // Map backend notification types to toast types
 const mapType = (type: string): "success" | "error" | "warning" | "info" | "critical" => {
   switch (type) {
-    case "payment_confirmation":
+    case "success":
       return "success";
-    case "overdue":
+    case "warning":
       return "warning";
     case "error":
       return "error";

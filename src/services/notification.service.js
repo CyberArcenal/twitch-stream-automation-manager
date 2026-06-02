@@ -1,7 +1,7 @@
 // src/main/services/notification.service.js
 //@ts-check
-const { Notification, BrowserWindow } = require('electron');
-const { settingsService } = require('./settings.service');
+const { Notification, BrowserWindow } = require("electron");
+const { settingsService } = require("./settings.service");
 
 class NotificationService {
   constructor() {
@@ -14,7 +14,7 @@ class NotificationService {
    */
   initialize(window) {
     this.mainWindow = window;
-    console.log('[NotificationService] Initialized');
+    console.log("[NotificationService] Initialized");
   }
 
   /**
@@ -25,13 +25,13 @@ class NotificationService {
   _sendToRenderers(channel, data) {
     try {
       const windows = BrowserWindow.getAllWindows();
-      windows.forEach(win => {
+      windows.forEach((win) => {
         if (!win.isDestroyed()) {
           win.webContents.send(channel, data);
         }
       });
     } catch (err) {
-      console.warn('[NotificationService] Failed to send event:', err);
+      console.warn("[NotificationService] Failed to send event:", err);
     }
   }
 
@@ -44,24 +44,29 @@ class NotificationService {
    */
   // @ts-ignore
   show(title, body, onClick = null) {
-    if (!settingsService.get('notificationsEnabled')) return false;
+    if (!settingsService.get("notificationsEnabled")) return false;
 
     const notification = new Notification({ title, body, silent: false });
 
     if (onClick) {
       // @ts-ignore
-      notification.on('click', onClick);
+      notification.on("click", onClick);
     } else {
       // Default: send event to renderer when clicked
-      notification.on('click', () => {
-        this._sendToRenderers('notification:clicked', { title, body });
+      notification.on("click", () => {
+        this._sendToRenderers("notification:clicked", { title, body });
       });
     }
 
     notification.show();
 
     // Also send event to renderer that a notification was shown
-    this._sendToRenderers('notification:shown', { title, body });
+    this._sendToRenderers("notification:shown", { title, body });
+    this._sendToRenderers("notification:created", {
+      title: title,
+      message: body,
+      type: "info",
+    });
 
     return true;
   }
@@ -86,7 +91,7 @@ class NotificationService {
    */
   // @ts-ignore
   notifyFollow(userName, onClick = null) {
-    const title = 'New Follower';
+    const title = "New Follower";
     const body = `${userName} started following you!`;
     return this.show(title, body, onClick);
   }
@@ -96,7 +101,7 @@ class NotificationService {
    * @returns {boolean}
    */
   isEnabled() {
-    return settingsService.get('notificationsEnabled');
+    return settingsService.get("notificationsEnabled");
   }
 
   /**
@@ -104,17 +109,16 @@ class NotificationService {
    * @param {boolean} enabled
    */
   setEnabled(enabled) {
-    settingsService.set('notificationsEnabled', enabled);
-    this._sendToRenderers('notification:settings-changed', { enabled });
+    settingsService.set("notificationsEnabled", enabled);
+    this._sendToRenderers("notification:settings-changed", { enabled });
     return enabled;
   }
 
-  // src/main/services/notification.service.js
-testGoLiveNotification() {
-  const title = "Test: You are live!";
-  const body = "This is a preview of your go-live notification.";
-  return this.show(title, body);
-}
+  testGoLiveNotification() {
+    const title = "Test: You are live!";
+    const body = "This is a preview of your go-live notification.";
+    return this.show(title, body);
+  }
 }
 
 // Singleton export

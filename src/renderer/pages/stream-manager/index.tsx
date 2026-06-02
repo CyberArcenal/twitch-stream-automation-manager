@@ -12,9 +12,14 @@ import CustomAutomationsCard from "./components/CustomAutomationsCard";
 import AlertsCard from "./components/AlertsCard";
 import CollaborationCard from "./components/CollaborationCard";
 import { StreamGoalsPreviewCard } from "./components/StreamGoalsPreviewCard";
+import { ErrorBoundary } from "../../components/UI/ErrorBoundary";
+import { ViewerListCard } from "./components/ViewerListCard";
+import { ActivePredictionCard } from "./components/ActivePredictionCard";
+import { useDashboardLayout } from "../../contexts/DashboardLayoutContext";
 
 const StreamManagerPage: React.FC = () => {
   const { isLive, streamData, loading, refresh } = useLiveStatus();
+  const { layout, isEditMode, toggleEditMode } = useDashboardLayout();
 
   if (loading) {
     return (
@@ -43,39 +48,65 @@ const StreamManagerPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 auto-rows-[1fr] h-full">
         {/* Column 1: Main Video Card */}
         <div className="flex flex-col gap-4 h-full">
-          <MainVideoCard
-            isLive={isLive || false}
-            streamData={streamData}
-            onRefresh={refresh}
-          />
-          <StreamGoalsPreviewCard onManageGoals={handleManageGoals} />
+          <ErrorBoundary>
+            <MainVideoCard
+              isLive={isLive || false}
+              streamData={streamData}
+              onRefresh={refresh}
+            />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ActivePredictionCard broadcasterId={streamData?.user_id}/>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <StreamGoalsPreviewCard onManageGoals={handleManageGoals} />
+          </ErrorBoundary>
         </div>
 
         {/* Column 2: Connection Hub + Quick Actions + Alerts */}
         <div className="flex flex-col gap-4 h-full">
-          <ConnectionHubCard isLive={isLive || false} onRefresh={refresh} />
-          <ConnectedSoftwareCard isLive={isLive || false} />
-          <QuickActionsCard isLive={isLive || false} />
-          <AlertsCard
-            isLive={isLive || false}
-            channelId={streamData?.user_id}
-          />
+          <ErrorBoundary>
+            <ConnectionHubCard isLive={isLive || false} onRefresh={refresh} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ConnectedSoftwareCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <QuickActionsCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <AlertsCard
+              isLive={isLive || false}
+              channelId={streamData?.user_id}
+            />
+          </ErrorBoundary>
         </div>
 
         {/* Column 3: Stream Health + Chat */}
         <div className="flex flex-col gap-4 h-full">
-          <StreamHealthCard isLive={isLive || false} />
-          <ChatCard
-            channelName={streamData?.user_login}
-            broadcasterId={streamData?.user_id}
-            isLive={isLive || false}
-          />
+          <ErrorBoundary>
+            <StreamHealthCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ViewerListCard broadcasterId={streamData?.user_id} moderatorId={streamData?.user_id}/>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ChatCard
+              channelName={streamData?.user_login}
+              broadcasterId={streamData?.user_id}
+              isLive={isLive || false}
+            />
+          </ErrorBoundary>
         </div>
 
         {/* Column 4: Automations + Collaboration */}
         <div className="flex flex-col gap-4 h-full">
-          <CustomAutomationsCard isLive={isLive || false} />
-          <CollaborationCard />
+          <ErrorBoundary>
+            <CustomAutomationsCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <CollaborationCard />
+          </ErrorBoundary>
         </div>
       </div>
     </div>

@@ -7,6 +7,9 @@ const { settingsService } = require("./settings.service");
 const { BrowserWindow } = require("electron");
 
 class TwitchApiService {
+  /**
+   * @param {string} endpoint
+   */
   async fetchTwitch(endpoint, options = {}, retry = true) {
     const url = `${API_BASE}/${endpoint}`;
 
@@ -400,6 +403,19 @@ class TwitchApiService {
     const result = await this.fetchTwitch(`chat/settings?${params}`);
     logger.debug(`[TwitchApi] getChatSettings - success`);
     return result;
+  }
+
+  /**
+   * @param {any} broadcasterId
+   * @param {any} moderatorId
+   */
+  async getChatters(broadcasterId, moderatorId) {
+    const params = new URLSearchParams({
+      broadcaster_id: broadcasterId,
+      moderator_id: moderatorId,
+      first: 100,
+    });
+    return await this.fetchTwitch(`chat/chatters?${params}`);
   }
 
   /**

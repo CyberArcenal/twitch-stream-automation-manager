@@ -57,6 +57,19 @@ class EventSubAPI {
       params: { userId }
     });
   }
+  async subscribeRaidEvents(userId: string): Promise<BaseResponse<any>> {
+    return window.backendAPI.eventsub({
+      method: 'subscribeRaidEvents',
+      params: { userId }
+    });
+  }
+
+  async subscribeHypeTrainEvents(userId: string): Promise<BaseResponse<any>> {
+    return window.backendAPI.eventsub({
+      method: 'subscribeHypeTrainEvents',
+      params: { userId }
+    });
+  }
 }
 
 export const eventsubAPI = new EventSubAPI();

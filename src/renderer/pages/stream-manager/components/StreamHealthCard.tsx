@@ -1,12 +1,13 @@
 import React from 'react';
 import { useStreamHealth } from '../hooks/useStreamHealth';
+import { Wifi } from 'lucide-react';
 
 interface StreamHealthCardProps {
   isLive: boolean;
 }
 
 const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
-  const { bitrate, fps, droppedFrames, cpuUsage, connected } = useStreamHealth(isLive);
+  const { bitrate, fps, droppedFrames, cpuUsage, connected, latency } = useStreamHealth(isLive);
 
   return (
     <div className="bg-[var(--card-bg)] rounded-xl p-4 shadow-lg border border-[var(--border-color)] min-w-[300px]">
@@ -17,6 +18,7 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
         </p>
       ) : (
         <div className="space-y-3">
+          {/* Bitrate */}
           <div>
             <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1">
               <span>Bitrate</span>
@@ -26,6 +28,8 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <div className="bg-[#9147ff] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (bitrate / 6000) * 100)}%` }} />
             </div>
           </div>
+
+          {/* FPS */}
           <div>
             <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1">
               <span>FPS</span>
@@ -35,6 +39,8 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <div className="bg-[#9147ff] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (fps / 60) * 100)}%` }} />
             </div>
           </div>
+
+          {/* Dropped Frames */}
           <div>
             <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1">
               <span>Dropped Frames</span>
@@ -44,6 +50,8 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <div className={`h-2 rounded-full transition-all ${droppedFrames > 5 ? 'bg-red-500' : 'bg-[#9147ff]'}`} style={{ width: `${Math.min(100, droppedFrames)}%` }} />
             </div>
           </div>
+
+          {/* CPU Usage */}
           <div>
             <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1">
               <span>CPU Usage</span>
@@ -53,6 +61,16 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <div className={`h-2 rounded-full transition-all ${cpuUsage > 80 ? 'bg-red-500' : 'bg-[#9147ff]'}`} style={{ width: `${Math.min(100, cpuUsage)}%` }} />
             </div>
           </div>
+
+          {/* Latency (Ping) */}
+          {latency !== null && (
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[var(--text-secondary)] flex items-center gap-1">
+                <Wifi className="w-3 h-3" /> Network Latency
+              </span>
+              <span className="text-[var(--text-primary)]">{latency} ms</span>
+            </div>
+          )}
         </div>
       )}
     </div>

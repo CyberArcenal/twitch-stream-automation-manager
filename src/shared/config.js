@@ -75,6 +75,7 @@ const SCOPES = [
   "moderator:manage:banned_users",
   "moderator:manage:automod",
   "moderator:manage:announcements",
+  "moderator:read:chatters",
 
   // Bits & Monetization
   "bits:read",

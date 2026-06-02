@@ -1,6 +1,7 @@
 // src/renderer/pages/stream-manager/components/ChatCard.tsx
-import React, { useState, useRef } from "react";
-import { Send, Trash2, Pin, PinOff, Reply, X } from "lucide-react";
+import React, { useState, useRef, useMemo } from "react";
+import { Send, Trash2, Smile, X } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 import ChatMessageItem from "./ChatMessageItem";
 import { useChat } from "../../hooks/useChat";
 import type { ChatMessage } from "../../../../api/core/chat";
@@ -30,17 +31,19 @@ const ChatCard: React.FC<ChatCardProps> = ({
     pinMessage,
     unpinMessage,
     deleteMessage,
+    currentUser,         // ✅ now exposed
   } = useChat(channelName, broadcasterId, isLive);
 
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Combine pinned + normal messages
-  const displayedMessages = [
-    ...pinnedMessages.map((msg) => ({ ...msg, isPinned: true })),
-    ...messages.filter((msg) => !pinnedMessages.some((p) => p.id === msg.id)),
-  ];
+const displayedMessages = useMemo(() => [
+  ...pinnedMessages.map(msg => ({ ...msg, isPinned: true })),
+  ...messages.filter(msg => !pinnedMessages.some(p => p.id === msg.id)),
+], [messages, pinnedMessages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -86,14 +89,20 @@ const ChatCard: React.FC<ChatCardProps> = ({
     }, 0);
   };
 
+  const onEmojiClick = (emojiObject: any) => {
+    setInput((prev) => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
+    inputRef.current?.focus();
+  };
+
   // Auto-scroll on new messages
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages, pinnedMessages]);
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--card-bg)] flex flex-col h-full min-h-[300px] min-w-[300px]">
-      <div className="p-3 border-b border-[var(--card-bg)] flex justify-between items-center">
+    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col h-full min-h-[300px] min-w-[300px]">
+      <div className="p-3 border-b border-[var(--border-color)] flex justify-between items-center">
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">
           My Chat {connected ? "🟢" : "🔴"}
         </h3>
@@ -118,7 +127,7 @@ const ChatCard: React.FC<ChatCardProps> = ({
             onDeleteClick={deleteMessage}
             onBanClick={banUser}
             onTimeoutClick={timeoutUser}
-            currentUser={""} // will be set inside useChat? Actually useChat returns currentUser but not exposed. We'll expose it.
+            currentUser={currentUser}   // ✅ now correctly passed
             isLive={isLive}
             isPinned={msg.isPinned}
           />
@@ -126,16 +135,16 @@ const ChatCard: React.FC<ChatCardProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-3 border-t border-[var(--card-bg)]">
+      <div className="p-3 border-t border-[var(--border-color)]">
         {replyingTo && (
-          <div className="flex items-center justify-between text-xs bg-[#2a2a2e] rounded-md px-2 py-1 mb-2">
+          <div className="flex items-center justify-between text-xs bg-[var(--btn-secondary-bg)] rounded-md px-2 py-1 mb-2">
             <span className="text-[var(--text-secondary)]">
               Replying to{" "}
               <span className="text-[var(--text-primary)] font-medium">{replyingTo.user}</span>
             </span>
             <button
               onClick={handleCancelReply}
-              className="p-0.5 hover:bg-[#3a3a4a] rounded"
+              className="p-0.5 hover:bg-[var(--btn-secondary-hover)] rounded"
             >
               <X className="w-3 h-3 text-[var(--text-secondary)]" />
             </button>
@@ -156,14 +165,28 @@ const ChatCard: React.FC<ChatCardProps> = ({
                   : "Connecting..."
             }
             disabled={!connected}
-            className="flex-1 bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-2 py-1 text-sm text-[var(--text-primary)] placeholder-[#adadb8] disabled:opacity-50 focus:outline-none focus:border-[#9147ff]"
+            className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] disabled:opacity-50 focus:outline-none focus:border-[#9147ff]"
           />
+          <div className="relative">
+            <button
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-1 bg-[var(--btn-secondary-bg)] rounded hover:bg-[var(--btn-secondary-hover)]"
+              title="Insert emoji"
+            >
+              <Smile className="w-4 h-4 text-[var(--text-primary)]" />
+            </button>
+            {showEmojiPicker && (
+              <div className="absolute bottom-full right-0 mb-2 z-50">
+                <EmojiPicker onEmojiClick={onEmojiClick} />
+              </div>
+            )}
+          </div>
           <button
             onClick={handleSend}
             disabled={!connected || !input.trim()}
             className="p-1 bg-[#9147ff] rounded hover:bg-[#772ce8] disabled:opacity-50"
           >
-            <Send className="w-4 h-4 text-[var(--text-primary)]" />
+            <Send className="w-4 h-4 text-white" />
           </button>
         </div>
         <div className="text-xs text-[var(--text-secondary)] text-center mt-2">

@@ -1,5 +1,5 @@
 // src/renderer/pages/stream-manager/components/MainVideoCard.tsx
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import {
   Edit3,
   Scissors,
@@ -7,17 +7,21 @@ import {
   Target,
   UsersRound,
   RefreshCw,
-  Plus,
-  Trash2,
+  Volume2,
+  VolumeX,
+  Bookmark,
 } from "lucide-react";
 import { useUptime } from "../hooks/useUptime";
 import { useStreamInfo } from "../hooks/useStreamInfo";
 import { useClip } from "../hooks/useClip";
 import { useRaid } from "../hooks/useRaid";
+import { useStreamHealth } from "../hooks/useStreamHealth";
 import { streamManagerAPI, type Goal } from "../../../api/core/streamManager";
 import EditStreamModal from "./EditStreamModal";
 import { GoalsModal } from "./GoalsModal";
 import { dialogs } from "../../../utils/dialogs";
+import Player, { type PlayerRef } from "./Player";
+import { useStreamMarker } from "../hooks/useStreamMarker";
 
 interface MainVideoCardProps {
   isLive: boolean;
@@ -30,69 +34,51 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
   streamData,
   onRefresh,
 }) => {
-  const videoRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<PlayerRef>(null);
   const [isHovering, setIsHovering] = useState(false);
+  const [muted, setMuted] = useState(true); // start muted to avoid autoplay issues
+  const [volume, setVolumeState] = useState(0.5);
   const uptime = useUptime(isLive, streamData?.started_at);
+  const { bitrate, connected: obsConnected } = useStreamHealth(isLive);
+  const { createMarker } = useStreamMarker();
 
-  // ✅ Tamang destructuring - gumamit ng info at updateField
   const { showEditModal, setShowEditModal, info, updateField, saveStreamInfo } =
     useStreamInfo(streamData, onRefresh);
-
   const { createClip } = useClip();
   const { startRaid } = useRaid();
 
-  // Goals state
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [showGoalsModal, setShowGoalsModal] = useState(false);
-  const [newGoalTitle, setNewGoalTitle] = useState("");
-  const [newGoalTarget, setNewGoalTarget] = useState(100);
-  const [newGoalUnit, setNewGoalUnit] = useState<
-    "followers" | "subscribers" | "bits" | "views"
-  >("followers");
-
   const channelName = streamData?.user_login?.toLowerCase();
-  const iframeSrc =
-    isLive && channelName
-      ? `https://player.twitch.tv/?channel=${channelName}&parent=localhost&autoplay=false&muted=true`
-      : "";
 
-  // Load goals when modal opens
+  // Reload player when channel changes or becomes live
   useEffect(() => {
-    if (showGoalsModal) {
-      loadGoals();
+    if (isLive && channelName) {
+      playerRef.current?.reload();
     }
-  }, [showGoalsModal]);
+  }, [isLive, channelName]);
 
-  const loadGoals = async () => {
-    const res = await streamManagerAPI.getGoals();
-    if (res.status && res.data) {
-      setGoals(res.data);
+  const handleRefreshPreview = () => {
+    playerRef.current?.reload();
+  };
+
+  const handleToggleMute = () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    playerRef.current?.setMuted(newMuted);
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setVolumeState(val);
+    playerRef.current?.setVolume(val);
+    if (val > 0 && muted) {
+      setMuted(false);
+      playerRef.current?.setMuted(false);
     }
   };
 
-  const addGoal = async () => {
-    if (!newGoalTitle.trim()) return;
-    const res = await streamManagerAPI.addGoal({
-      title: newGoalTitle,
-      target: newGoalTarget,
-      current: 0,
-      unit: newGoalUnit,
-    });
-    if (res.status && res.data) {
-      setGoals([...goals, res.data]);
-      setNewGoalTitle("");
-      setNewGoalTarget(100);
-    } else {
-      dialogs.error("Failed to add goal");
-    }
-  };
-
-  const deleteGoal = async (goalId: string) => {
-    if (await dialogs.confirm({title: "Delete this goal?"})) {
-      await streamManagerAPI.deleteGoal(goalId);
-      setGoals(goals.filter((g) => g.id !== goalId));
-    }
-  };
+  const handleCreateClip = () => createClip(streamData?.user_id);
+  const handleRaid = () => startRaid(streamData?.user_id);
+  const handleStatusRefresh = () => onRefresh();
 
   const handleStreamTogether = async () => {
     if (!channelName) return;
@@ -105,64 +91,22 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
   };
 
   const handleManageGoals = () => {
-    setShowGoalsModal(true);
+    // We need to open the GoalsModal – but it's rendered inside MainVideoCard already.
+    // We'll use a state to control it.
+    // Actually GoalsModal is already rendered at the bottom, we need to show it.
+    // We'll add a state for it.
   };
 
-  // Reload iframe when coming from offline to live
-  useEffect(() => {
-    if (isLive && channelName && videoRef.current && !videoRef.current.src) {
-      videoRef.current.src = iframeSrc;
-    }
-  }, [isLive, channelName, iframeSrc]);
-
-  // Detect if iframe got redirected to login and reload
-  useEffect(() => {
-    if (!isLive || !videoRef.current) return;
-    const iframe = videoRef.current;
-    const handleLoad = () => {
-      try {
-        const iframeUrl = iframe.contentWindow?.location.href;
-        if (
-          iframeUrl &&
-          (iframeUrl.includes("id.twitch.tv") || iframeUrl.includes("login"))
-        ) {
-          console.log("Detected login redirect, reloading iframe...");
-          setTimeout(() => {
-            if (iframe.src) iframe.src = iframeSrc;
-          }, 1000);
-        }
-      } catch (e) {
-        // Cross-origin means it's a valid Twitch page – good
-      }
-    };
-    iframe.addEventListener("load", handleLoad);
-    return () => iframe.removeEventListener("load", handleLoad);
-  }, [isLive, iframeSrc]);
-
-  const handleRefreshPreview = () => {
-    if (videoRef.current && iframeSrc) {
-      videoRef.current.src = "";
-      setTimeout(() => {
-        if (videoRef.current) videoRef.current.src = iframeSrc;
-      }, 100);
-    }
-  };
-
-  const handleStatusRefresh = () => {
-    onRefresh();
-  };
-
-  const handleCreateClip = () => createClip(streamData?.user_id);
-  const handleRaid = () => startRaid(streamData?.user_id);
+  // We'll add a local state for goals modal (already exists in original code but we removed it).
+  // Let's add it back.
+  const [showGoalsModal, setShowGoalsModal] = useState(false);
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl overflow-hidden shadow-lg border border-[var(--card-bg)] h-full flex flex-col min-w-[300px]">
+    <div className="bg-[var(--card-bg)] rounded-xl overflow-hidden shadow-lg border border-[var(--border-color)] h-full flex flex-col min-w-[300px]">
       {/* Stats row with refresh button */}
-      <div className="grid grid-cols-4 gap-2 p-2 border-b border-[var(--card-bg)] items-center">
+      <div className="grid grid-cols-4 gap-2 p-2 border-b border-[var(--border-color)] items-center">
         <div className="text-center">
-          <div className="text-[var(--text-secondary)] text-xs">
-            Session Time
-          </div>
+          <div className="text-[var(--text-secondary)] text-xs">Session Time</div>
           <div className="text-[var(--text-primary)] font-semibold text-sm">
             {isLive ? uptime : "00:00:00"}
           </div>
@@ -176,17 +120,19 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
         <div className="text-center">
           <div className="text-[var(--text-secondary)] text-xs">Bitrate</div>
           <div className="text-[var(--text-primary)] font-semibold">
-            -- kbps
+            {obsConnected && bitrate > 0 ? `${Math.round(bitrate)} kbps` : "--"}
           </div>
         </div>
         <div className="flex justify-end items-center gap-2">
           <div className="text-center">
             <div className="text-[var(--text-secondary)] text-xs">Speed</div>
-            <div className="text-[var(--text-primary)] font-semibold">--</div>
+            <div className="text-[var(--text-primary)] font-semibold">
+              {obsConnected ? "Auto" : "--"}
+            </div>
           </div>
           <button
             onClick={handleStatusRefresh}
-            className="p-1 rounded-full hover:bg-[#2a2a2e] transition"
+            className="p-1 rounded-full hover:bg-[var(--btn-secondary-bg)] transition"
             title="Check live status now"
           >
             <RefreshCw className="w-4 h-4 text-[var(--text-secondary)]" />
@@ -194,7 +140,7 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
         </div>
       </div>
 
-      {/* Video preview area with overlay refresh button */}
+      {/* Video preview area with volume controls */}
       <div
         className="relative bg-black flex-1 min-h-[250px] group"
         onMouseEnter={() => setIsHovering(true)}
@@ -211,28 +157,42 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
           </div>
         ) : (
           <>
-            <iframe
-              ref={videoRef}
-              src={iframeSrc}
-              className="w-full h-full"
-              allowFullScreen
-              title="Stream Preview"
+            <Player
+              ref={playerRef}
+              channelName={channelName!}
+              autoplay={true}
             />
+            {/* Volume control overlay */}
+            <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-black/60 rounded-full px-2 py-1 backdrop-blur-sm">
+              <button onClick={handleToggleMute} className="text-white p-1 hover:text-[#9147ff]">
+                {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-20 h-1 bg-white/30 rounded-full accent-[#9147ff]"
+              />
+            </div>
+            {/* Refresh button overlay */}
             <button
               onClick={handleRefreshPreview}
               className={`absolute top-2 right-2 p-2 rounded-full bg-black/60 hover:bg-black/80 transition-all duration-200 backdrop-blur-sm ${
                 isHovering ? "opacity-100" : "opacity-0"
               }`}
-              title="Reload video preview"
+              title="Reload video"
             >
-              <RefreshCw className="w-4 h-4 text-[var(--text-primary)]" />
+              <RefreshCw className="w-4 h-4 text-white" />
             </button>
           </>
         )}
       </div>
 
-      {/* Action buttons row - 3 columns, 2 rows */}
-      <div className="p-3 border-t border-[var(--card-bg)]">
+      {/* Action buttons row */}
+      <div className="p-3 border-t border-[var(--border-color)]">
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setShowEditModal(true)}
@@ -242,35 +202,39 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
           </button>
           <button
             onClick={handleCreateClip}
-            className="flex items-center justify-center gap-2 bg-[#2a2a2e] px-2 py-1.5 rounded-lg text-sm hover:bg-[#3a3a4a] transition"
+            className="flex items-center justify-center gap-2 bg-[var(--btn-secondary-bg)] px-2 py-1.5 rounded-lg text-sm hover:bg-[var(--btn-secondary-hover)] transition"
           >
             <Scissors className="w-4 h-4" /> Clip That
           </button>
           <button
+  onClick={() => createMarker()}
+  className="flex items-center justify-center gap-2 bg-[var(--btn-secondary-bg)] px-2 py-1.5 rounded-lg text-sm hover:bg-[var(--btn-secondary-hover)] transition"
+>
+  <Bookmark className="w-4 h-4" /> Add Marker
+</button>
+          <button
             onClick={handleRaid}
-            className="flex items-center justify-center gap-2 bg-[#2a2a2e] px-2 py-1.5 rounded-lg text-sm hover:bg-[#3a3a4a] transition"
+            className="flex items-center justify-center gap-2 bg-[var(--btn-secondary-bg)] px-2 py-1.5 rounded-lg text-sm hover:bg-[var(--btn-secondary-hover)] transition"
           >
             <Users className="w-4 h-4" /> Raid Channel
           </button>
           <button
             onClick={handleStreamTogether}
-            className="flex items-center justify-center gap-2 bg-[#2a2a2e] px-2 py-1.5 rounded-lg text-sm hover:bg-[#3a3a4a] transition"
+            className="flex items-center justify-center gap-2 bg-[var(--btn-secondary-bg)] px-2 py-1.5 rounded-lg text-sm hover:bg-[var(--btn-secondary-hover)] transition"
           >
             <UsersRound className="w-4 h-4" /> Stream Together
           </button>
           <button
-            onClick={handleManageGoals}
+            onClick={() => setShowGoalsModal(true)}
             data-goals-manage="true"
             className="flex items-center justify-center gap-2 bg-[var(--btn-secondary-bg)] px-2 py-1.5 rounded-lg text-sm hover:bg-[var(--btn-secondary-hover)] transition"
           >
             <Target className="w-4 h-4" /> Manage Goals
           </button>
-          {/* Empty placeholder para mapanatili ang grid (optional) */}
           <div></div>
         </div>
       </div>
 
-      {/* ✅ Tamang pag-render ng EditStreamModal - gamit ang info at updateField */}
       <EditStreamModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -280,7 +244,6 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
         channelName={channelName || ""}
       />
 
-      {/* Goals Modal */}
       <GoalsModal isOpen={showGoalsModal} onClose={() => setShowGoalsModal(false)} />
     </div>
   );

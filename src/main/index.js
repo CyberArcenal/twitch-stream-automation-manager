@@ -339,10 +339,9 @@ async function createMainWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
+      webviewTag: true, 
       webSecurity: !APP_CONFIG.isDev,
       sandbox: !APP_CONFIG.isDev,
-      // @ts-ignore
-      enableRemoteModule: false,
     },
   });
 
