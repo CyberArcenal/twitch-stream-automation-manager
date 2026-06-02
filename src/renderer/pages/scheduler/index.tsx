@@ -3,6 +3,7 @@ import { Calendar, Plus, Edit, Trash2, Power, PowerOff } from "lucide-react";
 import { schedulerAPI, type ScheduledEvent } from "../../api/core/scheduler";
 import { format } from "date-fns";
 import LoadingSpinner from "../../components/Shared/LoadingSpinner";
+import { dialogs } from "../../utils/dialogs";
 
 const SchedulerPage: React.FC = () => {
   const [schedules, setSchedules] = useState<ScheduledEvent[]>([]);
@@ -45,7 +46,7 @@ const SchedulerPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Delete this schedule?")) {
+    if (await dialogs.confirm({title: "Delete this schedule?"})) {
       await schedulerAPI.deleteSchedule(id);
       fetchSchedules();
     }

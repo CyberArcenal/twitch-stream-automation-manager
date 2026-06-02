@@ -16,6 +16,8 @@ import { useClip } from "../hooks/useClip";
 import { useRaid } from "../hooks/useRaid";
 import { streamManagerAPI, type Goal } from "../../../api/core/streamManager";
 import EditStreamModal from "./EditStreamModal";
+import { GoalsModal } from "./GoalsModal";
+import { dialogs } from "../../../utils/dialogs";
 
 interface MainVideoCardProps {
   isLive: boolean;
@@ -31,16 +33,11 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
   const videoRef = useRef<HTMLIFrameElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const uptime = useUptime(isLive, streamData?.started_at);
-  
+
   // ✅ Tamang destructuring - gumamit ng info at updateField
-  const {
-    showEditModal,
-    setShowEditModal,
-    info,
-    updateField,
-    saveStreamInfo,
-  } = useStreamInfo(streamData, onRefresh);
-  
+  const { showEditModal, setShowEditModal, info, updateField, saveStreamInfo } =
+    useStreamInfo(streamData, onRefresh);
+
   const { createClip } = useClip();
   const { startRaid } = useRaid();
 
@@ -91,7 +88,7 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
   };
 
   const deleteGoal = async (goalId: string) => {
-    if (confirm("Delete this goal?")) {
+    if (await dialogs.confirm({title: "Delete this goal?"})) {
       await streamManagerAPI.deleteGoal(goalId);
       setGoals(goals.filter((g) => g.id !== goalId));
     }
@@ -163,7 +160,9 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
       {/* Stats row with refresh button */}
       <div className="grid grid-cols-4 gap-2 p-2 border-b border-[var(--card-bg)] items-center">
         <div className="text-center">
-          <div className="text-[var(--text-secondary)] text-xs">Session Time</div>
+          <div className="text-[var(--text-secondary)] text-xs">
+            Session Time
+          </div>
           <div className="text-[var(--text-primary)] font-semibold text-sm">
             {isLive ? uptime : "00:00:00"}
           </div>
@@ -176,7 +175,9 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
         </div>
         <div className="text-center">
           <div className="text-[var(--text-secondary)] text-xs">Bitrate</div>
-          <div className="text-[var(--text-primary)] font-semibold">-- kbps</div>
+          <div className="text-[var(--text-primary)] font-semibold">
+            -- kbps
+          </div>
         </div>
         <div className="flex justify-end items-center gap-2">
           <div className="text-center">
@@ -259,7 +260,8 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
           </button>
           <button
             onClick={handleManageGoals}
-            className="flex items-center justify-center gap-2 bg-[#2a2a2e] px-2 py-1.5 rounded-lg text-sm hover:bg-[#3a3a4a] transition"
+            data-goals-manage="true"
+            className="flex items-center justify-center gap-2 bg-[var(--btn-secondary-bg)] px-2 py-1.5 rounded-lg text-sm hover:bg-[var(--btn-secondary-hover)] transition"
           >
             <Target className="w-4 h-4" /> Manage Goals
           </button>
@@ -279,95 +281,7 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
       />
 
       {/* Goals Modal */}
-      {showGoalsModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[var(--card-bg)] rounded-xl p-6 w-[500px] max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Manage Goals</h3>
-            <div className="space-y-4">
-              {/* Add new goal */}
-              <div className="border border-[var(--card-bg)] rounded-lg p-3">
-                <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">
-                  Add New Goal
-                </h4>
-                <input
-                  type="text"
-                  placeholder="Goal title"
-                  value={newGoalTitle}
-                  onChange={(e) => setNewGoalTitle(e.target.value)}
-                  className="w-full bg-[var(--background-color)] border border-[var(--card-bg)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm mb-2"
-                />
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="number"
-                    placeholder="Target"
-                    value={newGoalTarget}
-                    onChange={(e) => setNewGoalTarget(Number(e.target.value))}
-                    className="flex-1 bg-[var(--background-color)] border border-[var(--card-bg)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm"
-                  />
-                  <select
-                    value={newGoalUnit}
-                    onChange={(e) => setNewGoalUnit(e.target.value as any)}
-                    className="flex-1 bg-[var(--background-color)] border border-[var(--card-bg)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm"
-                  >
-                    <option value="followers">Followers</option>
-                    <option value="subscribers">Subscribers</option>
-                    <option value="bits">Bits</option>
-                    <option value="views">Views</option>
-                  </select>
-                </div>
-                <button
-                  onClick={addGoal}
-                  className="w-full py-1.5 bg-[#9147ff] rounded-lg text-sm"
-                >
-                  Add Goal
-                </button>
-              </div>
-
-              {/* List of goals */}
-              <div>
-                <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">
-                  Current Goals
-                </h4>
-                {goals.length === 0 ? (
-                  <p className="text-[var(--text-secondary)] text-sm">No goals yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {goals.map((goal) => (
-                      <div
-                        key={goal.id}
-                        className="bg-[var(--background-color)] rounded-lg p-3 flex justify-between items-center"
-                      >
-                        <div>
-                          <div className="text-[var(--text-primary)] font-medium">
-                            {goal.title}
-                          </div>
-                          <div className="text-[var(--text-secondary)] text-xs">
-                            {goal.current} / {goal.target} {goal.unit}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => deleteGoal(goal.id)}
-                          className="text-red-500 hover:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowGoalsModal(false)}
-                className="px-4 py-2 bg-[#2a2a2e] rounded-lg text-sm"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GoalsModal isOpen={showGoalsModal} onClose={() => setShowGoalsModal(false)} />
     </div>
   );
 };

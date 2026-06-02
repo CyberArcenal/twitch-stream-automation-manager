@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Users, UserPlus, LogOut, Upload, Download } from "lucide-react";
 import { authAPI } from "../../../api/core/auth";
 import { settingsAPI } from "../../../api/core/settings";
+import { dialogs } from "../../../utils/dialogs";
 
 interface Account {
   userId: string;
@@ -41,7 +42,7 @@ export const AccountsTab: React.FC = () => {
   };
 
   const removeAccount = async (userId: string) => {
-    if (confirm("Remove this account?")) {
+    if (await dialogs.confirm({title: "Remove this account?"})) {
       await authAPI.logoutAccount(userId);
       fetchAccounts();
     }

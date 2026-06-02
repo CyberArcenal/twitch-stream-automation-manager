@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Terminal, Plus, Trash2, Power, PowerOff, Clock } from "lucide-react";
 import { chatCommandsAPI, type ChatCommand } from "../../api/core/chatCommands";
 import LoadingSpinner from "../../components/Shared/LoadingSpinner";
+import { dialogs } from "../../utils/dialogs";
 
 const ChatCommandsPage: React.FC = () => {
   const [commands, setCommands] = useState<Record<string, ChatCommand>>({});
@@ -30,7 +31,7 @@ const ChatCommandsPage: React.FC = () => {
   };
 
   const handleDelete = async (cmdName: string) => {
-    if (confirm(`Delete command "${cmdName}"?`)) {
+    if (await dialogs.confirm({title: `Delete command "${cmdName}"?`})) {
       await chatCommandsAPI.removeCommand(cmdName);
       fetchCommands();
     }

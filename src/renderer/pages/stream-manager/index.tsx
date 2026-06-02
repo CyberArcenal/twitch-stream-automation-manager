@@ -11,6 +11,7 @@ import ChatCard from "./components/ChatCard";
 import CustomAutomationsCard from "./components/CustomAutomationsCard";
 import AlertsCard from "./components/AlertsCard";
 import CollaborationCard from "./components/CollaborationCard";
+import { StreamGoalsPreviewCard } from "./components/StreamGoalsPreviewCard";
 
 const StreamManagerPage: React.FC = () => {
   const { isLive, streamData, loading, refresh } = useLiveStatus();
@@ -23,6 +24,13 @@ const StreamManagerPage: React.FC = () => {
     );
   }
 
+  const handleManageGoals = () => {
+    const manageBtn = document.querySelector(
+      '[data-goals-manage="true"]',
+    ) as HTMLButtonElement;
+    if (manageBtn) manageBtn.click();
+  };
+
   return (
     <div className="h-full min-h-full overflow-auto p-4 bg-[var(--background-color)]">
       {/* 
@@ -34,12 +42,13 @@ const StreamManagerPage: React.FC = () => {
       */}
       <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 auto-rows-[1fr] h-full">
         {/* Column 1: Main Video Card */}
-        <div className="h-full">
+        <div className="flex flex-col gap-4 h-full">
           <MainVideoCard
             isLive={isLive || false}
             streamData={streamData}
             onRefresh={refresh}
           />
+          <StreamGoalsPreviewCard onManageGoals={handleManageGoals} />
         </div>
 
         {/* Column 2: Connection Hub + Quick Actions + Alerts */}
@@ -47,7 +56,10 @@ const StreamManagerPage: React.FC = () => {
           <ConnectionHubCard isLive={isLive || false} onRefresh={refresh} />
           <ConnectedSoftwareCard isLive={isLive || false} />
           <QuickActionsCard isLive={isLive || false} />
-          <AlertsCard isLive={isLive || false} channelId={streamData?.user_id} />
+          <AlertsCard
+            isLive={isLive || false}
+            channelId={streamData?.user_id}
+          />
         </div>
 
         {/* Column 3: Stream Health + Chat */}

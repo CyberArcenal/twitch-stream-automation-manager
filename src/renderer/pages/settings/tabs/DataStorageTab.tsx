@@ -3,24 +3,25 @@ import { Trash2, RefreshCw } from "lucide-react";
 import { historyAPI } from "../../../api/core/history";
 import { notificationStoreAPI } from "../../../api/core/notification-store";
 import { settingsAPI } from "../../../api/core/settings";
+import { dialogs } from "../../../utils/dialogs";
 
 export const DataStorageTab: React.FC = () => {
   const clearWatchHistory = async () => {
-    if (confirm("Clear all watch history?")) {
+    if (await dialogs.confirm({title: "Clear all watch history?"})) {
       await historyAPI.clear();
       alert("Watch history cleared");
     }
   };
 
   const clearNotifications = async () => {
-    if (confirm("Clear all notification history?")) {
+    if (await dialogs.confirm({title: "Clear all notification history?"})) {
       await notificationStoreAPI.clearAll();
       alert("Notification history cleared");
     }
   };
 
   const resetSettings = async () => {
-    if (confirm("Reset all settings to defaults? This action cannot be undone.")) {
+    if (await dialogs.confirm({title: "Reset all settings to defaults? This action cannot be undone."})) {
       await settingsAPI.reset();
       alert("Settings reset. Please restart the app.");
     }

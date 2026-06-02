@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Users, UserPlus, UserMinus, Search } from "lucide-react";
 import { streamManagerAPI } from "../../../api/core/streamManager";
 import { userAPI } from "../../../api/core/user";
+import { dialogs } from "../../../utils/dialogs";
 
 interface TeamManagementProps {
   broadcasterId: string;
@@ -48,7 +49,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
   };
 
   const removeModerator = async (userId: string, userName: string) => {
-    if (!confirm(`Remove ${userName} as moderator?`)) return;
+    if (!await dialogs.confirm({ title: `Remove ${userName} as moderator?` })) return;
     try {
       await streamManagerAPI.removeModerator(userId);
       fetchModerators();
