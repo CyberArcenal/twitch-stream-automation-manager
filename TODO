@@ -1,0 +1,363 @@
+## 📄 1. Analytics Page
+
+**Layunin:** Bigyan ng data-driven insights ang streamer – viewers, followers, subscribers, at engagement.
+
+### Main Dashboard
+- [ ] **Live metrics** – current viewers, follower count (real-time)
+- [ ] **Stream health** – bitrate, fps drops, dropped frames (kung connected sa OBS)
+- [ ] **Revenue estimate** – ads, bits, subs (daily/weekly/monthly)
+- [ ] **Top performing clips** – views, likes, creation date
+
+### Charts & Graphs (filterable by date range)
+- [ ] **Follower growth** – line graph (7d, 30d, all time)
+- [ ] **Subscriber points** (cumulative subs + resubs)
+- [ ] **Chat activity heatmap** – kung kailan active ang chat
+- [ ] **Game/category performance** – aling laro ang pinakamataas ang viewers
+
+### Export & Sharing
+- [ ] I‑download bilang PNG/CSV
+- [ ] I‑share ng naka‑embed na image (for social media)
+
+> **Gagamiting services:** `twitch-api.service` (get streams, followers, subscriptions), `history.service` (watch history), `clips.service`
+
+---
+
+## 📄 2. Moderation Page
+
+**Layunin:** I‑manage ang chat, bans, timeouts, at i‑filter ang spam/hate speech.
+
+### Chat Moderation Tools
+- [ ] **Chat feed** – live view ng channel chat (gamit ang `twitch-chat.service`)
+- [ ] **Quick actions** – timeout (1m,5m,10m,30m), ban, unban
+- [ ] **User info panel** – badges, follower since, sub tier, previous warnings
+- [ ] **Message filter** – awtomatikong i‑hide o i‑flag ang mga message na may banned words (gamit `chatFilters` sa settings)
+
+### Automation Rules
+- [ ] **Auto‑timeout** – kapag may link, caps >70%, spam na emoji
+- [ ] **Blocked words list** – galing sa `settingsService.chatFilters`
+- [ ] **Allow list** (trusted users exempted)
+
+### Moderation Logs
+- [ ] Talaan ng lahat ng bans/timeouts (kailan, sino, dahilan)
+- [ ] **Undo** button (unban / remove timeout)
+
+### Team Management
+- [ ] Listahan ng moderators (galing `streamManagerService.getModerators`)
+- [ ] Mag‑add / mag‑remove ng mod
+
+> **Gagamiting services:** `twitch-chat.service` (send messages, bans/timeouts), `settingsService` (chatFilters), `stream-manager.service` (moderators, ban, timeout)
+
+---
+
+## 📄 3. Creator Dashboard
+
+**Layunin:** Isang summary page ng lahat ng mahahalagang impormasyon at actions para sa streamer.
+
+### Stream Info (editable)
+- [ ] **Stream title** – inline edit (gamit `streamManagerService.updateStreamInfo`)
+- [ ] **Game/category** – searchable dropdown (gamit `gamesService.searchCategories`)
+- [ ] **Tags** – multi‑select
+- [ ] **Language** – dropdown
+
+### Recent Activity Feed (gamit `notificationStore`)
+- [ ] Latest 10 events: follows, subs, raids, hype train (naka‑group)
+- [ ] Click event → mag‑show ng modal o mag‑jump sa chat/analytics
+
+### Quick Actions
+- [ ] **Start / stop stream** (kung naka‑integrate sa OBS)
+- [ ] **Run commercial** (30s, 60s) – `streamManagerService.runCommercial`
+- [ ] **Create clip** (last 30s) – `streamManagerService.createClip`
+- [ ] **Send shoutout** sa isang channel – `streamManagerService.sendShoutout`
+- [ ] **Start raid** – `streamManagerService.startRaid`
+
+### Alerts & Reminders
+- [ ] **Go‑live notification** preview (test)
+- [ ] **Reminder** para mag‑update ng title / tags kung more than 2 hours na ang stream
+- [ ] **Ad schedule** – countdown hanggang next ad break
+
+### Stream Goals (gamit `streamManagerService` goals)
+- [ ] Mag‑set ng goal: followers, subs, bits (may progress bar)
+- [ ] I‑edit / i‑delete ang goal
+- [ ] I‑display sa overlay (kung naka‑browser source)
+
+> **Gagamiting services:** `stream-manager.service`, `gamesService`, `notificationStore`, `obsWebSocketService` (kung gusto mong Start/Stop stream)
+
+---
+
+## 📄 4. Stream Settings (o i‑merge na lang sa Creator Dashboard?)
+
+**Layunin:** Ayusin ang technical settings para sa stream. Pwede mo itong gawing tab sa loob ng Creator Dashboard.
+
+- [ ] **Stream title, category, tags, language** (duplicate sa Creator Dashboard – kaya pwedeng i‑remove)
+- [ ] **Stream key** (ipapakita kasama ng copy button) – `streamManagerService.getStreamKey`
+- [ ] **Ingest server** selection (listahan mula `twitchApiService.getIngestServers`)
+- [ ] **Latency mode** (normal / low latency)
+- [ ] **VOD settings** – i‑auto‑publish o i‑disable ang VOD
+- [ ] **ADS settings** – pre‑roll, mid‑roll
+- [ ] **Muted sections** (Twitch Soundtrack) – i‑toggle
+- [ ] **Stream markers** (create marker)
+
+> **Kung gugustuhin mong tanggalin ang Stream Settings page:**  
+> Ilipat mo na lang ang **Stream Key**, **Ingest server**, at **VOD settings** sa Creator Dashboard bilang expandable section o modal. Hindi naman araw‑araw ginagalaw ang mga ito.
+
+---
+
+## 📄 5. Settings Page (App‑wide preferences)
+
+**Layunin:** I‑customize ang gawi ng mismong application.
+
+### General
+- [ ] **Theme** (light/dark/system) – `themesService`
+- [ ] **Language** (kung multi‑lingual)
+- [ ] **Auto‑play** video when opening player – `settingsService.autoPlay`
+
+### Notifications
+- [ ] **Desktop notifications** – On/Off (gamit `notificationService`)
+- [ ] **Anong events ang mag‑notify** – follow, sub, raid, hype train, stream online (checkbox)
+- [ ] **Test notification** button
+
+### Chat & Moderation
+- [ ] **Blocked words list** (add/remove) – `settingsService.addChatFilter`
+- [ ] **Automod level** (none, basic, aggressive)
+- [ ] **Chat delay** (seconds)
+
+### Keyboard Shortcuts
+- [ ] Play/Pause, Next/Previous channel, Volume Up/Down, Mute, Fullscreen – gamit `shortcutService`
+- [ ] I‑customize ang key combinations
+
+### OBS WebSocket
+- [ ] **Auto‑connect** checkbox
+- [ ] **Host / Port** (default localhost:4455)
+- [ ] **Password** (naka‑store sa `obs-websocket.service`)
+- [ ] **Test connection** button
+
+### Accounts
+- [ ] **Mag‑add ng multiple Twitch accounts** (gamit `twitchAuthService.loginNewAccount`)
+- [ ] **Switch account** – walang logout, direct switch
+- [ ] **Remove account**
+- [ ] **Export / Import** settings & accounts (JSON)
+
+### Data & Storage
+- [ ] **Clear watch history** – `historyService.clearHistory`
+- [ ] **Clear notification cache** – `notificationStore.clearAll`
+- [ ] **Reset all settings** – `settingsService.reset`
+
+### Automation Defaults (galing `automationService`)
+- [ ] **Auto‑raid** target channel
+- [ ] **Auto‑clip** on stream offline
+- [ ] **Auto‑message** text (placeholder: `Thanks for the follow/sub! 🎉`)
+- [ ] I‑enable/disable kada automation
+
+### About / Updates
+- [ ] **Version number** (mula `package.json`)
+- [ ] **Check for updates** (gamit `electron-updater`)
+- [ ] **Open log folder** – `logger`
+
+---
+
+## ✅ Recap: Anong page ang dapat mong unahin?
+
+| Page | Priority | Dahil |
+|------|----------|-------|
+| **Creator Dashboard** | 🔴 High | Dito mo makikita at mae-edit ang stream info, plus quick actions – ito ang puso ng app para sa streamer |
+| **Moderation** | 🟠 High | Kailangan para sa live chat management, lalo na kung maraming viewers |
+| **Analytics** | 🟡 Medium | Hindi kailangan sa unang release pero maganda para sa insights |
+| **Settings** | 🟡 Medium | Kailangan para i‑customize ang app, pero pwedeng gawin sa huli |
+| **Stream Settings** | ⚪ Low (merge) | I‑merge mo na lang sa Creator Dashboard para iwas duplication |
+
+---
+
+## 🧠 Mga karagdagang ideya (kung gusto mong lumampas)
+
+- **Scheduled events** – mag‑schedule ng stream title/game change, o commercial break
+- **Chat bot commands** – `!so`, `!clip`, `!lurk`, `!uptime` – gamit ang `twitch-chat.service` + `automationService`
+- **Stream overlay preview** – i‑preview ang browser source (goals, recent events)
+- **Twitch Polls & Predictions** – gumamit ng `predictionsService` para gumawa/manage ng polls mula sa app
+
+Kung gusto mo, pwedeng gawan kita ng **actual component structure** (React) para sa isa sa mga page na ito – halimbawa, ang **Creator Dashboard**. Sabihin mo lang!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 1️⃣ **Layout & Responsiveness**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 1.1 | Replace hardcoded grid with dynamic CSS Grid using Tailwind’s `grid-cols-` and `minmax` | High | Current grid uses fixed column widths (`[1.5fr_1fr_1fr_1fr]`). On smaller screens it may overflow. Use `grid-cols-1 lg:grid-cols-4` with `gap-4` and let cards stretch. |
+| 1.2 | Add a resize observer to adjust card heights | Medium | Cards like `ChatCard` and `CustomAutomationsCard` have different heights; ensure they align nicely. Use `h-full` and `flex-col`. |
+| 1.3 | Improve mobile layout (sidebar open state) | Low | The page currently assumes desktop; add `overflow-x-auto` on the grid container and consider a stacked layout on screens < 768px. |
+
+---
+
+## 2️⃣ **Core Functionality Improvements**
+
+### 🎬 **MainVideoCard**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.1 | Fix "Bitrate" and "Speed" stats | High | Currently hardcoded `--` and `--`. Use real data from OBS or Twitch API (if available). Otherwise, remove or hide them. |
+| 2.2 | Handle `streamData` being `null` | High | Many properties (e.g., `streamData?.user_login`) are accessed without fallback. Use optional chaining with default values. |
+| 2.3 | Improve iframe reload logic | Medium | The iframe refresh button works, but the login redirect detection is fragile. Consider using a `key` prop on `<iframe>` to force re‑mount. |
+| 2.4 | Add volume/mute control for the embedded player | Low | The iframe has no sound because `muted=true`. Let users unmute via a button that toggles `?muted=false`. |
+
+### 💬 **ChatCard**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.5 | Expose `currentUser` from `useChat` to `ChatMessageItem` | High | Currently `currentUser` is defined in `useChat` but not passed to `ChatMessageItem`. This causes "you" badge not to appear. |
+| 2.6 | Fix missing `onBanClick` and `onTimeoutClick` in `ChatMessageItem` | High | The buttons are rendered but the handlers are missing from `ChatMessageItem` props. Add them. |
+| 2.7 | Add infinite scroll or pagination for chat history | Medium | Currently only last 200 messages are stored. Implement loading older messages when scrolling up (if backend supports). |
+| 2.8 | Add emoji picker | Low | Enhance chat input with a simple emoji selector. |
+| 2.9 | Persist chat filters (blocked words) in real time | Medium | The filter logic is in `useChat` but it uses `settingsService`? Actually `twitch-chat.service` filters on backend. No action needed. |
+
+### 🔌 **ConnectionHubCard**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.10 | Show OBS connection status | High | Currently only shows if OBS is running, not if WebSocket is connected. Use `useOBSConnection` (already exists) and display connected/disconnected. |
+| 2.11 | Add ability to change ingest server | Medium | The stream key is shown, but ingest server selection is in Stream Settings. Consider linking directly or adding quick selector. |
+| 2.12 | Fix "I'm Live" button – currently only triggers `onRefresh` | Medium | Should also open the stream key dashboard or start stream? Rename to "Check Live Status" or add separate "Go Live" button. |
+
+### ⚙️ **CustomAutomationsCard** (AutomationPanel, SceneManager, AlertConfigurator)
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.13 | Fix `autoClipEnabled` – "on viewer spike" not implemented | High | Backend `autoClip` triggers on stream offline, not on viewer spike. Change label or implement spike detection. |
+| 2.14 | Add persistence for custom scripts (local storage) | Medium | Currently scripts are stored in React state and lost on refresh. Use `localStorage` or backend store. |
+| 2.15 | Improve SceneManager error handling | Medium | When OBS connection fails, the password modal appears correctly, but if password wrong, it should show error. |
+| 2.16 | AlertConfigurator – test notifications should use `notificationAPI.testGoLiveNotification` | High | Currently it toggles only sound; add a "Test" button per event type. |
+
+### 📊 **AlertsCard & useAlertsFeed**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.17 | Fix duplicate event subscriptions | High | `useAlertsFeed` and `useStreamEvents` both subscribe to the same EventSub. Use a single source of truth (e.g., a global event manager). |
+| 2.18 | Add click‑to‑jump functionality | Medium | Clicking an alert should open the relevant page (follow → followers list, raid → raid info, etc.). |
+| 2.19 | Add sound notifications when alert arrives | Low | Use the `notification` service to play a sound if `soundEnabled` is true. |
+
+### 👥 **CollaborationCard**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.20 | Add moderator search | Low | Allow searching for users by name before adding. |
+| 2.21 | Show moderator badges or roles | Low | Distinguish between mods and VIPs (if API supports). |
+
+### 💚 **StreamHealthCard**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 2.22 | Fix real bitrate calculation | Medium | Currently uses placeholder 3500 kbps. Fetch from OBS `outputBytes` and compute. |
+| 2.23 | Add network latency / ping indicator | Low | Might be useful for streamers. |
+
+---
+
+## 3️⃣ **Missing Features**
+
+| # | Feature | Priority | Description |
+|---|---------|----------|-------------|
+| 3.1 | **Stream markers** – quickly add a marker from the MainVideoCard | High | Add a button next to "Clip That" to create a marker with a timestamp. |
+| 3.2 | **Commercial countdown timer** | Medium | Show remaining time until next commercial can be run (based on cooldown). |
+| 3.3 | **Viewer list** (who is in chat) | Medium | Use IRC `NAMES` command or Helix API to get chatters. |
+| 3.4 | **Channel point redemptions** display | Low | Show recent redemptions (requires EventSub and `channel:read:redemptions`). |
+| 3.5 | **Polls & Predictions quick overview** | Medium | Show active prediction in a small card on the main page. |
+| 3.6 | **Auto‑moderation stats** (messages filtered, timeouts) | Low | Display numbers in AutomationPanel. |
+
+---
+
+## 4️⃣ **Performance & Code Quality**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 4.1 | Reduce unnecessary re‑renders | Medium | Many components re‑fetch data on every interval. Use React `useCallback` and `useMemo` correctly. |
+| 4.2 | Implement WebSocket for live chat instead of polling? | High | Already using `@twurple/chat` WebSocket. No change needed. But ensure the connection is shared across components. |
+| 4.3 | Combine `useAlertsFeed` and `useStreamEvents` into one hook | High | Both do the same thing – unify into `useStreamEvents` and remove duplicate. |
+| 4.4 | Move `globalConnectionPromise` from `useSceneManager` to a singleton service | Medium | The global variable is a workaround; better to use a React Context or a module‑level state. |
+| 4.5 | Remove unused imports and components | Low | Many files import `Search`, `Info`, etc. but not used. Clean up. |
+| 4.6 | Add error boundaries for each card | Medium | Prevent one failed component from crashing the whole page. |
+
+---
+
+## 5️⃣ **User Experience (UX) Improvements**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 5.1 | Add skeleton loaders for every card | Medium | Currently only `MainVideoCard` has a skeleton. Add for others. |
+| 5.2 | Show connection status indicator in TopBar | High | Indicate Twitch chat connection, OBS connection, and EventSub connection with colored dots. |
+| 5.3 | Provide keyboard shortcuts overlay | Low | Press `?` to show available shortcuts (like mute, play, etc.). |
+| 5.4 | Add undo/redo for moderation actions (timeout/ban) | Medium | Could use `moderationLogService` to revert last action. |
+| 5.5 | Enable drag‑and‑drop to rearrange cards | Low | Let users customize their dashboard layout. |
+
+---
+
+## 6️⃣ **Theme & Styling Consistency**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 6.1 | Replace remaining hardcoded background colors | High | In `MainVideoCard`, `bg-[#2a2a2e]` and `bg-[#3a3a4a]` still appear. Replace with CSS variables. |
+| 6.2 | Ensure all components use `var(--border-color)` for borders | Medium | Some borders still use `border-[var(--card-bg)]` which is wrong. Use `border-[var(--border-color)]`. |
+| 6.3 | Add smooth transitions for theme switching | Low | Currently theme switches abruptly. Add CSS transition to `*` for color changes. |
+| 6.4 | Check contrast in light mode | High | Test light mode: text on `#9147ff` buttons is white, fine. Background colors need to be light enough. The CSS variables for light theme need adjustment. |
+
+---
+
+## 7️⃣ **Integration with Backend**
+
+| # | Task | Priority | Description |
+|---|------|----------|-------------|
+| 7.1 | Use real data for "Viewers" | Already done (via `streamData.viewer_count`). Ensure it updates. | ✅ |
+| 7.2 | Use `streamManagerAPI.getStreamElapsedHours` for uptime | Medium | Currently `useUptime` uses client‑side calculation based on `started_at`. Use backend value for accuracy. |
+| 7.3 | Connect `useShoutout` to backend `sendShoutout` | Already done. | ✅ |
+| 7.4 | Add backend support for custom scripts (upload, store, execute) | Low | Currently scripts are only frontend placeholders. Could be expanded with `vm2` or a sandbox. |
+
+---
+
+## ✅ **Immediate Next Steps (High Priority)**
+
+1. **Fix chat user identification** – pass `currentUser` to `ChatMessageItem`.
+2. **Add missing ban/timeout handlers** in `ChatMessageItem`.
+3. **Replace hardcoded colors** in `MainVideoCard` and other cards with CSS variables.
+4. **Remove duplicate EventSub subscriptions** – unify `useAlertsFeed` and `useStreamEvents`.
+5. **Add real bitrate and FPS from OBS** in `StreamHealthCard`.
+6. **Fix "I'm Live" button** behavior.
+7. **Implement commercial countdown** and display remaining cooldown.
+8. **Add stream marker button** in `MainVideoCard`.
+9. **Add error boundaries** for each major card.
