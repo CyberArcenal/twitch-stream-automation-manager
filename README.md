@@ -72,8 +72,8 @@ A powerful Electron‑based desktop application that helps Twitch streamers mana
 
 ### Clone the repository
 ```bash
-git clone https://github.com/CyberArcenal/twitch-stream-manager.git
-cd twitch-stream-manager
+git clone https://github.com/CyberArcenal/twitch-stream-automation-manager.git
+cd twitch-stream-automation-manager
 ```
 
 ### Install dependencies
