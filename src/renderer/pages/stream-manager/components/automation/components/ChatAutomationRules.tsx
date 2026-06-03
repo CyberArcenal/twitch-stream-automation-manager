@@ -31,11 +31,18 @@ interface ChatAutomationRulesProps {
   setRepeatWindowSeconds: (value: number) => void;
   repeatCountThreshold: number;
   setRepeatCountThreshold: (value: number) => void;
-    blockedBadges: string[];
+  blockedBadges: string[];
   onAddBlockedBadge: (badge: string) => void;
   onRemoveBlockedBadge: (badge: string) => void;
   newBadge: string;
   onNewBadgeChange: (value: string) => void;
+  autoClipOnChatSpike: boolean;
+  onToggleAutoClipOnChatSpike: () => void;
+  chatSpikeThreshold: number;
+  onChatSpikeThresholdChange: (value: number) => void;
+  chatSpikeCooldownMinutes: number;
+  onChatSpikeCooldownMinutesChange: (value: number) => void;
+
 }
 
 export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
@@ -73,6 +80,13 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
   onRemoveBlockedBadge,
   newBadge,
   onNewBadgeChange,
+  autoClipOnChatSpike,
+  onToggleAutoClipOnChatSpike,
+  chatSpikeThreshold,
+  onChatSpikeThresholdChange,
+  chatSpikeCooldownMinutes,
+  onChatSpikeCooldownMinutesChange,
+
 }) => {
   const handleAddTerm = () => {
     if (!newTerm.trim()) return;
@@ -298,47 +312,101 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
         </div>
 
         <div>
-  <div className="flex items-center gap-2 mb-1 mt-2">
-    <Shield className="w-3 h-3 text-[var(--text-secondary)]" />
-    <span className="text-xs text-[var(--text-secondary)]">
-      Blocked Badges (auto‑timeout)
-    </span>
-  </div>
-  <div className="flex gap-2 mb-2">
-    <input
-      type="text"
-      value={newBadge}
-      onChange={(e) => onNewBadgeChange(e.target.value)}
-      placeholder="e.g., troll, known_spammer"
-      className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
-    />
-    <button
-      onClick={() => {
-        if (newBadge.trim()) onAddBlockedBadge(newBadge);
-        onNewBadgeChange('');
-      }}
-      className="px-2 py-1 bg-[var(--primary-color)] rounded text-xs"
-    >
-      Add
-    </button>
-  </div>
-  <div className="flex flex-wrap gap-1 max-h-10 overflow-y-auto">
-    {blockedBadges.map((badge) => (
-      <span
-        key={badge}
-        className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--btn-secondary-bg)] rounded-full text-xs"
-      >
-        {badge}
-        <button onClick={() => onRemoveBlockedBadge(badge)} className="hover:text-red-400">
-          ×
-        </button>
-      </span>
-    ))}
-  </div>
-  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
-    Users with any of these badges will be automatically timed out.
-  </p>
-</div>
+          <div className="flex items-center gap-2 mb-1 mt-2">
+            <Shield className="w-3 h-3 text-[var(--text-secondary)]" />
+            <span className="text-xs text-[var(--text-secondary)]">
+              Blocked Badges (auto‑timeout)
+            </span>
+          </div>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={newBadge}
+              onChange={(e) => onNewBadgeChange(e.target.value)}
+              placeholder="e.g., troll, known_spammer"
+              className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
+            />
+            <button
+              onClick={() => {
+                if (newBadge.trim()) onAddBlockedBadge(newBadge);
+                onNewBadgeChange("");
+              }}
+              className="px-2 py-1 bg-[var(--primary-color)] rounded text-xs"
+            >
+              Add
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1 max-h-10 overflow-y-auto">
+            {blockedBadges.map((badge) => (
+              <span
+                key={badge}
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--btn-secondary-bg)] rounded-full text-xs"
+              >
+                {badge}
+                <button
+                  onClick={() => onRemoveBlockedBadge(badge)}
+                  className="hover:text-red-400"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+            Users with any of these badges will be automatically timed out.
+          </p>
+        </div>
+
+        <div className="mt-3 pt-2 border-t border-[var(--border-color)]">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[var(--text-primary)] flex items-center gap-1">
+              <span>🎬</span> Auto‑clip on chat spike
+            </span>
+            <button
+              onClick={onToggleAutoClipOnChatSpike}
+              className={`relative w-10 h-5 rounded-full transition-colors ${autoClipOnChatSpike ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoClipOnChatSpike ? "translate-x-5" : ""}`}
+              />
+            </button>
+          </div>
+          {autoClipOnChatSpike && (
+            <div className="ml-6 mt-2 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span>Messages per minute threshold</span>
+                <input
+                  type="number"
+                  value={chatSpikeThreshold}
+                  onChange={(e) =>
+                    onChatSpikeThresholdChange(Number(e.target.value))
+                  }
+                  min={10}
+                  max={500}
+                  step={10}
+                  className="w-20 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
+                />
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Cooldown (minutes)</span>
+                <input
+                  type="number"
+                  value={chatSpikeCooldownMinutes}
+                  onChange={(e) =>
+                    onChatSpikeCooldownMinutesChange(Number(e.target.value))
+                  }
+                  min={1}
+                  max={60}
+                  className="w-20 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
+                />
+              </div>
+              <p className="text-[10px] text-[var(--text-secondary)]">
+                Creates a clip when chat activity exceeds threshold. Cooldown
+                prevents multiple clips too close.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Master toggle for Chat Auto-Moderation */}
         <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-3 mt-3">

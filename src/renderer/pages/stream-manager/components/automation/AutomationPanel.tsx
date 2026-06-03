@@ -96,6 +96,10 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
           onToggleAutoShoutoutOnRaid={() => chat.setAutoShoutoutOnRaid(!chat.autoShoutoutOnRaid)}
           shoutoutMessage={chat.shoutoutMessage}
           onShoutoutMessageChange={chat.setShoutoutMessage}
+          autoStreamMarkers={chat.autoStreamMarkers}
+          onToggleAutoStreamMarkers={() => chat.setAutoStreamMarkers(!chat.autoStreamMarkers)}
+          markerIntervalMinutes={chat.markerIntervalMinutes}
+          onMarkerIntervalMinutesChange={chat.setMarkerIntervalMinutes}
         />
 
         <ChatAutomationRules
@@ -124,11 +128,17 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
         onToggleAutoModeration={() => chat.setAutoModerationEnabled(!chat.autoModerationEnabled)} slowModeDuration={chat.slowModeDuration} setSlowModeDuration={chat.setSlowModeDuration}
         repeatWindowSeconds={chat.repeatWindowSeconds} setRepeatWindowSeconds={chat.setRepeatWindowSeconds}
         repeatCountThreshold={chat.repeatCountThreshold} setRepeatCountThreshold={chat.setRepeatCountThreshold}
-         blockedBadges={chat.blockedBadges}
-  onAddBlockedBadge={chat.addBlockedBadge}
-  onRemoveBlockedBadge={chat.removeBlockedBadge}
-  newBadge={newBadge}
-  onNewBadgeChange={setNewBadge}
+        blockedBadges={chat.blockedBadges}
+        onAddBlockedBadge={chat.addBlockedBadge}
+        onRemoveBlockedBadge={chat.removeBlockedBadge}
+        newBadge={newBadge}
+        onNewBadgeChange={setNewBadge}
+        autoClipOnChatSpike={chat.autoClipOnChatSpike}
+        onToggleAutoClipOnChatSpike={() => chat.setAutoClipOnChatSpike(!chat.autoClipOnChatSpike)}
+        chatSpikeThreshold={chat.chatSpikeThreshold}
+        onChatSpikeThresholdChange={chat.setChatSpikeThreshold}
+        chatSpikeCooldownMinutes={chat.chatSpikeCooldownMinutes}
+        onChatSpikeCooldownMinutesChange={chat.setChatSpikeCooldownMinutes}
         />
 
 
