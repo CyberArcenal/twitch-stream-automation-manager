@@ -5,6 +5,7 @@ import Modal from "../../../components/UI/Modal";
 import Button from "../../../components/UI/Button";
 import { streamManagerAPI, type Goal } from "../../../api/core/streamManager";
 import { dialogs } from "../../../utils/dialogs";
+import { useAutomationLog } from "../../../contexts/AutomationLogContext";
 
 interface GoalsModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const GoalsModal: React.FC<GoalsModalProps> = ({ isOpen, onClose }) => {
     "followers" | "subscribers" | "bits" | "views"
   >("followers");
 
+  const { addLog } = useAutomationLog(); // para sa logs ng progress update
+
   const loadGoals = async () => {
     try {
       const res = await streamManagerAPI.getGoals();
@@ -33,11 +36,43 @@ export const GoalsModal: React.FC<GoalsModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // Mag‑load ng goals kapag binuksan ang modal
   useEffect(() => {
     if (isOpen) {
       loadGoals();
     }
   }, [isOpen]);
+
+  // ✅ MAGDAGDAG NG EVENT LISTENERS PARA SA REAL‑TIME UPDATE
+  useEffect(() => {
+    // Hindi na kailangan ng mga listener kung sarado ang modal?
+    // Pero puwede pa ring makinig para sa susunod na pagbukas.
+    // Mas mainam na laging makinig at i‑refresh ang goals kung bukas ang modal.
+    if (!isOpen) return;
+
+    const handleGoalUpdate = (data: any) => {
+      console.log("[GoalsModal] Goal update event received", data);
+      loadGoals(); // i‑refresh ang buong listahan
+      if (data.goalTitle) {
+        addLog(`Goal "${data.goalTitle}" progress updated`, "success");
+      }
+    };
+
+    // Makinig sa mga event na maaaring magpabago ng goal progress
+    window.backendAPI?.on?.("goal:progress-updated", handleGoalUpdate);
+    window.backendAPI?.on?.("eventsub:follow", handleGoalUpdate);
+    window.backendAPI?.on?.("eventsub:subscription", handleGoalUpdate);
+    window.backendAPI?.on?.("eventsub:bits", handleGoalUpdate);
+    window.backendAPI?.on?.("stream:viewer-count", handleGoalUpdate); // kung mayroon
+
+    return () => {
+      window.backendAPI?.off?.("goal:progress-updated", handleGoalUpdate);
+      window.backendAPI?.off?.("eventsub:follow", handleGoalUpdate);
+      window.backendAPI?.off?.("eventsub:subscription", handleGoalUpdate);
+      window.backendAPI?.off?.("eventsub:bits", handleGoalUpdate);
+      window.backendAPI?.off?.("stream:viewer-count", handleGoalUpdate);
+    };
+  }, [isOpen, addLog]);
 
   const addGoal = async () => {
     if (!newGoalTitle.trim()) return;
@@ -152,6 +187,13 @@ export const GoalsModal: React.FC<GoalsModalProps> = ({ isOpen, onClose }) => {
                     </div>
                     <div className="text-xs text-[var(--text-secondary)]">
                       {goal.current} / {goal.target} {goal.unit}
+                    </div>
+                    {/* Progress bar (optional enhancement) */}
+                    <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
+                      <div
+                        className="bg-[#9147ff] h-1.5 rounded-full"
+                        style={{ width: `${(goal.current / goal.target) * 100}%` }}
+                      />
                     </div>
                   </div>
                   <button

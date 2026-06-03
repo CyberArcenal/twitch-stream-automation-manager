@@ -38,7 +38,7 @@ class EventSubService extends EventEmitter {
    * @param {string} channel
    * @param {{ broadcasterId?: any; broadcasterName?: any; title?: any; gameId?: any; startedAt?: any; followerId?: any; followerName?: any; followedAt?: any; userId?: any; userName?: any; tier?: any; isGift?: any; fromBroadcasterId?: any; fromBroadcasterName?: any; viewers?: any; toBroadcasterId?: any; level?: any; total?: any; progress?: any; goal?: any; sessionId?: any; code?: number; reason?: Buffer<ArrayBufferLike>; }} data
    */
- _sendToRenderers(channel, data) {
+  _sendToRenderers(channel, data) {
     try {
       const windows = BrowserWindow.getAllWindows();
       windows.forEach((win) => {
@@ -345,6 +345,10 @@ class EventSubService extends EventEmitter {
         });
         this.emit("eventsub:hype_train", eventData);
         break;
+      case "channel.bits":
+        this._sendToRenderers("eventsub:bits", eventData);
+        this.emit("eventsub:bits", eventData);
+        break;
       default:
         logger.warn(`[EventSubService] Unhandled event type: ${eventType}`);
     }
@@ -534,6 +538,18 @@ class EventSubService extends EventEmitter {
   async subscribeToSubscriptions(userId) {
     if (!this.sessionId) throw new Error("EventSub not connected");
     return await this.subscribeToSubscriptionEvents(userId);
+  }
+
+  async subscribeToBitsEvents(userId) {
+    const subscription = await this.createSubscription("channel.bits", "1", {
+      broadcaster_user_id: userId,
+    });
+    this.subscriptions.set(subscription.id, {
+      type: "channel.bits",
+      condition: { broadcaster_user_id: userId },
+      userId,
+    });
+    return subscription;
   }
 
   /**
