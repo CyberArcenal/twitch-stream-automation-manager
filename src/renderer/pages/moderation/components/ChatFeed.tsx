@@ -107,7 +107,7 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
             onMouseLeave={() => setHoveredMsgId(null)}
           >
             {/* Avatar placeholder */}
-            <div className="w-6 h-6 rounded-full bg-[#9147ff] flex items-center justify-center text-xs font-bold">
+            <div className="w-6 h-6 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-xs font-bold">
               {msg.user.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">

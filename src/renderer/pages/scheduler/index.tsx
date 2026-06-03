@@ -98,7 +98,7 @@ const SchedulerPage: React.FC = () => {
             setFormData({ type: "stream", cronPattern: "every 30 minutes", action: "runCommercial", params: {}, enabled: true });
             setShowModal(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#9147ff] rounded-lg hover:bg-[#772ce8] transition"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] transition"
         >
           <Plus className="w-4 h-4" /> New Schedule
         </button>
@@ -219,7 +219,7 @@ const SchedulerPage: React.FC = () => {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-[#2a2a2e] rounded-md">Cancel</button>
-              <button onClick={handleSubmit} className="px-4 py-2 bg-[#9147ff] rounded-md">Save</button>
+              <button onClick={handleSubmit} className="px-4 py-2 bg-[var(--primary-color)] rounded-md">Save</button>
             </div>
           </div>
         </div>

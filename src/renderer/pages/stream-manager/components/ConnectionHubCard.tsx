@@ -107,7 +107,7 @@ const ConnectionHubCard: React.FC<ConnectionHubCardProps> = ({ isLive, onRefresh
           <button onClick={() => setShowKey(!showKey)} className="px-2 py-1 bg-[var(--btn-secondary-bg)] rounded text-xs hover:bg-[var(--btn-secondary-hover)]">
             {showKey ? "Hide" : "Show"}
           </button>
-          <button onClick={copyKey} className="px-2 py-1 bg-[#9147ff] rounded">
+          <button onClick={copyKey} className="px-2 py-1 bg-[var(--primary-color)] rounded">
             <Copy className="w-4 h-4" />
           </button>
           <button onClick={openDashboard} className="px-2 py-1 bg-[var(--btn-secondary-bg)] rounded hover:bg-[var(--btn-secondary-hover)]">
@@ -142,7 +142,7 @@ const ConnectionHubCard: React.FC<ConnectionHubCardProps> = ({ isLive, onRefresh
       <button
         onClick={handleCheckLiveStatus}
         disabled={refreshing}
-        className="w-full flex items-center justify-center gap-1 bg-[#9147ff] py-1.5 rounded-lg text-sm text-white hover:bg-[#772ce8] transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-1 bg-[var(--primary-color)] py-1.5 rounded-lg text-sm text-white hover:bg-[#772ce8] transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
         {refreshing ? "Checking..." : "Check Live Status"}

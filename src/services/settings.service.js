@@ -361,25 +361,35 @@ class SettingsService {
   }
 
   async exportAllSettings() {
-  const all = this.store.store;
-  const accounts = this.getAccounts();
-  const activeAccount = this.getActiveAccountId();
-  return { settings: all, accounts, activeAccount };
-}
+    const all = this.store.store;
+    const accounts = this.getAccounts();
+    const activeAccount = this.getActiveAccountId();
+    return { settings: all, accounts, activeAccount };
+  }
 
   /**
    * @param {{ settings: { [x: string]: unknown; }; accounts: unknown; activeAccount: unknown; }} data
    */
-async importAllSettings(data) {
-  // Override store
-  Object.keys(data.settings).forEach(key => {
-    this.store.set(key, data.settings[key]);
-  });
-  // Override accounts
-  this.store.set('accounts', data.accounts);
-  this.store.set('activeAccountId', data.activeAccount);
-  return true;
-}
+  async importAllSettings(data) {
+    // Override store
+    Object.keys(data.settings).forEach((key) => {
+      this.store.set(key, data.settings[key]);
+    });
+    // Override accounts
+    this.store.set("accounts", data.accounts);
+    this.store.set("activeAccountId", data.activeAccount);
+    return true;
+  }
+
+  getChatDisplayDelay() {
+    return this.store.get("chatDisplayDelay", 0);
+  }
+  /**
+   * @param {unknown} seconds
+   */
+  setChatDisplayDelay(seconds) {
+    this.store.set("chatDisplayDelay", seconds);
+  }
 }
 
 const settingsService = new SettingsService();

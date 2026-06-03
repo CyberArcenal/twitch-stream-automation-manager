@@ -35,7 +35,8 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
   ) {
     throw new Error("Not logged in");
   }
-  const moderatorId = broadcasterId; // streamer is moderator of own channel
+
+  const moderatorId = broadcasterId;
 
   switch (method) {
     case "updateStreamInfo":
@@ -58,12 +59,14 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
         is_rerun: params.is_rerun,
       });
     case "deleteMessage":
+      
       return await streamManagerService.deleteMessage(
-        params.broadcasterId,
-        params.moderatorId,
+        broadcasterId,
+        broadcasterId,
         params.messageId,
       );
     case "createClip":
+      
       return await streamManagerService.createClip(broadcasterId);
     case "startRaid":
       return await streamManagerService.startRaid(
@@ -173,7 +176,6 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
     case "getModerators":
       return await streamManagerService.getModerators(broadcasterId);
     case "addModerator":
-      // params.userId is the Twitch user ID (obtained from a username lookup)
       return await streamManagerService.addModerator(
         broadcasterId,
         // @ts-ignore

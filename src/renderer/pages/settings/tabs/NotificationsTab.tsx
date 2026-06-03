@@ -70,7 +70,7 @@ export const NotificationsTab: React.FC = () => {
           </div>
           <button
             onClick={toggleEnabled}
-            className={`relative w-10 h-5 rounded-full transition-colors ${enabled ? "bg-[#9147ff]" : "bg-[#2a2a2e]"}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${enabled ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${enabled ? "translate-x-5" : ""}`} />
           </button>
@@ -86,7 +86,7 @@ export const NotificationsTab: React.FC = () => {
               </span>
               <button
                 onClick={() => togglePreference(key as keyof typeof preferences)}
-                className={`relative w-10 h-5 rounded-full transition-colors ${preferences[key as keyof typeof preferences] ? "bg-[#9147ff]" : "bg-[#2a2a2e]"}`}
+                className={`relative w-10 h-5 rounded-full transition-colors ${preferences[key as keyof typeof preferences] ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${preferences[key as keyof typeof preferences] ? "translate-x-5" : ""}`} />
               </button>
@@ -95,7 +95,7 @@ export const NotificationsTab: React.FC = () => {
         </div>
 
         {/* Test button */}
-        <button onClick={testNotification} className="px-4 py-2 bg-[#9147ff] rounded-md text-[var(--text-primary)] text-sm hover:bg-[#772ce8] transition">
+        <button onClick={testNotification} className="px-4 py-2 bg-[var(--primary-color)] rounded-md text-[var(--text-primary)] text-sm hover:bg-[#772ce8] transition">
           Test Notification
         </button>
       </div>

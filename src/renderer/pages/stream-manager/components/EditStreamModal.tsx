@@ -223,7 +223,7 @@ const EditStreamModal: React.FC<EditStreamModalProps> = ({
               />
               <button
                 onClick={addTag}
-                className="px-4 py-2 bg-[#9147ff] rounded-lg hover:bg-[#772ce8] text-white"
+                className="px-4 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] text-white"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -323,7 +323,7 @@ const EditStreamModal: React.FC<EditStreamModalProps> = ({
                 onChange={(e) => updateField("is_rerun", e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[var(--input-border)] rounded-full peer peer-checked:bg-[#9147ff] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              <div className="w-11 h-6 bg-[var(--input-border)] rounded-full peer peer-checked:bg-[var(--primary-color)] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
             </label>
           </div>
 
@@ -342,7 +342,7 @@ const EditStreamModal: React.FC<EditStreamModalProps> = ({
                 onChange={(e) => updateField("is_branded_content", e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-[var(--input-border)] rounded-full peer peer-checked:bg-[#9147ff] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              <div className="w-11 h-6 bg-[var(--input-border)] rounded-full peer peer-checked:bg-[var(--primary-color)] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
             </label>
           </div>
         </div>
@@ -357,7 +357,7 @@ const EditStreamModal: React.FC<EditStreamModalProps> = ({
           </button>
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-[#9147ff] rounded-lg hover:bg-[#772ce8] text-white"
+            className="px-4 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] text-white"
           >
             Save Changes
           </button>

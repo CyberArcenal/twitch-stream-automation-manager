@@ -58,7 +58,7 @@ export const FollowerGrowthChart: React.FC<FollowerGrowthChartProps> = () => {
               onClick={() => setDays(d as any)}
               className={`px-3 py-1 text-xs rounded-md transition ${
                 days === d
-                  ? "bg-[#9147ff] text-[var(--text-primary)]"
+                  ? "bg-[var(--primary-color)] text-[var(--text-primary)]"
                   : "bg-[#2a2a2e] text-[var(--text-secondary)] hover:bg-[#3a3a4a]"
               }`}
             >

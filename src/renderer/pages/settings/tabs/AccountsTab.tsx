@@ -98,11 +98,11 @@ export const AccountsTab: React.FC = () => {
                 <div className="font-medium text-[var(--text-primary)]">{acc.displayName}</div>
                 <div className="text-xs text-[var(--text-secondary)]">{acc.login}</div>
               </div>
-              {acc.isActive && <span className="ml-2 text-xs bg-[#9147ff] px-2 py-0.5 rounded-full">Active</span>}
+              {acc.isActive && <span className="ml-2 text-xs bg-[var(--primary-color)] px-2 py-0.5 rounded-full">Active</span>}
             </div>
             <div className="flex gap-2">
               {!acc.isActive && (
-                <button onClick={() => switchAccount(acc.userId)} className="px-3 py-1 bg-[#9147ff] rounded-md text-sm">
+                <button onClick={() => switchAccount(acc.userId)} className="px-3 py-1 bg-[var(--primary-color)] rounded-md text-sm">
                   Switch
                 </button>
               )}

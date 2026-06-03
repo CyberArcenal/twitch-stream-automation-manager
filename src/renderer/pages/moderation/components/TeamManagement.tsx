@@ -81,7 +81,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
           />
           <button
             onClick={addModerator}
-            className="px-3 py-1 bg-[#9147ff] rounded-md text-sm flex items-center gap-1"
+            className="px-3 py-1 bg-[var(--primary-color)] rounded-md text-sm flex items-center gap-1"
           >
             <UserPlus className="w-4 h-4" /> Add
           </button>
@@ -100,7 +100,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
               className="flex items-center justify-between p-2 rounded-lg bg-[#2a2a2e]/30"
             >
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#9147ff]/20 flex items-center justify-center text-xs">
+                <div className="w-6 h-6 rounded-full bg-[var(--primary-color)]/20 flex items-center justify-center text-xs">
                   {mod.user_name.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-sm text-[var(--text-primary)]">{mod.user_name}</span>

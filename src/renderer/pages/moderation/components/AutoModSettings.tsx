@@ -99,7 +99,7 @@ export const AutoModSettings: React.FC<AutoModSettingsProps> = () => {
         <button
           onClick={toggleEnabled}
           className={`relative w-10 h-5 rounded-full transition-colors ${
-            enabled ? "bg-[#9147ff]" : "bg-[var(--input-border)]"
+            enabled ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"
           }`}
         >
           <span
@@ -122,7 +122,7 @@ export const AutoModSettings: React.FC<AutoModSettingsProps> = () => {
                 disabled={!enabled}
                 className={`flex-1 py-1.5 rounded-md text-sm font-medium transition ${
                   level === lvl
-                    ? "bg-[#9147ff] text-white"
+                    ? "bg-[var(--primary-color)] text-white"
                     : "bg-[var(--btn-secondary-bg)] text-[var(--text-secondary)] hover:bg-[var(--btn-secondary-hover)]"
                 } ${!enabled ? "opacity-50 cursor-not-allowed" : ""}`}
               >
@@ -149,7 +149,7 @@ export const AutoModSettings: React.FC<AutoModSettingsProps> = () => {
             <button
               onClick={addBlockedWord}
               disabled={!enabled}
-              className="px-3 py-1 bg-[#9147ff] rounded-md text-sm disabled:opacity-50 hover:bg-[#772ce8] transition"
+              className="px-3 py-1 bg-[var(--primary-color)] rounded-md text-sm disabled:opacity-50 hover:bg-[#772ce8] transition"
             >
               Add
             </button>
@@ -192,7 +192,7 @@ export const AutoModSettings: React.FC<AutoModSettingsProps> = () => {
             <button
               onClick={addTrustedUser}
               disabled={!enabled}
-              className="px-3 py-1 bg-[#9147ff] rounded-md text-sm disabled:opacity-50 hover:bg-[#772ce8] transition"
+              className="px-3 py-1 bg-[var(--primary-color)] rounded-md text-sm disabled:opacity-50 hover:bg-[#772ce8] transition"
             >
               Add
             </button>

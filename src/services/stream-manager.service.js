@@ -247,17 +247,15 @@ class StreamManagerService {
     return Math.max(0, this.commercialCooldownMs - elapsed);
   }
 
-  async deleteMessage(broadcasterId, moderatorId, messageId) {
-    const params = new URLSearchParams({
-      broadcaster_id: broadcasterId,
-      moderator_id: moderatorId,
-      message_id: messageId,
-    });
-    await twitchApiService.fetchTwitch(`moderation/chat?${params}`, {
-      method: "DELETE",
-    });
-    return true;
-  }
+async deleteMessage(broadcasterId, moderatorId, messageId) {
+  const params = new URLSearchParams({
+    broadcaster_id: broadcasterId,
+    moderator_id: moderatorId,
+    message_id: messageId,
+  });
+  await twitchApiService.fetchTwitch(`moderation/chat?${params}`, { method: "DELETE" });
+  return true;
+}
 
   setStreamStartTime(timestamp) {
     this.goalsStore.set("streamStartTime", timestamp);

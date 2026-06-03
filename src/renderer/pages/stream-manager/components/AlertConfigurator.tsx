@@ -42,7 +42,7 @@ const AlertConfigurator: React.FC = () => {
               </span>
               <button
                 onClick={() => updateSetting(key as keyof typeof settings, !settings[key as keyof typeof settings])}
-                className={`relative w-10 h-5 rounded-full transition-colors ${settings[key as keyof typeof settings] ? "bg-[#9147ff]" : "bg-[var(--input-border)]"}`}
+                className={`relative w-10 h-5 rounded-full transition-colors ${settings[key as keyof typeof settings] ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings[key as keyof typeof settings] ? "translate-x-5" : ""}`} />
               </button>

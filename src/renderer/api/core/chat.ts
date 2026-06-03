@@ -17,6 +17,7 @@ export interface ChatMessage {
     name?: string;
     id?: string;
   }>;
+   isDeleted?: boolean;
   isFromMe?: boolean;
   isPinned?: boolean;
 }

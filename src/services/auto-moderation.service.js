@@ -1,4 +1,5 @@
 // src/main/services/auto-moderation.service.js
+//@ts-check
 const { settingsService } = require("./settings.service");
 const { streamManagerService } = require("./stream-manager.service");
 const { moderationLogService } = require("./moderation-log.service");
@@ -11,11 +12,12 @@ class AutoModerationService {
       maxCapsPercent: 70,
       maxEmojis: 5,
       blockedWords: [],
-      trustedUsers: [], // array of usernames (lowercase)
+      trustedUsers: [],
     };
     this.autoDeleteMessage = false;
+    this.autoTimeoutUser = true;
     this.enabled = false;
-    this.level = "basic"; // 'none', 'basic', 'aggressive'
+    this.level = "basic";
   }
 
   loadSettings() {
@@ -30,47 +32,77 @@ class AutoModerationService {
     this.enabled = autoMod.enabled || false;
     this.level = autoMod.level || "basic";
     this.autoDeleteMessage = autoMod.autoDeleteMessage || false;
-    this._applyLevelRules();
+    this.autoTimeoutUser =
+      autoMod.autoTimeoutUser !== undefined ? autoMod.autoTimeoutUser : true;
+    // Hindi na tinatawag ang _applyLevelRules() para hindi ma-overwrite ang custom rules
   }
 
   saveSettings() {
     settingsService.set("autoModeration", {
       enabled: this.enabled,
       level: this.level,
-      enabled: this.enabled,
       links: this.rules.links,
       maxCapsPercent: this.rules.maxCapsPercent,
       maxEmojis: this.rules.maxEmojis,
       blockedWords: this.rules.blockedWords,
       trustedUsers: this.rules.trustedUsers,
       autoDeleteMessage: this.autoDeleteMessage,
+      autoTimeoutUser: this.autoTimeoutUser,
     });
   }
 
+  /**
+   * @param {boolean} enabled
+   */
   setAutoDeleteMessage(enabled) {
     this.autoDeleteMessage = enabled;
     this.saveSettings();
   }
 
+  /**
+   * @param {boolean} enabled
+   */
+  setAutoTimeoutUser(enabled) {
+    this.autoTimeoutUser = enabled;
+    this.saveSettings();
+    logger.info(
+      `[AutoMod] Auto-timeout user ${enabled ? "enabled" : "disabled"}`,
+    );
+  }
+
+  /**
+   * @param {boolean} enabled
+   */
   setEnabled(enabled) {
     this.enabled = enabled;
     this.saveSettings();
     logger.info(`[AutoMod] ${enabled ? "Enabled" : "Disabled"}`);
   }
 
+  /**
+   * @param {{ links: boolean; blockedWords: any; }} newRules
+   */
   updateRules(newRules) {
     this.rules = { ...this.rules, ...newRules };
     this.saveSettings();
   }
 
+  /**
+   * @param {string} username
+   */
   addTrustedUser(username) {
     const lower = username.toLowerCase();
+    // @ts-ignore
     if (!this.rules.trustedUsers.includes(lower)) {
+      // @ts-ignore
       this.rules.trustedUsers.push(lower);
       this.saveSettings();
     }
   }
 
+  /**
+   * @param {string} username
+   */
   removeTrustedUser(username) {
     const lower = username.toLowerCase();
     this.rules.trustedUsers = this.rules.trustedUsers.filter(
@@ -79,135 +111,141 @@ class AutoModerationService {
     this.saveSettings();
   }
 
-  async processMessage(channel, userId, userName, message, broadcasterId) {
-    if (!this.enabled) return false;
-    if (this.rules.trustedUsers.includes(userName.toLowerCase())) return false;
+  /**
+   * @param {string} channel
+   * @param {string} userId
+   * @param {string} userName
+   * @param {string} message
+   * @param {any} broadcasterId
+   * @param {import("@twurple/chat").ChatMessage} msg
+   */
+  // @ts-ignore
+  async processMessage(channel, userId, userName, message, broadcasterId, msg) {
+    logger.debug(`[AutoMod] Processing message from ${userName}: "${message}"`);
+    if (!this.enabled) {
+      logger.debug("[AutoMod] Auto-moderation is disabled, skipping checks.");
+      return false;
+    }
+
+    // @ts-ignore
+    if (this.rules.trustedUsers.includes(userName.toLowerCase())) {
+      logger.debug(`[AutoMod] User ${userName} is trusted, skipping checks.`);
+      return false;
+    }
+
+    // @ts-ignore
     const autoBlockLinks =
       settingsService.get("automationConfig")?.autoBlockLinks;
     let timeoutSeconds = 0;
     let reason = "";
 
-    // Check links
+    // 1. Links
     if (this.rules.links && /https?:\/\//i.test(message)) {
-      timeoutSeconds = 300; // 5 minutes
+      timeoutSeconds = 300;
       reason = "Link posted";
+      logger.info(`[AutoMod] Detected link in message from ${userName}`);
     }
-    // Check caps percentage
+    // 2. Caps (non-Latin friendly)
     else if (this.rules.maxCapsPercent > 0) {
-      const letters = message.replace(/[^A-Za-z]/g, "");
-      const caps = message.replace(/[^A-Z]/g, "");
-      if (
-        letters.length > 5 &&
-        (caps.length / letters.length) * 100 > this.rules.maxCapsPercent
-      ) {
+      // Gumamit ng Unicode property escapes para suportahan ang iba't ibang script
+      const letters = (message.match(/\p{L}/gu) || []).length;
+      const caps = (message.match(/\p{Lu}/gu) || []).length;
+      if (letters > 5 && (caps / letters) * 100 > this.rules.maxCapsPercent) {
         timeoutSeconds = 60;
         reason = "Excessive caps";
+        logger.info(
+          `[AutoMod] Detected excessive caps in message from ${userName}`,
+        );
       }
     }
-    // Check emoji count
+    // 3. Emojis
     else if (this.rules.maxEmojis > 0) {
       const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
       const emojis = message.match(emojiRegex) || [];
       if (emojis.length > this.rules.maxEmojis) {
         timeoutSeconds = 60;
         reason = `Too many emojis (${emojis.length})`;
+        logger.info(
+          `[AutoMod] Detected too many emojis in message from ${userName}`,
+        );
       }
     }
-    // Check blocked words
+
+    // 4. Blocked words (always check, kahit may nauna nang violation)
     if (timeoutSeconds === 0 && this.rules.blockedWords.length > 0) {
       const lowerMsg = message.toLowerCase();
       for (const word of this.rules.blockedWords) {
         if (lowerMsg.includes(word)) {
           timeoutSeconds = 300;
           reason = `Blocked word: ${word}`;
-          
-          if (timeoutSeconds > 0) {
-            try {
-              if (this.autoDeleteMessage) {
-                await streamManagerService.deleteMessage(
-                  broadcasterId,
-                  broadcasterId,
-                  msg.id,
-                );
-                logger.info(
-                  `[AutoMod] Deleted message from ${userName} (reason: ${reason})`,
-                );
-                moderationLogService.addLog(
-                  "delete",
-                  broadcasterId,
-                  userId,
-                  userName,
-                  null,
-                  reason,
-                );
-              } else {
-                await streamManagerService.timeoutUser(
-                  broadcasterId,
-                  userName,
-                  timeoutSeconds,
-                );
-                moderationLogService.addLog(
-                  "timeout",
-                  broadcasterId,
-                  userId,
-                  userName,
-                  timeoutSeconds,
-                  reason,
-                );
-              }
-              return true;
-            } catch (err) {
-              logger.error(
-                `[AutoMod] Failed to ${this.autoDeleteMessage ? "delete" : "timeout"} ${userName}:`,
-                err,
-              );
-            }
-          }
+          logger.info(
+            `[AutoMod] Detected blocked word "${word}" in message from ${userName}`,
+          );
           break;
         }
       }
     }
 
-    if (autoBlockLinks && /https?:\/\//i.test(message)) {
-      await streamManagerService.timeoutUser(broadcasterId, userName, 60);
-      moderationLogService.addLog(
-        "timeout",
-        broadcasterId,
-        userId,
-        userName,
-        60,
-        "Link posted (auto‑block)",
-      );
-      logger.info(`[AutoMod] Auto‑blocked link from ${userName}`);
-      return true;
-    }
-
+    // Kung may violation at may kahit isang aksyon na naka-enable
     if (timeoutSeconds > 0) {
+      let actionTaken = false;
+
       try {
-        await streamManagerService.timeoutUser(
-          broadcasterId,
-          userName,
-          timeoutSeconds,
-        );
-        moderationLogService.addLog(
-          "timeout",
-          broadcasterId,
-          userId,
-          userName,
-          timeoutSeconds,
-          reason,
-        );
-        logger.info(
-          `[AutoMod] Timed out ${userName} for ${timeoutSeconds}s: ${reason}`,
-        );
-        return true;
+        if (this.autoDeleteMessage) {
+          await streamManagerService.deleteMessage(
+            broadcasterId,
+            broadcasterId,
+            msg.id,
+          );
+          logger.info(
+            `[AutoMod] Deleted message from ${userName} (reason: ${reason})`,
+          );
+          moderationLogService.addLog(
+            "delete",
+            broadcasterId,
+            userId,
+            userName,
+            null,
+            // @ts-ignore
+            reason,
+          );
+          actionTaken = true;
+        }
+
+        if (this.autoTimeoutUser) {
+          await streamManagerService.timeoutUser(
+            broadcasterId,
+            broadcasterId,
+            userName,
+            timeoutSeconds,
+          );
+          moderationLogService.addLog(
+            "timeout",
+            broadcasterId,
+            userId,
+            userName,
+            // @ts-ignore
+            timeoutSeconds,
+            reason,
+          );
+          actionTaken = true;
+        }
+
+        // Kung walang aksyon (parehong naka-off), huwag mag-return true
+        return actionTaken;
       } catch (err) {
-        logger.error(`[AutoMod] Failed to timeout ${userName}:`, err);
+        // @ts-ignore
+        logger.error(`[AutoMod] Failed to act on ${userName}:`, err);
+        return false;
       }
     }
+
     return false;
   }
 
+  /**
+   * @param {string} level
+   */
   setLevel(level) {
     this.level = level;
     this._applyLevelRules();
@@ -237,12 +275,8 @@ class AutoModerationService {
     }
   }
 
-  getChatDisplayDelay() {
-    return this.store.get("chatDisplayDelay", 0); // seconds
-  }
-  setChatDisplayDelay(seconds) {
-    this.store.set("chatDisplayDelay", seconds);
-  }
+  // Inalis ang getChatDisplayDelay / setChatDisplayDelay dahil wala naman sa settingsService
+  // Kung kailangan, dapat idagdag sa settingsService mismo.
 
   getConfig() {
     return { enabled: this.enabled, level: this.level, rules: this.rules };

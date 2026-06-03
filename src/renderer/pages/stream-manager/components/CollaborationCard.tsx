@@ -99,7 +99,7 @@ const CollaborationCard: React.FC = () => {
           <button
             onClick={handleAddModerator}
             disabled={adding || !newModUsername.trim()}
-            className="p-1 bg-[#9147ff] rounded hover:bg-[#772ce8] disabled:opacity-50"
+            className="p-1 bg-[var(--primary-color)] rounded hover:bg-[#772ce8] disabled:opacity-50"
           >
             {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
           </button>

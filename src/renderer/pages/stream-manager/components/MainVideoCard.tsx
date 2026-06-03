@@ -196,7 +196,7 @@ const MainVideoCard: React.FC<MainVideoCardProps> = ({
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setShowEditModal(true)}
-            className="flex items-center justify-center gap-2 bg-[#9147ff] px-2 py-1.5 rounded-lg text-sm hover:bg-[#772ce8] transition"
+            className="flex items-center justify-center gap-2 bg-[var(--primary-color)] px-2 py-1.5 rounded-lg text-sm hover:bg-[#772ce8] transition"
           >
             <Edit3 className="w-4 h-4" /> Edit Stream Info
           </button>

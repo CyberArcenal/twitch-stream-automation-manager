@@ -48,7 +48,7 @@ export const AutomationTab: React.FC = () => {
           </div>
           <button
             onClick={() => setAutoRaid(!autoRaid)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoRaid ? "bg-[#9147ff]" : "bg-[#2a2a2e]"}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${autoRaid ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoRaid ? "translate-x-5" : ""}`} />
           </button>
@@ -72,7 +72,7 @@ export const AutomationTab: React.FC = () => {
           </div>
           <button
             onClick={() => setAutoClip(!autoClip)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoClip ? "bg-[#9147ff]" : "bg-[#2a2a2e]"}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${autoClip ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoClip ? "translate-x-5" : ""}`} />
           </button>
@@ -85,7 +85,7 @@ export const AutomationTab: React.FC = () => {
           </div>
           <button
             onClick={() => setAutoMessage(!autoMessage)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoMessage ? "bg-[#9147ff]" : "bg-[#2a2a2e]"}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${autoMessage ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoMessage ? "translate-x-5" : ""}`} />
           </button>
@@ -101,7 +101,7 @@ export const AutomationTab: React.FC = () => {
           </div>
         )}
 
-        <button onClick={saveSettings} className="w-full mt-4 py-2 bg-[#9147ff] rounded-md text-[var(--text-primary)]">Save Automation Settings</button>
+        <button onClick={saveSettings} className="w-full mt-4 py-2 bg-[var(--primary-color)] rounded-md text-[var(--text-primary)]">Save Automation Settings</button>
       </div>
     </div>
   );

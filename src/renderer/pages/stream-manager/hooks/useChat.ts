@@ -4,6 +4,7 @@ import { chatAPI, type ChatMessage } from "../../../api/core/chat";
 import { userAPI } from "../../../api/core/user";
 import { useModeration } from "./useModeration";
 import { dialogs } from "../../../utils/dialogs";
+import { streamManagerAPI } from "../../../api/core/streamManager";
 
 export const useChat = (
   channelName?: string,
@@ -18,8 +19,49 @@ export const useChat = (
   const [hoveredMsgId, setHoveredMsgId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { banUser, timeoutUser, clearChat } = useModeration(broadcasterId || "");
+  const { banUser, timeoutUser, clearChat } = useModeration(
+    broadcasterId || "",
+  );
   const channelNameRef = useRef(channelName);
+
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isBanning, setIsBanning] = useState<string | null>(null);
+  const [isTimeouting, setIsTimeouting] = useState<string | null>(null);
+  const [isClearingChat, setIsClearingChat] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  // Track last message per user for duplicate filtering
+  const lastUserMessage = useRef<
+    Map<string, { text: string; timestamp: number }>
+  >(new Map());
+
+  // Helper function to detect duplicate messages (same user + same text within 30 seconds)
+  const isDuplicateMessage = (
+    user: string,
+    messageText: string,
+    currentTime: number,
+    isFromMe?: boolean,
+  ): boolean => {
+    if (isFromMe) return false; // Always allow own messages
+
+    const last = lastUserMessage.current.get(user);
+    if (
+      last &&
+      last.text === messageText &&
+      currentTime - last.timestamp < 30000
+    ) {
+      console.log(
+        `[Chat] Duplicate message from ${user} within 30s: "${messageText}" → skipped`,
+      );
+      return true;
+    }
+    // Update the map with this new message
+    lastUserMessage.current.set(user, {
+      text: messageText,
+      timestamp: currentTime,
+    });
+    return false;
+  };
 
   // Keep channelNameRef up to date
   useEffect(() => {
@@ -41,7 +83,10 @@ export const useChat = (
   // Save pinned messages to localStorage whenever they change
   useEffect(() => {
     if (channelName) {
-      localStorage.setItem(`pinned_${channelName}`, JSON.stringify(pinnedMessages));
+      localStorage.setItem(
+        `pinned_${channelName}`,
+        JSON.stringify(pinnedMessages),
+      );
     }
   }, [pinnedMessages, channelName]);
 
@@ -77,10 +122,9 @@ export const useChat = (
         // Load recent messages from backend
         const recentRes = await chatAPI.getRecentMessages?.(channelName);
         if (recentRes?.status && recentRes.data) {
-          // Ensure each recent message has an id (they should)
-          const formatted = recentRes.data.map(m => ({
+          const formatted = recentRes.data.map((m) => ({
             ...m,
-            id: m.messageId || m.id, // fallback to messageId if present
+            id: m.messageId || m.id,
           }));
           setMessages(formatted);
         }
@@ -96,16 +140,15 @@ export const useChat = (
     };
   }, [channelName, isLive]);
 
-  // 🧩 ALWAYS attach the message listener (independent of `connected` state)
+  // Socket message listener (with duplicate filter)
   useEffect(() => {
     const handleMessage = (rawMsg: any) => {
       console.log("[Chat] IPC message received:", rawMsg);
       const currentChannel = channelNameRef.current;
       if (rawMsg.channel === currentChannel) {
-        // Convert the raw message to a proper ChatMessage object
         const msg: ChatMessage = {
           ...rawMsg,
-          id: rawMsg.messageId || rawMsg.id, // ✅ critical: use messageId as id
+          id: rawMsg.messageId || rawMsg.id,
           message: rawMsg.message,
           user: rawMsg.user,
           channel: rawMsg.channel,
@@ -116,17 +159,25 @@ export const useChat = (
           isFromMe: rawMsg.isFromMe,
           replyParentMsgId: rawMsg.replyParentMsgId,
         };
+
+        const msgTime = new Date(msg.timestamp).getTime();
+        // Check duplicate (same user + same message text within 30s)
+        if (isDuplicateMessage(msg.user, msg.message, msgTime, msg.isFromMe)) {
+          return; // Skip adding this message
+        }
+
         console.log("[Chat] Channel matches, adding message:", msg.message);
         setMessages((prev) => {
-          // Deduplicate by id (now we have a proper string id)
-          if (prev.some((m) => m.id === msg.id)) {
-            console.log("[Chat] Duplicate skipped, id:", msg.id);
-            return prev;
-          }
+          if (prev.some((m) => m.id === msg.id)) return prev;
           return [...prev, msg].slice(-200);
         });
       } else {
-        console.log("[Chat] Channel mismatch:", rawMsg.channel, "vs", currentChannel);
+        console.log(
+          "[Chat] Channel mismatch:",
+          rawMsg.channel,
+          "vs",
+          currentChannel,
+        );
       }
     };
 
@@ -136,7 +187,7 @@ export const useChat = (
     };
   }, []); // runs once on mount – listener stays alive
 
-  // Also listen for connection status changes to show the indicator
+  // Connection status listeners
   useEffect(() => {
     const handleConnected = () => setConnected(true);
     const handleDisconnected = () => setConnected(false);
@@ -148,7 +199,7 @@ export const useChat = (
     };
   }, []);
 
-  // Fallback: poll recent messages every 10 seconds to catch any missed messages
+  // Fallback: poll recent messages every 10 seconds (with duplicate filter)
   useEffect(() => {
     if (!connected || !channelName) return;
     const interval = setInterval(async () => {
@@ -158,10 +209,19 @@ export const useChat = (
           setMessages((prev) => {
             const newMessages = recentRes.data.filter((msg) => {
               const msgId = msg.messageId || msg.id;
-              return !prev.some((p) => p.id === msgId);
+              // Skip if already in list by ID
+              if (prev.some((p) => p.id === msgId)) return false;
+              // Apply duplicate filter
+              const msgTime = new Date(msg.timestamp).getTime();
+              if (
+                isDuplicateMessage(msg.user, msg.message, msgTime, msg.isFromMe)
+              ) {
+                return false;
+              }
+              return true;
             });
             if (newMessages.length === 0) return prev;
-            const formatted = newMessages.map(m => ({
+            const formatted = newMessages.map((m) => ({
               ...m,
               id: m.messageId || m.id,
             }));
@@ -175,14 +235,15 @@ export const useChat = (
     return () => clearInterval(interval);
   }, [connected, channelName]);
 
+  // Send message (with loading state)
   const sendMessage = async (text: string, replyToId?: string) => {
     if (!text.trim() || !connected) return false;
+    setIsSending(true);
     try {
       await chatAPI.send(text, replyToId);
-      // local echo
       const localMsg: ChatMessage = {
         id: `local-${Date.now()}`,
-        messageId: `local-${Date.now()}`, // for consistency
+        messageId: `local-${Date.now()}`,
         channel: channelName || "",
         user: currentUser,
         message: text,
@@ -199,16 +260,22 @@ export const useChat = (
       console.error(err);
       dialogs.error("Failed to send message.");
       return false;
+    } finally {
+      setIsSending(false);
     }
   };
 
+  // Clear chat (with loading)
   const clearChatMessages = async () => {
     if (!broadcasterId) return;
+    setIsClearingChat(true);
     try {
       await clearChat();
       setMessages([]);
     } catch (err) {
       dialogs.error("Could not clear chat.");
+    } finally {
+      setIsClearingChat(false);
     }
   };
 
@@ -237,9 +304,70 @@ export const useChat = (
     setPinnedMessages((prev) => prev.filter((msg) => msg.id !== msgId));
   };
 
-  const deleteMessage = (msgId: string) => {
-    setMessages((prev) => prev.filter((msg) => msg.id !== msgId));
-    setPinnedMessages((prev) => prev.filter((msg) => msg.id !== msgId));
+  const deleteMessage = async (msgId: string) => {
+    if (!broadcasterId) {
+      dialogs.error("No broadcaster ID");
+      return;
+    }
+    setIsDeleting(msgId);
+    try {
+      const res = await streamManagerAPI.deleteMessage(msgId);
+      if (res.status) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId
+              ? {
+                  ...msg,
+                  message: "[Message removed]",
+                  isDeleted: true,
+                  deletedAt: new Date().toISOString(),
+                }
+              : msg,
+          ),
+        );
+        setPinnedMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId
+              ? {
+                  ...msg,
+                  message: "[Message removed]",
+                  isDeleted: true,
+                  deletedAt: new Date().toISOString(),
+                }
+              : msg,
+          ),
+        );
+      } else {
+        dialogs.error(`Delete failed: ${res.message}`);
+      }
+    } catch (err) {
+      console.error("Delete error", err);
+      dialogs.error("Could not delete message. Make sure you are a moderator.");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const banUserWithLoading = async (username: string) => {
+    setIsBanning(username);
+    try {
+      await banUser(username);
+    } catch (err) {
+      dialogs.error(`Failed to ban ${username}`);
+    } finally {
+      setIsBanning(null);
+    }
+  };
+
+  const timeoutUserWithLoading = async (username: string, duration: number) => {
+    setIsTimeouting(username);
+    try {
+      await timeoutUser(username, duration);
+    } catch (err) {
+      dialogs.error(`Failed to timeout ${username}`);
+    } finally {
+      setIsTimeouting(null);
+    }
   };
 
   return {
@@ -255,11 +383,16 @@ export const useChat = (
     sendMessage,
     clearChatMessages,
     mentionUser,
-    banUser,
-    timeoutUser,
+    banUser: banUserWithLoading,
+    timeoutUser: timeoutUserWithLoading,
     pinMessage,
     unpinMessage,
     deleteMessage,
     currentUser,
+    isDeleting,
+    isBanning,
+    isTimeouting,
+    isClearingChat,
+    isSending,
   };
 };

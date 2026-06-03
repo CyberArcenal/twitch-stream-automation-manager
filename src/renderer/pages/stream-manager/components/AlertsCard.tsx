@@ -75,7 +75,7 @@ const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
             <span>Log to automation</span>
             <button
               onClick={() => setLogToAutomation(!logToAutomation)}
-              className={`relative w-8 h-4 rounded-full transition-colors ${logToAutomation ? "bg-[#9147ff]" : "bg-[var(--input-border)]"} ml-1`}
+              className={`relative w-8 h-4 rounded-full transition-colors ${logToAutomation ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"} ml-1`}
             >
               <span className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${logToAutomation ? "translate-x-4" : ""}`} />
             </button>
@@ -115,7 +115,7 @@ const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
       <div className="p-3 border-t border-[var(--border-color)]">
         <button
           onClick={clearEvents}
-          className="w-full text-center text-sm bg-[#9147ff] py-1.5 rounded-lg hover:bg-[#772ce8] transition"
+          className="w-full text-center text-sm bg-[var(--primary-color)] py-1.5 rounded-lg hover:bg-[#772ce8] transition"
         >
           Clear Alerts
         </button>

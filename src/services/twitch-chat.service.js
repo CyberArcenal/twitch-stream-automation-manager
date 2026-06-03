@@ -336,7 +336,7 @@ class TwitchChatService {
       `[Chat] setupChatListeners - attaching listeners for channel ${channelName}`,
     );
 
-    this.chatClient.onConnect(async () => {
+    this.chatClient?.onConnect(async () => {
       logger.info(`[Chat] Connected and authenticated to ${channelName}`);
       // Get numeric broadcaster ID from stored twitch data
       const twitchData = settingsService.get("twitch");
@@ -350,41 +350,42 @@ class TwitchChatService {
 
       this._sendToRenderers("chat:connected", { channel: channelName });
     });
-
-    this.chatClient.onMessage((channel, user, message, msg) => {
+    this.chatClient?.onMessage(async (channel, user, message, msg) => {
       const twitchData = settingsService.get("twitch");
-      const broadcasterId = twitchData?.userId; // numeric ID, e.g.,
-      logger.debug(
-        `[Chat] RAW MESSAGE: channel=${channel}, user=${user}, msg=${message}`,
-      );
-      const filters = settingsService.get("chatFilters") || [];
-      if (
-        filters.some((/** @type {string} */ f) =>
-          message.toLowerCase().includes(f),
+      const broadcasterId = twitchData?.userId;
+
+      const moderated = await autoModerationService
+        .processMessage(
+          channel,
+          msg.userInfo.userId,
+          user,
+          message,
+          broadcasterId,
+          msg,
         )
-      ) {
-        logger.debug(`[Chat] Message filtered (${user}): "${message}"`);
+        .catch((err) => logger.error("[AutoMod] Error:", err));
+
+      if (moderated) {
+        // Huwag ipadala sa UI at huwag i-save sa history
         return;
       }
 
-      logger.debug("[Chat] Full msg object:", JSON.stringify(msg, null, 2));
+      // ✅ 3. UI filter (pang-display lang, hindi na-moderate)
+      const filters = settingsService.get("chatFilters") || [];
+      const isFiltered = filters.some((f) => message.toLowerCase().includes(f));
+      if (isFiltered) {
+        logger.debug(`[Chat] Message filtered (UI) from ${user}: "${message}"`);
+        return; // huwag ipakita sa UI, pero hindi na-moderate (no action)
+      }
 
-      logger.debug("[Chat] msg.tags:", JSON.stringify(msg.tags, null, 2));
-
-      // ✅ Kunin ang badges mula sa msg._raw (dahil walang laman ang msg.tags)
-
-      /**
-       * @type {Object | undefined}
-       */
+      // 3️⃣ Kunin ang badges (pareho pa rin)
       let badgesArray = [];
       try {
         const raw = msg._raw;
         if (raw && typeof raw === "string") {
-          // Hanapin ang "badges=..." sa raw string
           const badgesMatch = raw.match(/badges=([^;]+)/);
           if (badgesMatch && badgesMatch[1]) {
             const badgesStr = badgesMatch[1];
-            // Halimbawa: "subscriber/0,premium/1"
             const parts = badgesStr.split(",");
             for (const part of parts) {
               const [name, version] = part.split("/");
@@ -394,8 +395,6 @@ class TwitchChatService {
             }
           }
         }
-        // Fallback: kung sakaling may userInfo.badges (hindi sa kasalukuyan)
-
         if (badgesArray.length === 0 && msg.userInfo?.badges) {
           const userBadges = msg.userInfo.badges;
           if (typeof userBadges === "object") {
@@ -408,13 +407,6 @@ class TwitchChatService {
       } catch (err) {
         logger.warn("[Chat] Failed to parse badges:", err);
       }
-      logger.debug(
-        `[Chat] Final badges for ${user}: ${JSON.stringify(badgesArray)}`,
-      );
-
-      logger.debug(
-        `[Chat] Final badges for ${user}: ${JSON.stringify(badgesArray)}`,
-      );
 
       const badgesWithUrl = badgesArray.map((b) => ({
         name: b.name,
@@ -423,7 +415,6 @@ class TwitchChatService {
       }));
 
       const isFromMe = user === this.currentUserLogin;
-
       const chatMessage = {
         messageId: msg.id,
         channel: channel,
@@ -448,7 +439,7 @@ class TwitchChatService {
         this.messageBuffer.shift();
       }
 
-      // Use unified sender
+      // 4️⃣ Ipadala at i-save lang kung HINDI filtered
 
       this._sendToRenderers("chat:message", chatMessage);
       chatHistoryService.addMessage(
@@ -458,17 +449,9 @@ class TwitchChatService {
         msg.id,
         badgesArray,
       );
-      autoModerationService.processMessage(
-        channel,
-        msg.userInfo.userId,
-        user,
-        message,
-
-        broadcasterId,
-      );
     });
 
-    this.chatClient.onJoin((channel, user) => {
+    this.chatClient?.onJoin((channel, user) => {
       if (user === userLogin) {
         logger.info(`[Chat] Own user ${user} joined ${channel}`);
         this._sendToRenderers("chat:connected", {
@@ -484,7 +467,7 @@ class TwitchChatService {
       }
     });
 
-    this.chatClient.onDisconnect(async (manually) => {
+    this.chatClient?.onDisconnect(async (manually) => {
       if (!manually && this.currentChannel) {
         logger.warn(
           `[Chat] Disconnected from ${this.currentChannel}, will attempt reconnect (attempt ${this.reconnectAttempts + 1})`,

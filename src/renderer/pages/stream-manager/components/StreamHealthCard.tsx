@@ -25,7 +25,7 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <span>{bitrate.toLocaleString()} kbps</span>
             </div>
             <div className="w-full bg-[var(--input-border)] rounded-full h-2">
-              <div className="bg-[#9147ff] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (bitrate / 6000) * 100)}%` }} />
+              <div className="bg-[var(--primary-color)] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (bitrate / 6000) * 100)}%` }} />
             </div>
           </div>
 
@@ -36,7 +36,7 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <span>{fps}</span>
             </div>
             <div className="w-full bg-[var(--input-border)] rounded-full h-2">
-              <div className="bg-[#9147ff] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (fps / 60) * 100)}%` }} />
+              <div className="bg-[var(--primary-color)] h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (fps / 60) * 100)}%` }} />
             </div>
           </div>
 
@@ -47,7 +47,7 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <span>{droppedFrames}%</span>
             </div>
             <div className="w-full bg-[var(--input-border)] rounded-full h-2">
-              <div className={`h-2 rounded-full transition-all ${droppedFrames > 5 ? 'bg-red-500' : 'bg-[#9147ff]'}`} style={{ width: `${Math.min(100, droppedFrames)}%` }} />
+              <div className={`h-2 rounded-full transition-all ${droppedFrames > 5 ? 'bg-red-500' : 'bg-[var(--primary-color)]'}`} style={{ width: `${Math.min(100, droppedFrames)}%` }} />
             </div>
           </div>
 
@@ -58,7 +58,7 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
               <span>{cpuUsage.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-[var(--input-border)] rounded-full h-2">
-              <div className={`h-2 rounded-full transition-all ${cpuUsage > 80 ? 'bg-red-500' : 'bg-[#9147ff]'}`} style={{ width: `${Math.min(100, cpuUsage)}%` }} />
+              <div className={`h-2 rounded-full transition-all ${cpuUsage > 80 ? 'bg-red-500' : 'bg-[var(--primary-color)]'}`} style={{ width: `${Math.min(100, cpuUsage)}%` }} />
             </div>
           </div>
 
