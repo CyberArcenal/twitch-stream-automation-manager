@@ -16,6 +16,10 @@ interface StreamTriggersProps {
   onToggleAutoShoutoutOnRaid: () => void;
   shoutoutMessage: string;
   onShoutoutMessageChange: (value: string) => void;
+  autoStreamMarkers: boolean;
+  onToggleAutoStreamMarkers: () => void;
+  markerIntervalMinutes: number;
+  onMarkerIntervalMinutesChange: (value: number) => void;
 }
 
 export const StreamTriggers: React.FC<StreamTriggersProps> = ({
@@ -34,6 +38,10 @@ export const StreamTriggers: React.FC<StreamTriggersProps> = ({
   onToggleAutoShoutoutOnRaid,
   shoutoutMessage,
   onShoutoutMessageChange,
+  autoStreamMarkers,
+  onToggleAutoStreamMarkers,
+  markerIntervalMinutes,
+  onMarkerIntervalMinutesChange,
 }) => {
   return (
     <div>
@@ -150,6 +158,44 @@ export const StreamTriggers: React.FC<StreamTriggersProps> = ({
             </p>
           </div>
         )}
+
+        <div className="mt-3 pt-2 border-t border-[var(--border-color)]">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[var(--text-primary)] flex items-center gap-1">
+              <span>⏱️</span> Auto‑save stream markers
+            </span>
+            <button
+              onClick={onToggleAutoStreamMarkers}
+              className={`relative w-10 h-5 rounded-full transition-colors ${autoStreamMarkers ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoStreamMarkers ? "translate-x-5" : ""}`}
+              />
+            </button>
+          </div>
+          {autoStreamMarkers && (
+            <div className="ml-6 mt-2">
+              <div className="flex justify-between text-xs">
+                <span>Interval (minutes)</span>
+                <input
+                  type="number"
+                  value={markerIntervalMinutes}
+                  onChange={(e) =>
+                    onMarkerIntervalMinutesChange(Number(e.target.value))
+                  }
+                  min={5}
+                  max={120}
+                  step={5}
+                  className="w-20 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
+                />
+              </div>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                Automatically creates a stream marker every X minutes while
+                live.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

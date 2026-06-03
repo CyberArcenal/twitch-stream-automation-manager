@@ -32,7 +32,12 @@ export const useChatModeration = () => {
   const [shoutoutMessage, setShoutoutMessage] = useState(
     "Thanks for the raid @{fromBroadcasterName}! Check them out at twitch.tv/{fromBroadcasterName}",
   );
-   const [blockedBadges, setBlockedBadges] = useState<string[]>([]); // ✅ bagong state
+   const [blockedBadges, setBlockedBadges] = useState<string[]>([]);
+     const [autoClipOnChatSpike, setAutoClipOnChatSpike] = useState(false);
+  const [chatSpikeThreshold, setChatSpikeThreshold] = useState(100);
+  const [chatSpikeCooldownMinutes, setChatSpikeCooldownMinutes] = useState(5);
+    const [autoStreamMarkers, setAutoStreamMarkers] = useState(false);
+  const [markerIntervalMinutes, setMarkerIntervalMinutes] = useState(30);
 
   // Load from backend
   useEffect(() => {
@@ -57,6 +62,11 @@ export const useChatModeration = () => {
         setAutoShoutoutOnRaid(res.data.config.autoShoutoutOnRaid ?? false);
         setShoutoutMessage(res.data.config.shoutoutMessage ?? "...");
         setBlockedBadges(res.data.config.blockedBadges ?? []);
+           setAutoClipOnChatSpike(res.data.config.autoClipOnChatSpike ?? false);
+        setChatSpikeThreshold(res.data.config.chatSpikeThreshold ?? 100);
+        setChatSpikeCooldownMinutes(res.data.config.chatSpikeCooldownMinutes ?? 5);
+         setAutoStreamMarkers(res.data.config.autoStreamMarkers ?? false);
+        setMarkerIntervalMinutes(res.data.config.markerIntervalMinutes ?? 30);
       }
     };
     load();
@@ -79,6 +89,11 @@ export const useChatModeration = () => {
     autoShoutoutOnRaid,
     shoutoutMessage,
     blockedBadges,
+        autoClipOnChatSpike,
+    chatSpikeThreshold,
+    chatSpikeCooldownMinutes,
+       autoStreamMarkers,
+    markerIntervalMinutes,
   });
 
 
@@ -127,6 +142,11 @@ export const useChatModeration = () => {
     blockedBadges,
     addBlockedBadge,
     removeBlockedBadge,
+      autoClipOnChatSpike, setAutoClipOnChatSpike,
+    chatSpikeThreshold, setChatSpikeThreshold,
+    chatSpikeCooldownMinutes, setChatSpikeCooldownMinutes,
+       autoStreamMarkers, setAutoStreamMarkers,
+    markerIntervalMinutes, setMarkerIntervalMinutes,
     // helpers
     addBlockedTerm: (term: string) =>
       setBlockedTerms((prev) => [...prev, term.toLowerCase()]),

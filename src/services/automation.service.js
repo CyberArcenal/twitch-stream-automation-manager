@@ -7,6 +7,7 @@ const { settingsService } = require("./settings.service");
 const { logger } = require("../utils/logger");
 const { autoModerationService } = require("./auto-moderation.service");
 const { chatSettingsService } = require("./chat-settings.service");
+const { twitchApiService } = require("./twitch-api.service");
 
 class AutomationService {
   constructor() {
@@ -29,6 +30,12 @@ class AutomationService {
       autoShoutoutOnRaid: false,
       shoutoutMessage:
         "Thanks for the raid @{fromBroadcasterName}! Check them out at twitch.tv/{fromBroadcasterName}",
+
+      autoClipOnChatSpike: false,
+      chatSpikeThreshold: 100, // messages per minute
+      chatSpikeCooldownMinutes: 5, // cooldown in minutes
+      autoStreamMarkers: false,
+      markerIntervalMinutes: 30,
     };
     this.listenersAttached = false;
     this.offlineHandled = false;
@@ -36,6 +43,10 @@ class AutomationService {
     this.slowModeTriggered = false;
     this.slowModeResetTimer = null;
     this.chatCheckInterval = null;
+    this.messageTimestamps = []; // array of timestamps for messages in current channel
+    this.lastClipTime = 0; // timestamp ng huling clip trigger
+    this.markerTimer = null;
+    this.isLive = false;
 
     this.loadConfig();
   }
@@ -44,6 +55,8 @@ class AutomationService {
     this.config = { ...this.config, ...config };
     this.running = true;
     this.offlineHandled = false;
+    this.messageTimestamps = [];
+    this.lastClipTime = 0;
 
     const enableAutoMod = config.autoModerationEnabled === true;
     autoModerationService.setEnabled(enableAutoMod);
@@ -69,6 +82,10 @@ class AutomationService {
       logger.info("[Automation] Auto-moderation disabled by user preference");
     }
 
+    if (this.running && this.isLive && this.config.autoStreamMarkers) {
+      this.startMarkerTimer();
+    }
+
     this.messageCounts.clear();
     this.slowModeTriggered = false;
     if (this.slowModeResetTimer) clearTimeout(this.slowModeResetTimer);
@@ -87,6 +104,7 @@ class AutomationService {
       clearInterval(this.chatCheckInterval);
       this.chatCheckInterval = null;
     }
+    this.stopMarkerTimer();
     logger.info("[Automation] Stopped");
   }
 
@@ -103,6 +121,14 @@ class AutomationService {
       this.handleStreamOffline.bind(this),
     );
     eventSubService.on("eventsub:raid", this.handleRaid.bind(this));
+    eventSubService.on(
+      "eventsub:stream-online",
+      this.handleStreamOnline.bind(this),
+    );
+    eventSubService.on(
+      "eventsub:stream-offline",
+      this.handleStreamOffline.bind(this),
+    );
 
     if (twitchChatService.chatClient) {
       twitchChatService.chatClient.onMessage(this.handleChatMessage.bind(this));
@@ -120,6 +146,50 @@ class AutomationService {
 
     this.listenersAttached = true;
     logger.debug("[Automation] Event listeners attached");
+  }
+
+  handleStreamOnline(data) {
+    if (!this.running) return;
+    this.isLive = true;
+    if (this.config.autoStreamMarkers) {
+      this.startMarkerTimer();
+    }
+  }
+
+  startMarkerTimer() {
+    if (this.markerTimer) clearInterval(this.markerTimer);
+    const intervalMs = this.config.markerIntervalMinutes * 60 * 1000;
+    logger.info(
+      `[Automation] Starting stream markers every ${this.config.markerIntervalMinutes} minutes`,
+    );
+    this.markerTimer = setInterval(async () => {
+      await this.createStreamMarker();
+    }, intervalMs);
+  }
+
+  stopMarkerTimer() {
+    if (this.markerTimer) {
+      clearInterval(this.markerTimer);
+      this.markerTimer = null;
+      logger.info("[Automation] Stopped stream markers");
+    }
+  }
+
+  async createStreamMarker() {
+    const broadcasterId = settingsService.get("twitch")?.userId;
+    if (!broadcasterId) {
+      logger.warn(
+        "[Automation] Cannot create stream marker: no broadcaster ID",
+      );
+      return;
+    }
+    try {
+      const description = `Auto marker (${new Date().toLocaleTimeString()})`;
+      await twitchApiService.createStreamMarker(broadcasterId, description);
+      logger.info(`[Automation] Stream marker created: "${description}"`);
+    } catch (err) {
+      logger.error("[Automation] Failed to create stream marker:", err);
+    }
   }
 
   async handleRaid(data) {
@@ -246,12 +316,60 @@ class AutomationService {
       }
       this.messageCounts.clear();
     }
+
+    // ✅ Auto-clip on chat spike (kung naka-on at hindi pa sa cooldown)
+    if (this.config.autoClipOnChatSpike) {
+      logger.debug(
+        `[Automation] Checking for chat spike: ${message} (user: ${user})`,
+      );
+      const now = Date.now();
+      // Idagdag ang timestamp ng mensahe
+      this.messageTimestamps.push(now);
+      // Alisin ang mga luma (mas matanda sa 1 minuto)
+      const oneMinuteAgo = now - 60 * 1000;
+      this.messageTimestamps = this.messageTimestamps.filter(
+        (ts) => ts > oneMinuteAgo,
+      );
+      const currentRate = this.messageTimestamps.length;
+
+      // Check kung lumampas sa threshold at hindi pa na-trigger kamakailan
+      const cooldownMs = this.config.chatSpikeCooldownMinutes * 60 * 1000;
+      if (
+        currentRate >= this.config.chatSpikeThreshold &&
+        now - this.lastClipTime >= cooldownMs
+      ) {
+        logger.info(
+          `[Automation] Chat spike detected: ${currentRate} msgs/min. Creating clip.`,
+        );
+        this.lastClipTime = now;
+        const broadcasterId = settingsService.get("twitch")?.userId;
+        if (broadcasterId) {
+          try {
+            const clip = await streamManagerService.createClip(broadcasterId);
+            await this.sendChatMessage(
+              `📸 Clip created for the hype! ${clip.edit_url}`,
+            );
+            logger.info(
+              `[Automation] Auto-clip created due to chat spike. Clip: ${clip.id}`,
+            );
+          } catch (err) {
+            logger.error(
+              "[Automation] Failed to create clip on chat spike:",
+              err,
+            );
+          }
+        }
+      }
+    }
   }
 
   async handleStreamOffline(data) {
     if (!this.running) return;
     if (this.offlineHandled) return;
     this.offlineHandled = true;
+
+    this.stopMarkerTimer();
+    this.isLive = false;
 
     const broadcasterId =
       data?.broadcasterId || settingsService.get("twitch")?.userId;
@@ -322,6 +440,11 @@ class AutomationService {
       autoShoutoutOnRaid: false,
       shoutoutMessage:
         "Thanks for the raid @{fromBroadcasterName}! Check them out at twitch.tv/{fromBroadcasterName}",
+      autoClipOnChatSpike: false,
+      chatSpikeThreshold: 100,
+      chatSpikeCooldownMinutes: 5,
+      autoStreamMarkers: false,
+      markerIntervalMinutes: 30,
       ...saved,
     };
   }
