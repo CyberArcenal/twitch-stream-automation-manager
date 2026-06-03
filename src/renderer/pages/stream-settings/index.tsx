@@ -184,7 +184,7 @@ const StreamSettingsPage: React.FC = () => {
               />
               <button
                 onClick={createMarker}
-                className="px-4 py-2 bg-[#9147ff] rounded-md hover:bg-[#772ce8] transition"
+                className="px-4 py-2 bg-[var(--primary-color)] rounded-md hover:bg-[#772ce8] transition"
               >
                 Create
               </button>

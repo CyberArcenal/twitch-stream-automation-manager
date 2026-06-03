@@ -1,9 +1,12 @@
 // src/main/services/automation.service.js
-const { eventSubService } = require('./eventsub.service');
-const { streamManagerService } = require('./stream-manager.service');
-const { twitchChatService } = require('./twitch-chat.service');
-const { settingsService } = require('./settings.service');
-const { logger } = require('../utils/logger');
+//@ts-check
+const { eventSubService } = require("./eventsub.service");
+const { streamManagerService } = require("./stream-manager.service");
+const { twitchChatService } = require("./twitch-chat.service");
+const { settingsService } = require("./settings.service");
+const { logger } = require("../utils/logger");
+const { autoModerationService } = require("./auto-moderation.service");
+const { chatSettingsService } = require("./chat-settings.service");
 
 class AutomationService {
   constructor() {
@@ -12,11 +15,28 @@ class AutomationService {
       autoRaid: false,
       autoClip: false,
       autoMessage: false,
-      autoMessageText: 'Thanks for the follow/sub! 🎉',
+      autoMessageText: "Thanks for the follow/sub! 🎉",
       raidTarget: null,
+
+      autoSlowMode: false,
+      slowModeSpamThreshold: 5,
+      slowModeWaitTime: 10,
+      slowModeDuration: 60,
+      autoFollowerMode: false,
+      followerModeDuration: 5,
+
+      // ✅ bagong config para sa shoutout sa raid
+      autoShoutoutOnRaid: false,
+      shoutoutMessage:
+        "Thanks for the raid @{fromBroadcasterName}! Check them out at twitch.tv/{fromBroadcasterName}",
     };
     this.listenersAttached = false;
-    this.offlineHandled = false; // para iwas multiple raid/clip
+    this.offlineHandled = false;
+    this.messageCounts = new Map();
+    this.slowModeTriggered = false;
+    this.slowModeResetTimer = null;
+    this.chatCheckInterval = null;
+
     this.loadConfig();
   }
 
@@ -24,24 +44,126 @@ class AutomationService {
     this.config = { ...this.config, ...config };
     this.running = true;
     this.offlineHandled = false;
+
+    const enableAutoMod = config.autoModerationEnabled === true;
+    autoModerationService.setEnabled(enableAutoMod);
+
+    if (enableAutoMod) {
+      autoModerationService.updateRules({
+        links: config.autoBlockLinks === true,
+        blockedWords: config.blockedTerms || [],
+        blockedBadges: config.blockedBadges || [],
+        repeatWindowSeconds:
+          config.repeatWindowSeconds ?? this.config.repeatWindowSeconds ?? 10,
+        repeatCountThreshold:
+          config.repeatCountThreshold ?? this.config.repeatCountThreshold ?? 3,
+      });
+      autoModerationService.setAutoDeleteMessage(
+        config.autoDeleteMessage === true,
+      );
+      autoModerationService.setAutoTimeoutUser(
+        config.autoTimeoutUser !== false,
+      );
+      logger.info("[Automation] Auto-moderation settings synced with UI");
+    } else {
+      logger.info("[Automation] Auto-moderation disabled by user preference");
+    }
+
+    this.messageCounts.clear();
+    this.slowModeTriggered = false;
+    if (this.slowModeResetTimer) clearTimeout(this.slowModeResetTimer);
+
     this.attachEventListeners();
-     this.saveConfig();
-    logger.info('[Automation] Started');
+    this.saveConfig();
+    logger.info("[Automation] Started");
   }
 
   stop() {
     this.running = false;
     this.offlineHandled = false;
-    logger.info('[Automation] Stopped');
+    this.messageCounts.clear();
+    if (this.slowModeResetTimer) clearTimeout(this.slowModeResetTimer);
+    if (this.chatCheckInterval) {
+      clearInterval(this.chatCheckInterval);
+      this.chatCheckInterval = null;
+    }
+    logger.info("[Automation] Stopped");
   }
 
   attachEventListeners() {
     if (this.listenersAttached) return;
-    eventSubService.on('eventsub:follow', this.handleFollow.bind(this));
-    eventSubService.on('eventsub:subscription', this.handleSubscription.bind(this));
-    eventSubService.on('eventsub:stream-offline', this.handleStreamOffline.bind(this));
+
+    eventSubService.on("eventsub:follow", this.handleFollow.bind(this));
+    eventSubService.on(
+      "eventsub:subscription",
+      this.handleSubscription.bind(this),
+    );
+    eventSubService.on(
+      "eventsub:stream-offline",
+      this.handleStreamOffline.bind(this),
+    );
+    eventSubService.on("eventsub:raid", this.handleRaid.bind(this));
+
+    if (twitchChatService.chatClient) {
+      twitchChatService.chatClient.onMessage(this.handleChatMessage.bind(this));
+    } else {
+      this.chatCheckInterval = setInterval(() => {
+        if (twitchChatService.chatClient) {
+          twitchChatService.chatClient.onMessage(
+            this.handleChatMessage.bind(this),
+          );
+          clearInterval(this.chatCheckInterval);
+          this.chatCheckInterval = null;
+        }
+      }, 1000);
+    }
+
     this.listenersAttached = true;
-    logger.debug('[Automation] Event listeners attached');
+    logger.debug("[Automation] Event listeners attached");
+  }
+
+  async handleRaid(data) {
+    if (!this.running) return;
+
+    const broadcasterId = settingsService.get("twitch")?.userId;
+    if (!broadcasterId) return;
+
+    // ✅ Auto-follower mode (kung naka-on)
+    if (this.config.autoFollowerMode) {
+      logger.info(
+        `[Automation] Raid detected, enabling follower mode for ${this.config.followerModeDuration} minutes`,
+      );
+      try {
+        await chatSettingsService.setFollowerMode(
+          broadcasterId,
+          broadcasterId,
+          true,
+          0,
+        );
+        chatSettingsService.scheduleFollowerModeDisable(
+          broadcasterId,
+          broadcasterId,
+          this.config.followerModeDuration,
+        );
+      } catch (err) {
+        logger.error(
+          "[Automation] Failed to enable follower mode on raid:",
+          err,
+        );
+      }
+    }
+
+    // ✅ Auto-shoutout on raid (kung naka-on)
+    if (this.config.autoShoutoutOnRaid && data?.fromBroadcasterName) {
+      const fromName = data.fromBroadcasterName;
+      let message = this.config.shoutoutMessage;
+      // Palitan ang mga placeholder
+      message = message.replace(/\{fromBroadcasterName\}/g, fromName);
+      await this.sendChatMessage(message);
+      logger.info(
+        `[Automation] Sent shoutout on raid from ${fromName}: "${message}"`,
+      );
+    }
   }
 
   async handleFollow(data) {
@@ -60,67 +182,157 @@ class AutomationService {
     }
   }
 
+  async handleChatMessage(channel, user, message, msg) {
+    if (
+      twitchChatService.currentChannel &&
+      channel !== twitchChatService.currentChannel
+    )
+      return;
+    if (!this.running) return;
+    if (!this.config.autoSlowMode) return;
+    if (this.slowModeTriggered) return;
+
+    const now = Date.now();
+    const userId = msg.userInfo?.userId;
+    const userKey = userId || user;
+
+    let userData = this.messageCounts.get(userKey);
+    if (!userData) {
+      userData = { count: 0, resetTimer: null };
+      this.messageCounts.set(userKey, userData);
+    }
+
+    if (userData.resetTimer && now > userData.resetTimer) {
+      userData.count = 0;
+      userData.resetTimer = null;
+    }
+
+    if (!userData.resetTimer) {
+      userData.resetTimer = now + 60 * 1000;
+    }
+
+    userData.count++;
+    logger.debug(
+      `[Automation] User ${user} message count: ${userData.count}/${this.config.slowModeSpamThreshold}`,
+    );
+
+    if (userData.count >= this.config.slowModeSpamThreshold) {
+      logger.info(
+        `[Automation] Spam detected from ${user}, enabling slow mode for ${this.config.slowModeDuration} seconds`,
+      );
+      this.slowModeTriggered = true;
+
+      const broadcasterId = settingsService.get("twitch")?.userId;
+      if (broadcasterId) {
+        try {
+          await chatSettingsService.setSlowMode(
+            broadcasterId,
+            broadcasterId,
+            true,
+            this.config.slowModeWaitTime,
+          );
+          chatSettingsService.scheduleSlowModeDisable(
+            broadcasterId,
+            broadcasterId,
+            this.config.slowModeDuration,
+          );
+          this.slowModeResetTimer = setTimeout(() => {
+            this.slowModeTriggered = false;
+            this.slowModeResetTimer = null;
+          }, this.config.slowModeDuration * 1000);
+        } catch (err) {
+          logger.error("[Automation] Failed to enable slow mode:", err);
+        }
+      }
+      this.messageCounts.clear();
+    }
+  }
+
   async handleStreamOffline(data) {
     if (!this.running) return;
-    // Iwas multiple triggers
     if (this.offlineHandled) return;
     this.offlineHandled = true;
 
-    const broadcasterId = data?.broadcasterId || settingsService.get('twitch')?.userId;
+    const broadcasterId =
+      data?.broadcasterId || settingsService.get("twitch")?.userId;
     if (!broadcasterId) {
-      logger.warn('[Automation] No broadcaster ID for offline event');
+      logger.warn("[Automation] No broadcaster ID for offline event");
       return;
     }
 
     if (this.config.autoRaid && this.config.raidTarget) {
       try {
-        await streamManagerService.startRaid(broadcasterId, this.config.raidTarget);
-        logger.info(`[Automation] Auto-raid to ${this.config.raidTarget} triggered`);
+        await streamManagerService.startRaid(
+          broadcasterId,
+          this.config.raidTarget,
+        );
+        logger.info(
+          `[Automation] Auto-raid to ${this.config.raidTarget} triggered`,
+        );
       } catch (err) {
-        logger.error('[Automation] Auto-raid failed:', err);
+        logger.error("[Automation] Auto-raid failed:", err);
       }
     }
     if (this.config.autoClip) {
       try {
         await streamManagerService.createClip(broadcasterId);
-        logger.info('[Automation] Auto-clip triggered');
+        logger.info("[Automation] Auto-clip triggered");
       } catch (err) {
-        logger.error('[Automation] Auto-clip failed:', err);
+        logger.error("[Automation] Auto-clip failed:", err);
       }
     }
   }
 
   async sendChatMessage(message) {
     if (!twitchChatService.currentChannel) {
-      logger.warn('[Automation] Chat not connected, cannot send auto-message');
+      logger.warn("[Automation] Chat not connected, cannot send auto-message");
       return;
     }
     try {
       await twitchChatService.sendChatMessage(message);
       logger.debug(`[Automation] Auto-message sent: "${message}"`);
     } catch (err) {
-      logger.error('[Automation] Failed to send auto-message:', err);
+      logger.error("[Automation] Failed to send auto-message:", err);
     }
   }
 
   loadConfig() {
-  const saved = settingsService.get('automationConfig') || {
-    autoRaid: false,
-    autoClip: false,
-    autoMessage: false,
-    autoMessageText: 'Thanks for the follow/sub! 🎉',
-    raidTarget: null,
-  };
-  this.config = saved;
-}
+    const saved = settingsService.get("automationConfig") || {};
+    this.config = {
+      autoRaid: false,
+      autoClip: false,
+      autoMessage: false,
+      autoMessageText: "Thanks for the follow/sub! 🎉",
+      raidTarget: null,
+      autoModerationEnabled: false,
+      autoBlockLinks: false,
+      blockedTerms: [],
+      blockedBadges: [],
+      autoDeleteMessage: false,
+      autoTimeoutUser: true,
+      autoSlowMode: false,
+      slowModeSpamThreshold: 5,
+      slowModeWaitTime: 10,
+      slowModeDuration: 60,
+      autoFollowerMode: false,
+      followerModeDuration: 5,
+      repeatWindowSeconds: 10,
+      repeatCountThreshold: 3,
+      // ✅ idinagdag ang shoutout settings
+      autoShoutoutOnRaid: false,
+      shoutoutMessage:
+        "Thanks for the raid @{fromBroadcasterName}! Check them out at twitch.tv/{fromBroadcasterName}",
+      ...saved,
+    };
+  }
 
-saveConfig() {
-  settingsService.set('automationConfig', this.config);
-}
+  saveConfig() {
+    settingsService.set("automationConfig", this.config);
+  }
 
-getConfig() {
-  return { running: this.running, config: this.config };
-}
+  getConfig() {
+    return { running: this.running, config: this.config };
+  }
 }
 
 const automationService = new AutomationService();

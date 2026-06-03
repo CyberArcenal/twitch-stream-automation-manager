@@ -361,3 +361,194 @@ Kung gusto mo, pwedeng gawan kita ng **actual component structure** (React) para
 7. **Implement commercial countdown** and display remaining cooldown.
 8. **Add stream marker button** in `MainVideoCard`.
 9. **Add error boundaries** for each major card.
+
+
+
+
+
+
+
+
+
+
+
+
+
+[2] 06/03/2026 19:21:53 INFO [EventSubService] Received event: channel.follow
+[2] {
+[2]   "user_id": "1499210003",
+[2]   "user_login": "cyberarcenal",
+[2]   "user_name": "cyberarcenal",
+[2]   "broadcaster_user_id": "1500235096",
+[2]   "broadcaster_user_login": "cyberarcenal1",
+[2]   "broadcaster_user_name": "cyberarcenal1",
+[2]   "followed_at": "2026-06-03T11:21:54.172483018Z"
+[2] }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 🔴 **Critical – Dapat ayusin agad**
+
+| # | Issue | File | Action |
+|---|-------|------|--------|
+| 1 | **Maling parameter sa `timeoutUser`** – kulang ng `moderatorId` | `auto-moderation.service.js` (linya ~90, ~115, ~125) | Palitan ang `await streamManagerService.timeoutUser(broadcasterId, userName, seconds)` ng `await streamManagerService.timeoutUser(broadcasterId, broadcasterId, userName, seconds)` |
+| 2 | **Hindi na-a-await ang auto-mod bago magpadala ng chat message** | `twitch-chat.service.js` (linya ~300) | Gawing `await autoModerationService.processMessage(...)` at kung `true` ang resulta, **huwag nang i-send** ang message sa UI at huwag i-save sa history |
+| 3 | **Missing `this.store` sa `getChatDisplayDelay` / `setChatDisplayDelay`** | `auto-moderation.service.js` (linya ~130-135) | Alisin ang dalawang method na ito **kung hindi kailangan**, o kaya idagdag sa constructor: `this.store = new Store({ name: "autoModeration" });` |
+
+---
+
+### 🟡 **Medium Priority**
+
+| # | Issue | Action |
+|---|-------|--------|
+| 4 | **Duplikadong `enabled` key sa `saveSettings`** | Alisin ang isa sa dalawang `enabled: this.enabled` (linya ~40) |
+| 5 | **Na-o-overwrite ang custom rules sa `loadSettings()`** | Huwag tawagin ang `this._applyLevelRules()` sa loob ng `loadSettings()` – tawagin lang ito sa `setLevel()` |
+| 6 | **Redundant duplicate timeout block** (hindi na maaabot) | Alisin ang pangalawang `if (timeoutSeconds > 0) { ... }` block (linya ~115) |
+| 7 | **Mali ang logic kung `autoDeleteMessage` at `autoTimeoutUser` ay parehong false** | Sa unang `if (timeoutSeconds > 0)`, kung walang aksyon (parehong false), huwag mag-`return true` – i-`return false` na lang |
+
+---
+
+### 🟢 **Low Priority / Enhancement**
+
+| # | Issue | Action |
+|---|-------|--------|
+| 8 | **Caps detection hindi gumagana sa non-Latin characters** | Palitan ang regex `[^A-Za-z]` ng Unicode-aware: `/[^\p{L}]/u` at `/[^\p{Lu}]/u` (kung supported ng environment) |
+| 9 | **`userId` parameter sa `processMessage` ay hindi ginagamit** | Pwedeng alisin o gamitin sa logs para sa mas magandang debugging |
+| 10 | **`autoBlockLinks` ay galing sa `automationConfig` – inconsistency** | Ilipat ang link blocking sa sariling setting ng auto-mod (o panatilihin pero linawin ang logic) |
+
+---
+
+### ✅ **Checklist bago i-deploy**
+
+- [ ] Naayos na ang `timeoutUser` parameter sa lahat ng tatlong tawag
+- [ ] Na-`await` na ang auto-mod bago magpadala ng chat message
+- [ ] Tinanggal o naayos na ang `getChatDisplayDelay` / `setChatDisplayDelay`
+- [ ] Naalis na ang duplicate `enabled`
+- [ ] Hindi na na-o-overwrite ang custom rules
+- [ ] Naalis na ang redundant timeout block
+- [ ] Tested: nag-ttimeout at nagde-delete pa rin ang auto-mod kahit naka-off ang auto-delete o auto-timeout
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 🔴 **Critical – Dapat ayusin kaagad (Blocking bugs)**
+
+| # | Issue | File(s) | Action |
+|---|-------|---------|--------|
+| 1 | **Hindi na-a-await ang auto-mod bago magpadala ng chat message** | `twitch-chat.service.js` | Gawing `await autoModerationService.processMessage(...)`. Kung `true` ang resulta, huwag i-send sa UI at huwag i-save sa history. |
+| 2 | **Magkaiba ang configuration storage ng UI at backend** | `AutomationPanel.tsx`, `automation.service.js`, `auto-moderation.service.js` | Kapag nag-start ng automation, tawagin ang `autoModerationService.setEnabled(true)` at ipasa ang `autoBlockLinks`, `blockedTerms`, `autoDeleteMessage`, `autoTimeoutUser` mula sa UI config. |
+| 3 | **Walang paraan para i-enable ang auto-moderation nang hiwalay** | `AutomationPanel.tsx` | Magdagdag ng toggle na "Enable Chat Auto‑Moderation" – hiwalay sa Start/Stop ng automation (raid/clip/message). |
+| 4 | **`autoBlockLinks` ay redundant at inconsistent** | `auto-moderation.service.js` | Gamitin na lang ang `this.rules.links` (mula sa `autoModeration` store) – huwag nang basahin ang `automationConfig.autoBlockLinks`. I-update ang UI para i-save ang `links` sa `autoModeration` sa halip na `automationConfig`. |
+
+---
+
+## 🟡 **Medium Priority – Consistency at Completeness**
+
+| # | Issue | Action |
+|---|-------|--------|
+| 5 | **Duplicate logs sa `useAutomation` at `useAutomationLog`** | Alisin ang internal `logs` state sa `useAutomation`; gamitin na lang ang context mula `useAutomationLog` sa buong app. |
+| 6 | **Hindi gumagana ang slow mode at follower mode automation** | **Option A:** Implement actual backend logic (monitor chat spam, auto-enable slow mode; auto-enable follower mode on raid). <br> **Option B:** Alisin ang UI toggles kung hindi naman kailangan. |
+| 7 | **Hindi na-lo-load ang auto-moderation settings sa app start** | Sa `auto-moderation.service.js`, tawagin ang `loadSettings()` sa constructor o sa `initialize()` method. |
+| 8 | **`autoModerationService.enabled` ay hindi nasi-set kapag nag-start ng automation** | Sa `automation.service.js` `start()` method, idagdag: `autoModerationService.setEnabled(true)` at i-sync ang rules. |
+| 9 | **Caps detection para sa non‑Latin characters (naayos na sa code natin, pero kailangan i-test)** | Siguruhing gumagana sa mga Cyrillic, Chinese, Arabic, etc. Gamitin ang `\p{L}` at `\p{Lu}` regex. |
+
+---
+
+## 🟢 **Low Priority / Enhancement**
+
+| # | Issue / Idea | Action |
+|---|--------------|--------|
+| 10 | **Auto‑moderation para sa spam (repeated messages)** | Magdagdag ng detection para sa paulit-ulit na message (hal. 3x sa loob ng 10 sec) – auto-timeout. |
+| 11 | **Auto‑respond sa custom commands (hindi lang `!so`, `!clip`, etc.)** | Palawakin ang `chat-commands.service.js` para suportahan ang user-defined commands (gaya ng `!discord`, `!socials`). |
+| 12 | **Auto‑shoutout kapag may raid** | Sa `eventsub.service.js` `channel.raid` event, magpadala ng shoutout message sa chat. |
+| 13 | **Auto‑set ng stream title/game batay sa schedule** | Gumawa ng `scheduler.service.js` (may existing pero simple) – gamitin ang `updateStreamInfo` para magpalit ng title/game sa oras na itinakda. |
+| 14 | **Auto‑commercial tuwing nagba-break ang streamer (voice-controlled o hotkey)** | Integrate sa `streamManagerService.runCommercial` at magbigay ng UI button o voice command. |
+| 15 | **Auto‑announce ng new followers/subs sa chat na may customizable message** | Gamitin ang `automation.service.js` `handleFollow` at `handleSubscription` – gawing mas flexible (pwedeng i-edit ang message sa UI). |
+| 16 | **Auto‑timeout para sa mga user na may specific badge (e.g., known trolls)** | Sa `auto-moderation.service.js`, magdagdag ng `blockedBadges` array – kung may badge na `"troll"` (custom), i‑timeout. |
+| 17 | **Auto‑clip ng highlights batay sa chat activity (biglang dami ng messages)** | Subaybayan ang message rate; kapag lumampas sa threshold (hal. 100 msgs/min), i‑trigger ang `createClip`. |
+| 18 | **Auto‑save ng stream markers tuwing 30 minuto** | Gamitin ang `twitchApiService.createStreamMarker` sa interval – makakatulong sa pag-edit ng VOD. |
+
+---
+
+## ✅ **Checklist bago i-deploy**
+
+- [ ] Naayos na ang `twitch-chat.service.js` – `await` sa auto-mod at hindi pinapadaan ang moderated messages.
+- [ ] Na-si-sync na ang `autoModerationService` kapag nag-start ng automation (enabled + rules).
+- [ ] Na-add na ang "Enable Chat Auto‑Moderation" toggle sa UI.
+- [ ] Tinanggal na ang redundancy ng `autoBlockLinks` (iisang source na lang).
+- [ ] Na-load ang auto-mod settings sa app startup.
+- [ ] Na-ayos na ang duplicate logs (isang source of truth).
+- [ ] Na-test na ang caps detection sa iba't ibang wika.
+- [ ] Kung hindi implemented ang slow/follower mode, naitago na ang UI toggles (o kaya ay na-implement na).
+
+---
+
+## 💡 **Mga Dagdag na Feature na Puwede mong idagdag sa Todo List**
+
+| | Feature | Priority (kung idadagdag) |
+|--|---------|---------------------------|
+| A | **Auto‑respond sa `!uptime` gamit ang `streamManagerService.getStreamElapsedHours()`** | Low (existing na sa `chat-commands.service.js` – check lang) |
+| B | **Auto‑ban ng users na nagpo-post ng prohibited links (hindi lang timeout)** | Low |
+| C | **Auto‑moderation na may external API (e.g., Perspective API) para sa toxicity** | Medium (kung may budget) |
+| D | **Auto‑save ng chat logs para sa moderation review** | Low |
+| E | **Auto‑tweet / Auto‑discord post kapag nag-go-live** | Medium |
+| F | **Auto‑raid sa random followed channel kung walang specified target** | Low |

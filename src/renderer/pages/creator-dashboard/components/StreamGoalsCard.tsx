@@ -126,7 +126,7 @@ export const StreamGoalsCard: React.FC<StreamGoalsCardProps> = () => {
                 </div>
                 <div className="mt-2 h-2 bg-[var(--card-bg)] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#9147ff] rounded-full transition-all"
+                    className="h-full bg-[var(--primary-color)] rounded-full transition-all"
                     style={{ width: `${Math.min(percent, 100)}%` }}
                   />
                 </div>
@@ -180,7 +180,7 @@ export const StreamGoalsCard: React.FC<StreamGoalsCardProps> = () => {
               </button>
               <button
                 onClick={editingGoal ? updateGoal : addGoal}
-                className="px-3 py-1 bg-[#9147ff] rounded-md"
+                className="px-3 py-1 bg-[var(--primary-color)] rounded-md"
               >
                 {editingGoal ? "Update" : "Create"}
               </button>

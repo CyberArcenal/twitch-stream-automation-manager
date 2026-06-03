@@ -16,6 +16,7 @@ const {
   obsWebSocketService,
 } = require("../../../../services/obs-websocket.service");
 const { languagesService } = require("../../../../services/languages.service");
+const { twitchApiService } = require("../../../../services/twitch-api.service");
 
 /**
  * @param {Electron.IpcMainInvokeEvent} event
@@ -34,7 +35,8 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
   ) {
     throw new Error("Not logged in");
   }
-  const moderatorId = broadcasterId; // streamer is moderator of own channel
+
+  const moderatorId = broadcasterId;
 
   switch (method) {
     case "updateStreamInfo":
@@ -56,7 +58,15 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
         // @ts-ignore
         is_rerun: params.is_rerun,
       });
+    case "deleteMessage":
+      
+      return await streamManagerService.deleteMessage(
+        broadcasterId,
+        broadcasterId,
+        params.messageId,
+      );
     case "createClip":
+      
       return await streamManagerService.createClip(broadcasterId);
     case "startRaid":
       return await streamManagerService.startRaid(
@@ -166,7 +176,6 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
     case "getModerators":
       return await streamManagerService.getModerators(broadcasterId);
     case "addModerator":
-      // params.userId is the Twitch user ID (obtained from a username lookup)
       return await streamManagerService.addModerator(
         broadcasterId,
         // @ts-ignore
@@ -185,10 +194,6 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
       );
     case "getUserByName":
       // Re‑use the existing method from twitchApiService
-      const {
-        twitchApiService,
-      } = require("../../../../services/twitch-api.service");
-      // @ts-ignore
       return await twitchApiService.getUserByName(params.username);
 
     case "obsStartStream":

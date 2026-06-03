@@ -92,7 +92,7 @@ export const StreamGoalsPreviewCard: React.FC<StreamGoalsPreviewCardProps> = ({ 
               </div>
               <div className="h-1.5 bg-[var(--input-border)] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#9147ff] rounded-full transition-all"
+                  className="h-full bg-[var(--primary-color)] rounded-full transition-all"
                   style={{ width: `${percent}%` }}
                 />
               </div>

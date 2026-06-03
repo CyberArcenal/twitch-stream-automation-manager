@@ -116,14 +116,14 @@ export const OBSWebSocketTab: React.FC = () => {
           <span className="text-[var(--text-primary)]">Auto-connect on startup</span>
           <button
             onClick={() => setAutoConnect(!autoConnect)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoConnect ? "bg-[#9147ff]" : "bg-[#2a2a2e]"}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${autoConnect ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoConnect ? "translate-x-5" : ""}`} />
           </button>
         </div>
 
         <div className="flex gap-2 pt-2">
-          <button onClick={saveSettings} className="px-4 py-2 bg-[#9147ff] rounded-md text-sm">Save Settings</button>
+          <button onClick={saveSettings} className="px-4 py-2 bg-[var(--primary-color)] rounded-md text-sm">Save Settings</button>
           <button onClick={testConnection} disabled={testing} className="px-4 py-2 bg-[#2a2a2e] rounded-md text-sm">
             {testing ? "Testing..." : "Test Connection"}
           </button>

@@ -1,12 +1,13 @@
+// src/renderer/pages/stream-manager/hooks/useViewerList.ts
 import { useState, useEffect } from 'react';
 import { streamManagerAPI } from '../../../api/core/streamManager';
 
-export const useViewerList = (broadcasterId: string, moderatorId: string) => {
+export const useViewerList = (broadcasterId: string, moderatorId: string, isLive: boolean) => {
   const [viewers, setViewers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchViewers = async () => {
-    if (!broadcasterId || !moderatorId) return;
+    if (!broadcasterId || !moderatorId || !isLive) return;
     setLoading(true);
     try {
       const res = await streamManagerAPI.getChatters(broadcasterId, moderatorId);
@@ -21,10 +22,14 @@ export const useViewerList = (broadcasterId: string, moderatorId: string) => {
   };
 
   useEffect(() => {
+    if (!isLive) {
+      setViewers([]);
+      return;
+    }
     fetchViewers();
     const interval = setInterval(fetchViewers, 30000);
     return () => clearInterval(interval);
-  }, [broadcasterId, moderatorId]);
+  }, [broadcasterId, moderatorId, isLive]);
 
   return { viewers, loading, refresh: fetchViewers };
 };

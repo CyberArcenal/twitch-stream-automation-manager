@@ -124,7 +124,7 @@ const PredictionsPage: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#9147ff] rounded-lg hover:bg-[#772ce8] transition"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] transition"
         >
           <Plus className="w-4 h-4" /> New Prediction
         </button>
@@ -287,7 +287,7 @@ const PredictionsPage: React.FC = () => {
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="px-4 py-2 bg-[#9147ff] rounded-md disabled:opacity-50"
+                className="px-4 py-2 bg-[var(--primary-color)] rounded-md disabled:opacity-50"
               >
                 {creating ? "Creating..." : "Create Prediction"}
               </button>

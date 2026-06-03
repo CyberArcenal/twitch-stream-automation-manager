@@ -82,7 +82,7 @@ export const UserInfoPanel: React.FC<UserInfoPanelProps> = ({
           {badges.channel.slice(0, 3).map((badge) => (
             <span
               key={badge.set_id}
-              className="px-2 py-0.5 bg-[#9147ff]/20 rounded text-xs text-[#9147ff]"
+              className="px-2 py-0.5 bg-[var(--primary-color)]/20 rounded text-xs text-[#9147ff]"
             >
               {badge.set_id}
             </span>

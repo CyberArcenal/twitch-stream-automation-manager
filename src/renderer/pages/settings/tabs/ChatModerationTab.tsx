@@ -71,7 +71,7 @@ export const ChatModerationTab: React.FC = () => {
               placeholder="Word to block"
               className="flex-1 bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-3 py-2 text-[var(--text-primary)] text-sm"
             />
-            <button onClick={addBlockedWord} className="px-3 py-2 bg-[#9147ff] rounded-md text-sm">Add</button>
+            <button onClick={addBlockedWord} className="px-3 py-2 bg-[var(--primary-color)] rounded-md text-sm">Add</button>
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             {blockedWords.map((word) => (
@@ -94,7 +94,7 @@ export const ChatModerationTab: React.FC = () => {
               <button
                 key={level}
                 onClick={() => updateAutoModLevel(level)}
-                className={`flex-1 py-2 rounded-md text-sm ${autoModLevel === level ? "bg-[#9147ff] text-[var(--text-primary)]" : "bg-[#2a2a2e] text-[var(--text-secondary)]"}`}
+                className={`flex-1 py-2 rounded-md text-sm ${autoModLevel === level ? "bg-[var(--primary-color)] text-[var(--text-primary)]" : "bg-[#2a2a2e] text-[var(--text-secondary)]"}`}
               >
                 {level === "none" ? "Off" : level.charAt(0).toUpperCase() + level.slice(1)}
               </button>

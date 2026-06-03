@@ -33,7 +33,7 @@ export const ExportButtons: React.FC = () => {
       </button>
       <button
         onClick={exportAsCSV}
-        className="flex items-center gap-2 px-4 py-2 bg-[#9147ff] rounded-lg text-[var(--text-primary)] text-sm hover:bg-[#772ce8] transition"
+        className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] rounded-lg text-[var(--text-primary)] text-sm hover:bg-[#772ce8] transition"
       >
         <Share2 className="w-4 h-4" /> Export CSV
       </button>

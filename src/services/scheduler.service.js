@@ -1,13 +1,14 @@
+// src/main/services/scheduler.service.js
 const Store = require('electron-store');
 const { logger } = require('../utils/logger');
 const { streamManagerService } = require('./stream-manager.service');
-const { twitchApiService } = require('./twitch-api.service');
 const { settingsService } = require('./settings.service');
 
 class SchedulerService {
   constructor() {
     this.store = new Store({ name: 'scheduler' });
     this.intervals = new Map();
+    this.dailyJobs = new Map(); // store daily job timeouts
     this.loadSchedules();
   }
 
@@ -54,26 +55,51 @@ class SchedulerService {
     this.saveSchedules(filtered);
   }
 
+  /**
+   * Schedule a job based on cronPattern
+   * Supported patterns:
+   * - "every X minutes" / "every X hours" (interval)
+   * - "daily at HH:MM" (e.g., "daily at 15:30")
+   */
   scheduleJob(schedule) {
     const { id, type, cronPattern, action, params } = schedule;
-    // Simple interval-based (for demo) – use node-cron for production
-    const interval = this.parseCronToMs(cronPattern);
-    if (!interval) return;
-    const intervalId = setInterval(async () => {
-      try {
-        await this.executeAction(type, action, params);
-        logger.info(`[Scheduler] Executed scheduled ${type}: ${action}`);
-      } catch (err) {
-        logger.error(`[Scheduler] Failed to execute ${id}:`, err);
-      }
-    }, interval);
-    this.intervals.set(id, intervalId);
+    const intervalMs = this.parseInterval(cronPattern);
+    if (intervalMs) {
+      // interval-based
+      const intervalId = setInterval(async () => {
+        await this.executeScheduledAction(id, type, action, params);
+      }, intervalMs);
+      this.intervals.set(id, intervalId);
+      logger.info(`[Scheduler] Scheduled interval job ${id}: every ${intervalMs/1000}s`);
+      return;
+    }
+
+    const dailyTime = this.parseDailyTime(cronPattern);
+    if (dailyTime) {
+      // daily job: compute next execution time
+      const scheduleDaily = () => {
+        const now = new Date();
+        let next = new Date();
+        next.setHours(dailyTime.hours, dailyTime.minutes, 0, 0);
+        if (next <= now) next.setDate(next.getDate() + 1);
+        const delay = next - now;
+        const timeoutId = setTimeout(async () => {
+          await this.executeScheduledAction(id, type, action, params);
+          // re-schedule for next day
+          scheduleDaily();
+        }, delay);
+        this.dailyJobs.set(id, timeoutId);
+        logger.info(`[Scheduler] Scheduled daily job ${id} at ${dailyTime.hours}:${dailyTime.minutes}, next run in ${Math.round(delay/1000)}s`);
+      };
+      scheduleDaily();
+      return;
+    }
+
+    logger.warn(`[Scheduler] Unsupported cron pattern: ${cronPattern}`);
   }
 
-  parseCronToMs(cronPattern) {
-    // Simple: 'every 30 mins', 'every 1 hour', 'every day at 15:00'
-    // For demo, just parse 'every X minutes/hours'
-    const match = cronPattern.match(/every (\d+) (minute|minutes|hour|hours)/i);
+  parseInterval(pattern) {
+    const match = pattern.match(/every (\d+) (minute|minutes|hour|hours)/i);
     if (match) {
       const value = parseInt(match[1]);
       const unit = match[2].toLowerCase();
@@ -83,15 +109,42 @@ class SchedulerService {
     return null;
   }
 
+  parseDailyTime(pattern) {
+    const match = pattern.match(/daily at (\d{1,2}):(\d{2})/i);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+        return { hours, minutes };
+      }
+    }
+    return null;
+  }
+
+  async executeScheduledAction(scheduleId, type, action, params) {
+    try {
+      logger.info(`[Scheduler] Executing scheduled ${type}: ${action} (schedule ${scheduleId})`);
+      await this.executeAction(type, action, params);
+    } catch (err) {
+      logger.error(`[Scheduler] Failed to execute schedule ${scheduleId}:`, err);
+    }
+  }
+
   async executeAction(type, action, params) {
     const broadcasterId = settingsService.get('twitch')?.userId;
     if (!broadcasterId) throw new Error('Not logged in');
+
     switch (action) {
       case 'updateStreamInfo':
+        // params should contain { title, game_id }
+        if (!params || (!params.title && !params.game_id)) {
+          throw new Error('Missing title or game_id for updateStreamInfo');
+        }
         await streamManagerService.updateStreamInfo(broadcasterId, params);
+        logger.info(`[Scheduler] Stream info updated: title="${params.title}", game_id=${params.game_id}`);
         break;
       case 'runCommercial':
-        await streamManagerService.runCommercial(broadcasterId, params.length || 30);
+        await streamManagerService.runCommercial(broadcasterId, params?.length || 30);
         break;
       default:
         logger.warn(`[Scheduler] Unknown action: ${action}`);
@@ -103,13 +156,21 @@ class SchedulerService {
       clearInterval(this.intervals.get(id));
       this.intervals.delete(id);
     }
+    if (this.dailyJobs.has(id)) {
+      clearTimeout(this.dailyJobs.get(id));
+      this.dailyJobs.delete(id);
+    }
   }
 
   cancelAll() {
     for (const [id] of this.intervals) {
       clearInterval(this.intervals.get(id));
     }
+    for (const [id] of this.dailyJobs) {
+      clearTimeout(this.dailyJobs.get(id));
+    }
     this.intervals.clear();
+    this.dailyJobs.clear();
   }
 
   getSchedules() {

@@ -11,13 +11,21 @@ class ChatHistoryService {
     this.retentionDays = 7; // delete messages older than 7 days
   }
 
-  _sendToRenderers(channel, data) {
+ _sendToRenderers(channel, data) {
     try {
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) win.webContents.send(channel, data);
+      const windows = BrowserWindow.getAllWindows();
+      windows.forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(channel, data);
+        }
       });
-    } catch (err) {
-      logger.warn('[ChatHistory] send error:', err);
+    } catch (error) {
+      // If running outside Electron (e.g., tests), ignore
+      logger.warn(
+        "Failed to send IPC event (maybe not in Electron):",
+        // @ts-ignore
+        error.message,
+      );
     }
   }
 

@@ -10,14 +10,17 @@ class TwitchApiService {
   /**
    * @param {string} endpoint
    */
+  // @ts-ignore
   async fetchTwitch(endpoint, options = {}, retry = true) {
     const url = `${API_BASE}/${endpoint}`;
 
+    // @ts-ignore
     const method = options.method || "GET";
     logger.debug(`[TwitchApi] ${method} ${endpoint} - starting`);
 
     const startTime = Date.now();
 
+    // @ts-ignore
     const headers = { ...options.headers };
 
     const token = twitchAuthService.getAccessToken();
@@ -59,10 +62,20 @@ class TwitchApiService {
         throw new Error(error.message || `API error: ${res.status}`);
       }
 
-      const data = await res.json();
+      let data = null;
+      const contentType = res.headers.get("content-type");
+      const contentLength = res.headers.get("content-length");
+
+      if (contentType?.includes("application/json") && contentLength !== "0") {
+        data = await res.json();
+      } else {
+        data = {};
+      }
+
       logger.debug(`[TwitchApi] ${endpoint} - success (${duration}ms)`);
       return data;
     } catch (err) {
+      // @ts-ignore
       logger.error(`[TwitchApi] ${endpoint} - exception:`, err);
       throw err;
     }
@@ -149,6 +162,7 @@ class TwitchApiService {
       );
       return streamsResponse;
     } catch (error) {
+      // @ts-ignore
       logger.error("[TwitchApi] getFollowedStreams - error:", error);
       throw error;
     }
@@ -355,6 +369,7 @@ class TwitchApiService {
       width: 1024,
       height: 768,
 
+      // @ts-ignore
       parent: BrowserWindow.getFocusedWindow(),
       modal: false,
       show: true,
@@ -410,6 +425,7 @@ class TwitchApiService {
    * @param {any} moderatorId
    */
   async getChatters(broadcasterId, moderatorId) {
+    // @ts-ignore
     const params = new URLSearchParams({
       broadcaster_id: broadcasterId,
       moderator_id: moderatorId,
@@ -491,6 +507,39 @@ class TwitchApiService {
     return await this.fetchTwitch("streams/markers", {
       method: "POST",
       body: JSON.stringify(body),
+    });
+  }
+
+  /**
+   * Add a blocked term to the channel
+   * @param {string} broadcasterId
+   * @param {string} moderatorId
+   * @param {string} term - The word/phrase to block
+   */
+  async addBlockedTerm(broadcasterId, moderatorId, term) {
+    const body = { term };
+    return await this.fetchTwitch(
+      `moderation/blocked_terms?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+  }
+
+  /**
+   * Remove a blocked term from the channel
+   * @param {string} broadcasterId
+   * @param {string} termId - ID of the blocked term
+   */
+  async removeBlockedTerm(broadcasterId, termId) {
+    const params = new URLSearchParams({
+      broadcaster_id: broadcasterId,
+      id: termId,
+    });
+    return await this.fetchTwitch(`moderation/blocked_terms?${params}`, {
+      method: "DELETE",
     });
   }
 }

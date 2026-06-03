@@ -17,6 +17,7 @@ class ShortcutStorageService {
       volumeDown: 'Ctrl+Shift+Down',
       fullscreen: 'F11',
       closePlayer: 'Ctrl+W',
+      runCommercial: 'Ctrl+Shift+C',
     };
   }
 

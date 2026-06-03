@@ -358,6 +358,13 @@ class StreamManagerAPI {
       params: { broadcasterId, moderatorId },
     });
   }
+
+async deleteMessage(messageId: string): Promise<BaseResponse<boolean>> {
+  return window.backendAPI['stream-manager']({
+    method: 'deleteMessage',
+    params: { messageId }
+  });
+}
 }
 
 export const streamManagerAPI = new StreamManagerAPI();

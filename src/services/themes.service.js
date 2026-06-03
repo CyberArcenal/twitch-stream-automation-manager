@@ -1,5 +1,6 @@
 // src/main/services/themes.service.js
 //@ts-check
+const { logger } = require('../utils/logger');
 const { settingsService } = require('./settings.service');
 const { BrowserWindow } = require('electron');
 
@@ -10,11 +11,19 @@ class ThemesService {
 
   _sendToRenderers(channel, data) {
     try {
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) win.webContents.send(channel, data);
+      const windows = BrowserWindow.getAllWindows();
+      windows.forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(channel, data);
+        }
       });
-    } catch (err) {
-      console.warn('[ThemesService] send error:', err);
+    } catch (error) {
+      // If running outside Electron (e.g., tests), ignore
+      logger.warn(
+        "Failed to send IPC event (maybe not in Electron):",
+        // @ts-ignore
+        error.message,
+      );
     }
   }
 

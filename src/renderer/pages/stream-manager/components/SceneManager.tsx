@@ -40,7 +40,7 @@ const SceneManager: React.FC = () => {
       {!connected ? (
         <div className="text-center">
           <p className="text-sm text-[var(--text-secondary)] mb-3">OBS WebSocket not connected.</p>
-          <button onClick={() => connectOBS()} className="bg-[#9147ff] px-4 py-2 rounded-lg text-sm hover:bg-[#772ce8] text-white">
+          <button onClick={() => connectOBS()} className="bg-[var(--primary-color)] px-4 py-2 rounded-lg text-sm hover:bg-[#772ce8] text-white">
             Connect to OBS
           </button>
           <p className="text-xs text-[var(--text-secondary)] mt-3">
@@ -59,7 +59,7 @@ const SceneManager: React.FC = () => {
               onClick={() => switchScene(scene.sceneName)}
               className={`w-full text-left px-3 py-2 rounded-lg transition-all ${
                 currentScene === scene.sceneName
-                  ? 'bg-[#9147ff] text-white'
+                  ? 'bg-[var(--primary-color)] text-white'
                   : 'bg-[var(--btn-secondary-bg)] text-[var(--text-secondary)] hover:bg-[var(--btn-secondary-hover)]'
               }`}
             >
@@ -92,7 +92,7 @@ const SceneManager: React.FC = () => {
             <div className="flex gap-2">
               <button
                 onClick={handlePasswordSubmit}
-                className="flex-1 py-2 bg-[#9147ff] rounded-lg hover:bg-[#772ce8] text-white"
+                className="flex-1 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] text-white"
               >
                 Connect
               </button>

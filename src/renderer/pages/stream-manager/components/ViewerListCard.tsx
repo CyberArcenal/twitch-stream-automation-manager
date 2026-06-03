@@ -1,17 +1,19 @@
+// src/renderer/pages/stream-manager/components/ViewerListCard.tsx
 import React from 'react';
-import { Users, Loader2 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useViewerList } from '../hooks/useViewerList';
 
 interface ViewerListCardProps {
   broadcasterId: string;
   moderatorId: string;
+  isLive: boolean;
 }
 
-export const ViewerListCard: React.FC<ViewerListCardProps> = ({ broadcasterId, moderatorId }) => {
-  const { viewers, loading, refresh } = useViewerList(broadcasterId, moderatorId);
+export const ViewerListCard: React.FC<ViewerListCardProps> = ({ broadcasterId, moderatorId, isLive }) => {
+  const { viewers, refresh } = useViewerList(broadcasterId, moderatorId, isLive);
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] p-3">
+    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] p-3 max-h-[110px] h-full">
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#9147ff]" />
@@ -21,8 +23,8 @@ export const ViewerListCard: React.FC<ViewerListCardProps> = ({ broadcasterId, m
           Refresh
         </button>
       </div>
-      {loading ? (
-        <div className="flex justify-center py-2"><Loader2 className="w-4 h-4 animate-spin" /></div>
+      {!isLive ? (
+        <p className="text-xs text-[var(--text-secondary)] text-center">Stream offline</p>
       ) : viewers.length === 0 ? (
         <p className="text-xs text-[var(--text-secondary)] text-center">No viewers or insufficient scope</p>
       ) : (

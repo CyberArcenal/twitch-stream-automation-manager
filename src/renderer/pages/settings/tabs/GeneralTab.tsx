@@ -50,13 +50,13 @@ export const GeneralTab: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setTheme("dark")}
-              className={`px-3 py-1 rounded-md text-sm ${theme === "dark" ? "bg-[#9147ff] text-[var(--text-primary)]" : "bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)]"}`}
+              className={`px-3 py-1 rounded-md text-sm ${theme === "dark" ? "bg-[var(--primary-color)] text-[var(--text-primary)]" : "bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)]"}`}
             >
               Dark
             </button>
             <button
               onClick={() => setTheme("light")}
-              className={`px-3 py-1 rounded-md text-sm ${theme === "light" ? "bg-[#9147ff] text-[var(--text-primary)]" : "bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)]"}`}
+              className={`px-3 py-1 rounded-md text-sm ${theme === "light" ? "bg-[var(--primary-color)] text-[var(--text-primary)]" : "bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)]"}`}
             >
               Light
             </button>
@@ -95,7 +95,7 @@ export const GeneralTab: React.FC = () => {
           </div>
           <button
             onClick={() => handleAutoPlayChange(!autoPlay)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoPlay ? "bg-[#9147ff]" : "bg-[var(--input-border)]"}`}
+            className={`relative w-10 h-5 rounded-full transition-colors ${autoPlay ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoPlay ? "translate-x-5" : ""}`} />
           </button>

@@ -2,6 +2,7 @@
 import type { BaseResponse } from "./common";
 
 export interface ChatMessage {
+  messageId: string;
   id: string;
   channel: string;
   user: string;
@@ -16,6 +17,7 @@ export interface ChatMessage {
     name?: string;
     id?: string;
   }>;
+   isDeleted?: boolean;
   isFromMe?: boolean;
   isPinned?: boolean;
 }
