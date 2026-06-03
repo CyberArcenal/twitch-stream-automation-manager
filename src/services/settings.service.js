@@ -43,8 +43,13 @@ class SettingsService {
           win.webContents.send(channel, data);
         }
       });
-    } catch (err) {
-      console.warn("[NotificationService] Failed to send event:", err);
+    } catch (error) {
+      // If running outside Electron (e.g., tests), ignore
+      logger.warn(
+        "Failed to send IPC event (maybe not in Electron):",
+        // @ts-ignore
+        error.message,
+      );
     }
   }
 

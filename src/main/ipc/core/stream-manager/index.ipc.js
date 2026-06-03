@@ -16,6 +16,7 @@ const {
   obsWebSocketService,
 } = require("../../../../services/obs-websocket.service");
 const { languagesService } = require("../../../../services/languages.service");
+const { twitchApiService } = require("../../../../services/twitch-api.service");
 
 /**
  * @param {Electron.IpcMainInvokeEvent} event
@@ -56,6 +57,12 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
         // @ts-ignore
         is_rerun: params.is_rerun,
       });
+    case "deleteMessage":
+      return await streamManagerService.deleteMessage(
+        params.broadcasterId,
+        params.moderatorId,
+        params.messageId,
+      );
     case "createClip":
       return await streamManagerService.createClip(broadcasterId);
     case "startRaid":
@@ -185,10 +192,6 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
       );
     case "getUserByName":
       // Re‑use the existing method from twitchApiService
-      const {
-        twitchApiService,
-      } = require("../../../../services/twitch-api.service");
-      // @ts-ignore
       return await twitchApiService.getUserByName(params.username);
 
     case "obsStartStream":

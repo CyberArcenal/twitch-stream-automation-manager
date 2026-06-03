@@ -101,7 +101,7 @@ const displayedMessages = useMemo(() => [
   }, [messages, pinnedMessages]);
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col h-full min-h-[300px] min-w-[300px]">
+    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col h-full min-h-[300px] min-w-[300px] max-h-[560px]">
       <div className="p-3 border-b border-[var(--border-color)] flex justify-between items-center">
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">
           My Chat {connected ? "🟢" : "🔴"}

@@ -352,6 +352,8 @@ class TwitchChatService {
     });
 
     this.chatClient.onMessage((channel, user, message, msg) => {
+      const twitchData = settingsService.get("twitch");
+      const broadcasterId = twitchData?.userId; // numeric ID, e.g.,
       logger.debug(
         `[Chat] RAW MESSAGE: channel=${channel}, user=${user}, msg=${message}`,
       );
@@ -424,7 +426,7 @@ class TwitchChatService {
 
       const chatMessage = {
         messageId: msg.id,
-        channel: channel.slice(1),
+        channel: channel,
         user: user,
         message: message,
         parsedMessage: parseChatMessage(message, msg.emoteOffsets),
@@ -450,7 +452,7 @@ class TwitchChatService {
 
       this._sendToRenderers("chat:message", chatMessage);
       chatHistoryService.addMessage(
-        channel.slice(1),
+        channel,
         user,
         message,
         msg.id,
@@ -470,13 +472,13 @@ class TwitchChatService {
       if (user === userLogin) {
         logger.info(`[Chat] Own user ${user} joined ${channel}`);
         this._sendToRenderers("chat:connected", {
-          channel: channel.slice(1),
+          channel: channel,
         });
         this.reconnectAttempts = 0;
       } else {
         logger.debug(`[Chat] User ${user} joined ${channel}`);
         this._sendToRenderers("chat:user-joined", {
-          channel: channel.slice(1),
+          channel: channel,
           user,
         });
       }
@@ -652,15 +654,18 @@ class TwitchChatService {
    */
   _sendToRenderers(channel, data) {
     try {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send(channel, data);
+      const windows = BrowserWindow.getAllWindows();
+      windows.forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(channel, data);
+        }
       });
-      // logger.debug(`[Chat] Sent event "${channel}" to renderers`);
-    } catch (err) {
+    } catch (error) {
+      // If running outside Electron (e.g., tests), ignore
       logger.warn(
-        `[Chat] Failed to send event "${channel}" to renderers:`,
-
-        err,
+        "Failed to send IPC event (maybe not in Electron):",
+        // @ts-ignore
+        error.message,
       );
     }
   }

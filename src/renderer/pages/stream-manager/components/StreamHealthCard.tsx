@@ -10,7 +10,7 @@ const StreamHealthCard: React.FC<StreamHealthCardProps> = ({ isLive }) => {
   const { bitrate, fps, droppedFrames, cpuUsage, connected, latency } = useStreamHealth(isLive);
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl p-4 shadow-lg border border-[var(--border-color)] min-w-[300px]">
+    <div className="bg-[var(--card-bg)] rounded-xl p-4 shadow-lg border border-[var(--border-color)] min-w-[300px] h-full max-h-[240px]">
       <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Stream Health</h3>
       {!connected ? (
         <p className="text-xs text-[var(--text-secondary)] text-center py-2">

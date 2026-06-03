@@ -361,3 +361,26 @@ Kung gusto mo, pwedeng gawan kita ng **actual component structure** (React) para
 7. **Implement commercial countdown** and display remaining cooldown.
 8. **Add stream marker button** in `MainVideoCard`.
 9. **Add error boundaries** for each major card.
+
+
+
+
+
+
+
+
+
+
+
+
+
+[2] 06/03/2026 19:21:53 INFO [EventSubService] Received event: channel.follow
+[2] {
+[2]   "user_id": "1499210003",
+[2]   "user_login": "cyberarcenal",
+[2]   "user_name": "cyberarcenal",
+[2]   "broadcaster_user_id": "1500235096",
+[2]   "broadcaster_user_login": "cyberarcenal1",
+[2]   "broadcaster_user_name": "cyberarcenal1",
+[2]   "followed_at": "2026-06-03T11:21:54.172483018Z"
+[2] }

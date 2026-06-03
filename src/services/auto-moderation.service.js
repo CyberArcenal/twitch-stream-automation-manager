@@ -13,6 +13,7 @@ class AutoModerationService {
       blockedWords: [],
       trustedUsers: [], // array of usernames (lowercase)
     };
+    this.autoDeleteMessage = false;
     this.enabled = false;
     this.level = "basic"; // 'none', 'basic', 'aggressive'
   }
@@ -28,6 +29,7 @@ class AutoModerationService {
     };
     this.enabled = autoMod.enabled || false;
     this.level = autoMod.level || "basic";
+    this.autoDeleteMessage = autoMod.autoDeleteMessage || false;
     this._applyLevelRules();
   }
 
@@ -41,7 +43,13 @@ class AutoModerationService {
       maxEmojis: this.rules.maxEmojis,
       blockedWords: this.rules.blockedWords,
       trustedUsers: this.rules.trustedUsers,
+      autoDeleteMessage: this.autoDeleteMessage,
     });
+  }
+
+  setAutoDeleteMessage(enabled) {
+    this.autoDeleteMessage = enabled;
+    this.saveSettings();
   }
 
   setEnabled(enabled) {
@@ -74,7 +82,8 @@ class AutoModerationService {
   async processMessage(channel, userId, userName, message, broadcasterId) {
     if (!this.enabled) return false;
     if (this.rules.trustedUsers.includes(userName.toLowerCase())) return false;
-
+    const autoBlockLinks =
+      settingsService.get("automationConfig")?.autoBlockLinks;
     let timeoutSeconds = 0;
     let reason = "";
 
@@ -111,9 +120,66 @@ class AutoModerationService {
         if (lowerMsg.includes(word)) {
           timeoutSeconds = 300;
           reason = `Blocked word: ${word}`;
+          
+          if (timeoutSeconds > 0) {
+            try {
+              if (this.autoDeleteMessage) {
+                await streamManagerService.deleteMessage(
+                  broadcasterId,
+                  broadcasterId,
+                  msg.id,
+                );
+                logger.info(
+                  `[AutoMod] Deleted message from ${userName} (reason: ${reason})`,
+                );
+                moderationLogService.addLog(
+                  "delete",
+                  broadcasterId,
+                  userId,
+                  userName,
+                  null,
+                  reason,
+                );
+              } else {
+                await streamManagerService.timeoutUser(
+                  broadcasterId,
+                  userName,
+                  timeoutSeconds,
+                );
+                moderationLogService.addLog(
+                  "timeout",
+                  broadcasterId,
+                  userId,
+                  userName,
+                  timeoutSeconds,
+                  reason,
+                );
+              }
+              return true;
+            } catch (err) {
+              logger.error(
+                `[AutoMod] Failed to ${this.autoDeleteMessage ? "delete" : "timeout"} ${userName}:`,
+                err,
+              );
+            }
+          }
           break;
         }
       }
+    }
+
+    if (autoBlockLinks && /https?:\/\//i.test(message)) {
+      await streamManagerService.timeoutUser(broadcasterId, userName, 60);
+      moderationLogService.addLog(
+        "timeout",
+        broadcasterId,
+        userId,
+        userName,
+        60,
+        "Link posted (auto‑block)",
+      );
+      logger.info(`[AutoMod] Auto‑blocked link from ${userName}`);
+      return true;
     }
 
     if (timeoutSeconds > 0) {

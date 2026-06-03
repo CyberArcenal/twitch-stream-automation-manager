@@ -1,24 +1,33 @@
-// src/renderer/pages/stream-manager/components/AutomationPanel.tsx
-// Add persistence for custom scripts
 import React, { useState, useEffect } from "react";
-import { Upload, Trash2, Play, Square } from "lucide-react";
+import {
+  Upload,
+  Trash2,
+  Play,
+  Square,
+  Shield,
+  Clock,
+  Users,
+  Link,
+  Ban,
+} from "lucide-react";
 import { streamManagerAPI } from "../../../api/core/streamManager";
 import { useAutomation } from "../hooks/useAutomation";
-
-interface AutomationLog {
-  id: string;
-  timestamp: Date;
-  message: string;
-  type: "info" | "success" | "error";
-}
+import { useAutomationLog } from "../../../contexts/AutomationLogContext";
 
 interface AutomationPanelProps {
   isLive: boolean;
+  broadcasterId?: string;
+  moderatorId?: string;
 }
 
 const STORAGE_KEY = "automation_custom_scripts";
 
-const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
+const AutomationPanel: React.FC<AutomationPanelProps> = ({
+  isLive,
+  broadcasterId,
+  moderatorId,
+}) => {
+  const { logs, addLog, clearLogs } = useAutomationLog();
   const {
     autoRaidEnabled,
     setAutoRaidEnabled,
@@ -32,20 +41,46 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
     setRaidTarget,
     automationRunning,
     setAutomationRunning,
-    logs,
-    setLogs,
     startAutomation,
     stopAutomation,
-    addLog,
-    clearLogs,
-  } = useAutomation();
+  } = useAutomation(); // ❌ huwag kunin ang setLogs
+
+  // New automation states
+  const [autoSlowMode, setAutoSlowMode] = useState(false);
+  const [slowModeSpamThreshold, setSlowModeSpamThreshold] = useState(5);
+  const [slowModeWaitTime, setSlowModeWaitTime] = useState(10);
+  const [autoDeleteMessage, setAutoDeleteMessage] = useState(false);
+  const [autoFollowerMode, setAutoFollowerMode] = useState(false);
+  const [followerModeDuration, setFollowerModeDuration] = useState(60);
+  const [autoBlockLinks, setAutoBlockLinks] = useState(false);
+  const [blockedTerms, setBlockedTerms] = useState<string[]>([]);
+  const [newTerm, setNewTerm] = useState("");
 
   const [scripts, setScripts] = useState<{ name: string; enabled: boolean }[]>(
     [],
   );
   const [scriptName, setScriptName] = useState("");
 
-  // Load scripts from localStorage on mount
+  // Load saved automation preferences from backend
+  useEffect(() => {
+    const loadAutomationPrefs = async () => {
+      try {
+        const prefs = await streamManagerAPI.getAutomationStatus();
+        if (prefs.status && prefs.data?.config) {
+          setAutoSlowMode(prefs.data.config.autoSlowMode || false);
+          setAutoFollowerMode(prefs.data.config.autoFollowerMode || false);
+          setAutoBlockLinks(prefs.data.config.autoBlockLinks || false);
+          setBlockedTerms(prefs.data.config.blockedTerms || []);
+          setAutoDeleteMessage(prefs.data.config.autoDeleteMessage || false);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadAutomationPrefs();
+  }, []);
+
+  // Load scripts from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -57,47 +92,16 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
     }
   }, []);
 
-  // Save scripts to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(scripts));
   }, [scripts]);
 
-  useEffect(() => {
-    const loadStatus = async () => {
-      const res = await streamManagerAPI.getAutomationStatus();
-      if (res.status && res.data) {
-        setAutomationRunning(res.data.running);
-        setAutoRaidEnabled(res.data.config.autoRaid);
-        setAutoClipEnabled(res.data.config.autoClip);
-        setAutoMessageEnabled(res.data.config.autoMessage);
-        setAutoMessageText(res.data.config.autoMessageText);
-        setRaidTarget(res.data.config.raidTarget || "");
-      }
-    };
-    loadStatus();
-  }, []);
-
-  useEffect(() => {
-    const handleAutomationLog = (data: AutomationLog) => {
-      const logWithTimestamp = {
-        ...data,
-        timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
-      };
-      setLogs((prev) => [logWithTimestamp, ...prev.slice(0, 49)]);
-    };
-    window.backendAPI?.on?.("automation:log", handleAutomationLog);
-    return () =>
-      window.backendAPI?.off?.("automation:log", handleAutomationLog);
-  }, []);
-
+  // Helper to add log using the context
   const addLocalLog = (
     message: string,
     type: "info" | "success" | "error" = "info",
   ) => {
-    setLogs((prev) => [
-      { id: Date.now().toString(), timestamp: new Date(), message, type },
-      ...prev.slice(0, 49),
-    ]);
+    addLog(message, type);
   };
 
   const handleStartAutomation = async () => {
@@ -107,6 +111,14 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
       autoMessage: autoMessageEnabled,
       autoMessageText,
       raidTarget: raidTarget || null,
+      autoSlowMode,
+      slowModeSpamThreshold,
+      slowModeWaitTime,
+      autoFollowerMode,
+      followerModeDuration,
+      autoBlockLinks,
+      blockedTerms,
+      autoDeleteMessage,
     };
     const res = await streamManagerAPI.startAutomation(config);
     if (res.status) {
@@ -127,6 +139,19 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
     }
   };
 
+  const addBlockedTerm = () => {
+    if (!newTerm.trim()) return;
+    setBlockedTerms([...blockedTerms, newTerm.trim().toLowerCase()]);
+    setNewTerm("");
+    addLocalLog(`Blocked term added: "${newTerm}"`, "info");
+  };
+
+  const removeBlockedTerm = (term: string) => {
+    setBlockedTerms(blockedTerms.filter((t) => t !== term));
+    addLocalLog(`Blocked term removed: "${term}"`, "info");
+  };
+
+  // Toggle handlers
   const handleToggleAutoRaid = () => {
     const newState = !autoRaidEnabled;
     setAutoRaidEnabled(newState);
@@ -135,7 +160,6 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
       newState ? "success" : "info",
     );
   };
-
   const handleToggleAutoClip = () => {
     const newState = !autoClipEnabled;
     setAutoClipEnabled(newState);
@@ -144,7 +168,6 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
       newState ? "success" : "info",
     );
   };
-
   const handleToggleAutoMessage = () => {
     const newState = !autoMessageEnabled;
     setAutoMessageEnabled(newState);
@@ -153,17 +176,41 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
       newState ? "success" : "info",
     );
   };
+  const handleToggleAutoSlowMode = () => {
+    const newState = !autoSlowMode;
+    setAutoSlowMode(newState);
+    addLocalLog(
+      `Auto‑slow mode ${newState ? "enabled" : "disabled"}`,
+      newState ? "success" : "info",
+    );
+  };
+  const handleToggleAutoFollowerMode = () => {
+    const newState = !autoFollowerMode;
+    setAutoFollowerMode(newState);
+    addLocalLog(
+      `Auto‑follower mode ${newState ? "enabled" : "disabled"}`,
+      newState ? "success" : "info",
+    );
+  };
+  const handleToggleAutoBlockLinks = () => {
+    const newState = !autoBlockLinks;
+    setAutoBlockLinks(newState);
+    addLocalLog(
+      `Auto‑block links ${newState ? "enabled" : "disabled"}`,
+      newState ? "success" : "info",
+    );
+  };
 
+  // Custom script handlers
   const handleAddScript = () => {
     if (!scriptName.trim()) return;
-    setScripts((prev) => [...prev, { name: scriptName.trim(), enabled: true }]);
+    setScripts([...scripts, { name: scriptName.trim(), enabled: true }]);
     addLocalLog(`Custom script "${scriptName.trim()}" added`, "success");
     setScriptName("");
   };
-
   const handleToggleScript = (index: number) => {
-    setScripts((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, enabled: !s.enabled } : s)),
+    setScripts(
+      scripts.map((s, i) => (i === index ? { ...s, enabled: !s.enabled } : s)),
     );
     const script = scripts[index];
     addLocalLog(
@@ -171,27 +218,34 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
       "info",
     );
   };
-
   const handleRemoveScript = (index: number) => {
     const script = scripts[index];
-    setScripts((prev) => prev.filter((_, i) => i !== index));
+    setScripts(scripts.filter((_, i) => i !== index));
     addLocalLog(`Script "${script.name}" removed`, "error");
   };
-
   const handleResetLogs = () => {
-    setLogs([]);
+    clearLogs();
     addLocalLog("Automation logs cleared", "info");
+  };
+
+  const handleToggleAutoDeleteMessage = () => {
+    const newState = !autoDeleteMessage;
+    setAutoDeleteMessage(newState);
+    addLocalLog(
+      `Auto‑delete messages ${newState ? "enabled" : "disabled"}`,
+      newState ? "success" : "info",
+    );
   };
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {/* Triggers */}
+        {/* Stream Triggers */}
         <div>
           <h4 className="text-xs font-medium text-[var(--text-secondary)] uppercase mb-2">
-            Triggers
+            Stream Triggers
           </h4>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-scroll max-h-60">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--text-primary)]">
                 Auto‑raid when stream ends
@@ -206,15 +260,25 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
                 />
               </button>
             </div>
+            {autoRaidEnabled && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  value={raidTarget}
+                  onChange={(e) => setRaidTarget(e.target.value)}
+                  placeholder="Raid target channel"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
+                />
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              {/* ✅ Fixed label */}
               <span className="text-sm text-[var(--text-primary)]">
                 Auto‑clip when stream ends
               </span>
               <button
                 onClick={handleToggleAutoClip}
                 disabled={!isLive}
-                className={`relative w-10 h-5 rounded-full transition-colors ${autoClipEnabled ? "bg-[#9147ff]" : "bg-[var(--input-border)]"} ${!isLive ? "opacity-50 cursor-not-allowed" : ""}`}
+                className="relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)]"
               >
                 <span
                   className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoClipEnabled ? "translate-x-5" : ""}`}
@@ -223,12 +287,12 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--text-primary)]">
-                Auto‑message on new follower/sub
+                Auto‑message on follow/sub
               </span>
               <button
                 onClick={handleToggleAutoMessage}
                 disabled={!isLive}
-                className={`relative w-10 h-5 rounded-full transition-colors ${autoMessageEnabled ? "bg-[#9147ff]" : "bg-[var(--input-border)]"} ${!isLive ? "opacity-50 cursor-not-allowed" : ""}`}
+                className="relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)]"
               >
                 <span
                   className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoMessageEnabled ? "translate-x-5" : ""}`}
@@ -242,21 +306,156 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
                   value={autoMessageText}
                   onChange={(e) => setAutoMessageText(e.target.value)}
                   placeholder="Auto‑message text"
-                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm text-[var(--text-primary)]"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
                 />
               </div>
             )}
-            {autoRaidEnabled && (
-              <div className="mt-2">
+          </div>
+        </div>
+
+        {/* Chat Automation Rules */}
+        <div>
+          <h4 className="text-xs font-medium text-[var(--text-secondary)] uppercase mb-2 flex items-center gap-1">
+            <Shield className="w-3 h-3" /> Chat Automation
+          </h4>
+          <div className="space-y-3 overflow-y-auto max-h-60">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[var(--text-primary)]">
+                Auto‑enable Slow Mode on spam
+              </span>
+              <button
+                onClick={handleToggleAutoSlowMode}
+                className="relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)]"
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoSlowMode ? "translate-x-5" : ""}`}
+                />
+              </button>
+            </div>
+            {autoSlowMode && (
+              <div className="ml-6 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>Spam threshold (messages per minute)</span>
+                  <input
+                    type="number"
+                    value={slowModeSpamThreshold}
+                    onChange={(e) =>
+                      setSlowModeSpamThreshold(Number(e.target.value))
+                    }
+                    className="w-16 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1 text-center"
+                  />
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span>Slow mode wait time (seconds)</span>
+                  <select
+                    value={slowModeWaitTime}
+                    onChange={(e) =>
+                      setSlowModeWaitTime(Number(e.target.value))
+                    }
+                    className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
+                  >
+                    <option value={5}>5 sec</option>
+                    <option value={10}>10 sec</option>
+                    <option value={30}>30 sec</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[var(--text-primary)] flex items-center gap-1">
+                <Ban className="w-3 h-3" /> Auto‑delete messages containing
+                blocked terms
+              </span>
+              <button
+                onClick={handleToggleAutoDeleteMessage}
+                className="relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)]"
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoDeleteMessage ? "translate-x-5" : ""}`}
+                />
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[var(--text-primary)]">
+                Auto‑enable Follower Mode during raid
+              </span>
+              <button
+                onClick={handleToggleAutoFollowerMode}
+                className="relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)]"
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoFollowerMode ? "translate-x-5" : ""}`}
+                />
+              </button>
+            </div>
+            {autoFollowerMode && (
+              <div className="ml-6">
+                <div className="flex justify-between text-xs">
+                  <span>Follower mode duration (minutes)</span>
+                  <input
+                    type="number"
+                    value={followerModeDuration}
+                    onChange={(e) =>
+                      setFollowerModeDuration(Number(e.target.value))
+                    }
+                    className="w-20 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[var(--text-primary)] flex items-center gap-1">
+                <Link className="w-3 h-3" /> Auto‑block messages containing
+                links
+              </span>
+              <button
+                onClick={handleToggleAutoBlockLinks}
+                className="relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)]"
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoBlockLinks ? "translate-x-5" : ""}`}
+                />
+              </button>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Ban className="w-3 h-3 text-[var(--text-secondary)]" />
+                <span className="text-xs text-[var(--text-secondary)]">
+                  Blocked terms
+                </span>
+              </div>
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
-                  value={raidTarget}
-                  onChange={(e) => setRaidTarget(e.target.value)}
-                  placeholder="Raid target channel (e.g., channelname)"
-                  className="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm text-[var(--text-primary)]"
+                  value={newTerm}
+                  onChange={(e) => setNewTerm(e.target.value)}
+                  placeholder="Add a word or phrase"
+                  className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
                 />
+                <button
+                  onClick={addBlockedTerm}
+                  className="px-2 py-1 bg-[#9147ff] rounded text-xs"
+                >
+                  Add
+                </button>
               </div>
-            )}
+              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                {blockedTerms.map((term) => (
+                  <span
+                    key={term}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--btn-secondary-bg)] rounded-full text-xs"
+                  >
+                    {term}
+                    <button
+                      onClick={() => removeBlockedTerm(term)}
+                      className="hover:text-red-400"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -270,8 +469,8 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
               type="text"
               value={scriptName}
               onChange={(e) => setScriptName(e.target.value)}
-              placeholder="Script name (e.g., 'greeting.js')"
-              className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm text-[var(--text-primary)]"
+              placeholder="Script name"
+              className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
             />
             <button
               onClick={handleAddScript}
@@ -291,19 +490,17 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
                   key={idx}
                   className="flex items-center justify-between bg-[var(--input-bg)] p-1 rounded"
                 >
-                  <span className="text-xs text-[var(--text-primary)] truncate">
-                    {script.name}
-                  </span>
+                  <span className="text-xs truncate">{script.name}</span>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleToggleScript(idx)}
-                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      className="text-xs text-[var(--text-secondary)] hover:text-white"
                     >
                       {script.enabled ? "Disable" : "Enable"}
                     </button>
                     <button
                       onClick={() => handleRemoveScript(idx)}
-                      className="text-xs text-red-400 hover:text-red-300"
+                      className="text-red-400 hover:text-red-300"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -314,7 +511,7 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
           </div>
         </div>
 
-        {/* Logs */}
+        {/* Automation Logs */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-xs font-medium text-[var(--text-secondary)] uppercase">
@@ -322,12 +519,12 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
             </h4>
             <button
               onClick={handleResetLogs}
-              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              className="text-xs text-[var(--text-secondary)] hover:text-white"
             >
               Clear
             </button>
           </div>
-          <div className="space-y-1 max-h-48 overflow-y-auto">
+          <div className="space-y-1 max-h-50 overflow-y-auto">
             {logs.length === 0 ? (
               <p className="text-xs text-[var(--text-secondary)] italic">
                 No automation events yet.
@@ -353,46 +550,22 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
         </div>
       </div>
 
-      {/* Buttons always at bottom */}
-      <div className="border-[var(--border-color)] ">
-        <div className="mt-4 p-2 mb-2 border-t border-[var(--border-color)]">
-          <div className="flex justify-between text-xs text-[var(--text-secondary)]">
-            <span>Messages filtered:</span>
-            <span>
-              {
-                logs.filter(
-                  (l) => l.type === "error" && l.message.includes("filtered"),
-                ).length
-              }
-            </span>
-          </div>
-          <div className="flex justify-between text-xs text-[var(--text-secondary)]">
-            <span>Auto-timeouts:</span>
-            <span>
-              {
-                logs.filter(
-                  (l) => l.type === "error" && l.message.includes("Timeout"),
-                ).length
-              }
-            </span>
-          </div>
-        </div>
-        <div className="flex gap-2 border-t p-3">
-          <button
-            onClick={handleStartAutomation}
-            disabled={automationRunning}
-            className="flex-1 flex items-center justify-center gap-1 bg-[#9147ff] py-1.5 rounded-lg hover:bg-[#772ce8] disabled:opacity-50 text-sm text-white"
-          >
-            <Play className="w-3 h-3" /> Start
-          </button>
-          <button
-            onClick={handleStopAutomation}
-            disabled={!automationRunning}
-            className="flex-1 flex items-center justify-center gap-1 bg-[var(--btn-secondary-bg)] py-1.5 rounded-lg hover:bg-[var(--btn-secondary-hover)] disabled:opacity-50 text-sm"
-          >
-            <Square className="w-3 h-3" /> Stop
-          </button>
-        </div>
+      {/* Start / Stop buttons */}
+      <div className="border-t border-[var(--border-color)] p-3 flex gap-2">
+        <button
+          onClick={handleStartAutomation}
+          disabled={automationRunning}
+          className="flex-1 flex items-center justify-center gap-1 bg-[#9147ff] py-1.5 rounded-lg hover:bg-[#772ce8] disabled:opacity-50 text-white text-sm"
+        >
+          <Play className="w-3 h-3" /> Start
+        </button>
+        <button
+          onClick={handleStopAutomation}
+          disabled={!automationRunning}
+          className="flex-1 flex items-center justify-center gap-1 bg-[var(--btn-secondary-bg)] py-1.5 rounded-lg hover:bg-[var(--btn-secondary-hover)] disabled:opacity-50 text-sm"
+        >
+          <Square className="w-3 h-3" /> Stop
+        </button>
       </div>
     </div>
   );

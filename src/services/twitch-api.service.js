@@ -493,6 +493,42 @@ class TwitchApiService {
       body: JSON.stringify(body),
     });
   }
+
+
+
+
+
+/**
+ * Add a blocked term to the channel
+ * @param {string} broadcasterId
+ * @param {string} moderatorId
+ * @param {string} term - The word/phrase to block
+ */
+async addBlockedTerm(broadcasterId, moderatorId, term) {
+  const body = { term };
+  return await this.fetchTwitch(`moderation/blocked_terms?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+/**
+ * Remove a blocked term from the channel
+ * @param {string} broadcasterId
+ * @param {string} termId - ID of the blocked term
+ */
+async removeBlockedTerm(broadcasterId, termId) {
+  const params = new URLSearchParams({
+    broadcaster_id: broadcasterId,
+    id: termId
+  });
+  return await this.fetchTwitch(`moderation/blocked_terms?${params}`, {
+    method: 'DELETE'
+  });
+}
+
+
 }
 
 const twitchApiService = new TwitchApiService();

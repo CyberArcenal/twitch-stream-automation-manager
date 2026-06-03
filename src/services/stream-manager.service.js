@@ -12,7 +12,10 @@ class StreamManagerService {
   }
 
   async updateStreamInfo(broadcasterId, data) {
-    logger.info(`[StreamManager] Updating stream info for ${broadcasterId}`, data);
+    logger.info(
+      `[StreamManager] Updating stream info for ${broadcasterId}`,
+      data,
+    );
 
     const body = {
       title: data.title,
@@ -26,7 +29,9 @@ class StreamManagerService {
     };
 
     // Remove undefined fields
-    Object.keys(body).forEach(key => body[key] === undefined && delete body[key]);
+    Object.keys(body).forEach(
+      (key) => body[key] === undefined && delete body[key],
+    );
 
     const params = new URLSearchParams({ broadcaster_id: broadcasterId });
     await twitchApiService.fetchTwitch(`channels?${params}`, {
@@ -70,7 +75,9 @@ class StreamManagerService {
   }
 
   async _runCommercial(broadcasterId, length = 30) {
-    logger.info(`[StreamManager] Running ${length}s commercial for ${broadcasterId}`);
+    logger.info(
+      `[StreamManager] Running ${length}s commercial for ${broadcasterId}`,
+    );
     const body = { broadcaster_id: broadcasterId, length };
     return await twitchApiService.fetchTwitch("channels/commercial", {
       method: "POST",
@@ -141,7 +148,9 @@ class StreamManagerService {
   async getModerators(broadcasterId) {
     try {
       const params = new URLSearchParams({ broadcaster_id: broadcasterId });
-      const result = await twitchApiService.fetchTwitch(`moderation/moderators?${params}`);
+      const result = await twitchApiService.fetchTwitch(
+        `moderation/moderators?${params}`,
+      );
       return result.data || [];
     } catch (err) {
       logger.warn("[StreamManager] getModerators error:", err.message);
@@ -210,7 +219,9 @@ class StreamManagerService {
   }
 
   deleteGoal(goalId) {
-    const goals = this.goalsStore.get("goals", []).filter((g) => g.id !== goalId);
+    const goals = this.goalsStore
+      .get("goals", [])
+      .filter((g) => g.id !== goalId);
     this.goalsStore.set("goals", goals);
   }
 
@@ -234,6 +245,18 @@ class StreamManagerService {
     if (!lastTime) return 0;
     const elapsed = Date.now() - lastTime;
     return Math.max(0, this.commercialCooldownMs - elapsed);
+  }
+
+  async deleteMessage(broadcasterId, moderatorId, messageId) {
+    const params = new URLSearchParams({
+      broadcaster_id: broadcasterId,
+      moderator_id: moderatorId,
+      message_id: messageId,
+    });
+    await twitchApiService.fetchTwitch(`moderation/chat?${params}`, {
+      method: "DELETE",
+    });
+    return true;
   }
 
   setStreamStartTime(timestamp) {

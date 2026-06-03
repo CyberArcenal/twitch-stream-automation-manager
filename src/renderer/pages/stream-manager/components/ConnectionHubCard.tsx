@@ -138,27 +138,6 @@ const ConnectionHubCard: React.FC<ConnectionHubCardProps> = ({ isLive, onRefresh
         </p>
       </div>
 
-      {/* Start / Stop Stream buttons (only if OBS connected) */}
-      {obsConnected && (
-        <div className="flex gap-2 mb-3">
-          {!isStreaming ? (
-            <button
-              onClick={handleStartStream}
-              className="flex-1 flex items-center justify-center gap-1 bg-green-600 py-1.5 rounded-lg text-sm hover:bg-green-700 transition"
-            >
-              <Play className="w-3 h-3" /> Start Stream
-            </button>
-          ) : (
-            <button
-              onClick={handleStopStream}
-              className="flex-1 flex items-center justify-center gap-1 bg-red-600 py-1.5 rounded-lg text-sm hover:bg-red-700 transition"
-            >
-              <Square className="w-3 h-3" /> Stop Stream
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Check Live Status button with loading state */}
       <button
         onClick={handleCheckLiveStatus}

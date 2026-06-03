@@ -2,6 +2,7 @@
 import type { BaseResponse } from "./common";
 
 export interface ChatMessage {
+  messageId: string;
   id: string;
   channel: string;
   user: string;

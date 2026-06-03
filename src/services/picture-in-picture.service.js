@@ -2,6 +2,7 @@
 //@ts-check
 const { BrowserWindow } = require('electron');
 const path = require('path');
+const { logger } = require('../utils/logger');
 
 class PictureInPictureService {
   constructor() {
@@ -15,11 +16,19 @@ class PictureInPictureService {
 
   _sendToRenderers(channel, data) {
     try {
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) win.webContents.send(channel, data);
+      const windows = BrowserWindow.getAllWindows();
+      windows.forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(channel, data);
+        }
       });
-    } catch (err) {
-      console.warn('[PiPService] send error:', err);
+    } catch (error) {
+      // If running outside Electron (e.g., tests), ignore
+      logger.warn(
+        "Failed to send IPC event (maybe not in Electron):",
+        // @ts-ignore
+        error.message,
+      );
     }
   }
 

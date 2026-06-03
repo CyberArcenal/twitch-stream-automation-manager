@@ -1,6 +1,7 @@
 // src/main/services/shortcut.service.js
 //@ts-check
 const { globalShortcut, BrowserWindow } = require('electron');
+const { logger } = require('../utils/logger');
 
 class ShortcutService {
   constructor() {
@@ -15,11 +16,19 @@ class ShortcutService {
 
   _sendToRenderers(channel, data) {
     try {
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) win.webContents.send(channel, data);
+      const windows = BrowserWindow.getAllWindows();
+      windows.forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(channel, data);
+        }
       });
-    } catch (err) {
-      console.warn('[ShortcutService] send error:', err);
+    } catch (error) {
+      // If running outside Electron (e.g., tests), ignore
+      logger.warn(
+        "Failed to send IPC event (maybe not in Electron):",
+        // @ts-ignore
+        error.message,
+      );
     }
   }
 
