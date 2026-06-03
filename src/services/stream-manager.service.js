@@ -9,6 +9,51 @@ class StreamManagerService {
     this.goalsStore = new Store({ name: "streamGoals" });
     this.lastCommercialTime = null;
     this.commercialCooldownMs = 8 * 60 * 1000; // 8 minutes default
+
+    const { eventSubService } = require("./eventsub.service");
+    eventSubService.on("eventsub:follow", this.onFollowEvent.bind(this));
+    eventSubService.on(
+      "eventsub:subscription",
+      this.onSubscriptionEvent.bind(this),
+    );
+    eventSubService.on("eventsub:bits", this.onBitsEvent.bind(this));
+  }
+
+  async onFollowEvent(data) {
+    // I‑update ang anumang goal na may unit na "followers"
+    await this.incrementGoalProgress("followers", 1);
+  }
+
+  async onSubscriptionEvent(data) {
+    // I‑update ang subscriber goal (kung ang goal ay "subscribers")
+    await this.incrementGoalProgress("subscribers", 1);
+  }
+
+  async onBitsEvent(data) {
+    // I‑update ang bits goal (kung ang goal ay "bits")
+    const amount = data.amount || data.bits || 0;
+    if (amount > 0) await this.incrementGoalProgress("bits", amount);
+  }
+
+  async incrementGoalProgress(unit, amount) {
+    const goals = this.getGoals();
+    let updated = false;
+    for (const goal of goals) {
+      if (goal.unit === unit && goal.current < goal.target) {
+        goal.current = Math.min(goal.current + amount, goal.target);
+        updated = true;
+      }
+    }
+    if (updated) {
+      this.goalsStore.set("goals", goals);
+      // I‑broadcast ang update sa lahat ng renderer
+      const { BrowserWindow } = require("electron");
+      BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send("goal:progress-updated", { unit, amount });
+        }
+      });
+    }
   }
 
   async updateStreamInfo(broadcasterId, data) {
@@ -247,15 +292,17 @@ class StreamManagerService {
     return Math.max(0, this.commercialCooldownMs - elapsed);
   }
 
-async deleteMessage(broadcasterId, moderatorId, messageId) {
-  const params = new URLSearchParams({
-    broadcaster_id: broadcasterId,
-    moderator_id: moderatorId,
-    message_id: messageId,
-  });
-  await twitchApiService.fetchTwitch(`moderation/chat?${params}`, { method: "DELETE" });
-  return true;
-}
+  async deleteMessage(broadcasterId, moderatorId, messageId) {
+    const params = new URLSearchParams({
+      broadcaster_id: broadcasterId,
+      moderator_id: moderatorId,
+      message_id: messageId,
+    });
+    await twitchApiService.fetchTwitch(`moderation/chat?${params}`, {
+      method: "DELETE",
+    });
+    return true;
+  }
 
   setStreamStartTime(timestamp) {
     this.goalsStore.set("streamStartTime", timestamp);

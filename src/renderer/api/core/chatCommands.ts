@@ -1,18 +1,15 @@
+import type { ChatCommand } from '../../pages/chat-commands/types';
 import type { BaseResponse } from './common';
-
-export interface ChatCommand {
-  action: string;
-  cooldown: number;
-  enabled: boolean;
-  userCooldowns?: Map<string, number>;
-}
 
 class ChatCommandsAPI {
   async getCommands(): Promise<BaseResponse<Record<string, ChatCommand>>> {
     return window.backendAPI['chat-commands']({ method: 'getCommands' });
   }
-  async addCommand(command: string, action: string, cooldown: number): Promise<BaseResponse<boolean>> {
-    return window.backendAPI['chat-commands']({ method: 'addCommand', params: { command, action, cooldown } });
+  async addCustomCommand(command: string, response: string, cooldown: number): Promise<BaseResponse<boolean>> {
+    return window.backendAPI['chat-commands']({ method: 'addCustomCommand', params: { command, response, cooldown } });
+  }
+  async updateCommand(command: string, updates: Partial<ChatCommand>): Promise<BaseResponse<boolean>> {
+    return window.backendAPI['chat-commands']({ method: 'updateCommand', params: { command, updates } });
   }
   async removeCommand(command: string): Promise<BaseResponse<boolean>> {
     return window.backendAPI['chat-commands']({ method: 'removeCommand', params: { command } });

@@ -1,3 +1,4 @@
+// src/main/ipc/index.ipc.js
 const { ipcMain } = require('electron');
 const { chatCommandsService } = require('../../../../services/chat-commands.service');
 
@@ -6,9 +7,11 @@ async function handleChatCommandsRequest(event, payload) {
 
   switch (method) {
     case 'getCommands':
-      return chatCommandsService.commands;
-    case 'addCommand':
-      return chatCommandsService.addCommand(params.command, params.action, params.cooldown);
+      return chatCommandsService.getAllCommands(); // dapat ibalik ang lahat ng commands (kasama ang response)
+    case 'addCustomCommand':
+      return chatCommandsService.addCustomCommand(params.command, params.response, params.cooldown);
+    case 'updateCommand':
+      return chatCommandsService.updateCommand(params.command, params.updates);
     case 'removeCommand':
       return chatCommandsService.removeCommand(params.command);
     case 'setCommandEnabled':
