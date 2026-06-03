@@ -13,6 +13,7 @@ import SettingsPage from "../pages/settings";
 import SchedulerPage from "../pages/scheduler";
 import ChatCommandsPage from "../pages/chat-commands";
 import PredictionsPage from "../pages/predictions";
+import { streamManagerAPI } from "../api/core/streamManager";
 
 // ─── Generic Placeholder (for pages not yet built) ─────────────
 const PlaceholderPage = ({
@@ -80,6 +81,15 @@ function App() {
       window.backendAPI.notifyAppReady();
       console.log("Notified main process: renderer is ready");
     }
+  }, []);
+
+  useEffect(() => {
+    const handleRunCommercial = async () => {
+      await streamManagerAPI.runCommercial(30);
+    };
+    window.backendAPI?.on?.("shortcut:runCommercial", handleRunCommercial);
+    return () =>
+      window.backendAPI?.off?.("shortcut:runCommercial", handleRunCommercial);
   }, []);
 
   return (

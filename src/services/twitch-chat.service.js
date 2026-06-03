@@ -14,9 +14,11 @@ const { logger } = require("../utils/logger");
 const { chatHistoryService } = require("./chat-history.service");
 const { autoModerationService } = require("./auto-moderation.service");
 const { chatCommandsService } = require("./chat-commands.service");
+const EventEmitter = require("events");
 
 class TwitchChatService {
   constructor() {
+    this.events = new EventEmitter();
     this.chatClient = null; // channel chat client
     this.whisperClient = null; // whispers client
     this.currentChannel = null;
@@ -449,6 +451,7 @@ class TwitchChatService {
         msg.id,
         badgesArray,
       );
+      this.events.emit("chat:message", channel, user, message, msg);
     });
 
     this.chatClient?.onJoin((channel, user) => {

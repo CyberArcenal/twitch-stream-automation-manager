@@ -64,6 +64,9 @@ class ShortcutService {
       case 'closePlayer':
         this._sendToRenderers('shortcut:closePlayer');
         break;
+      case 'runCommercial':
+        this._sendToRenderers('shortcut:runCommercial');
+        break;
       default:
         console.warn(`[ShortcutService] Unknown action: ${action}`);
     }

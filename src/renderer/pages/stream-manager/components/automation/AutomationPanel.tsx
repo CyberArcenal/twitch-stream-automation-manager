@@ -24,7 +24,9 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
   const { logs, clearLogs, addLog } = useAutomationLog();
   const stream = useStreamTriggers();
   const chat = useChatModeration();
+  const [newBadge, setNewBadge] = useState("");
   const { automationRunning, startAutomation, stopAutomation } = useAutomationRunner();
+  
 
   const [scripts, setScripts] = useState<CustomScript[]>([]);
   const [newTermLocal, setNewTermLocal] = useState("");
@@ -90,33 +92,45 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
           onToggleAutoMessage={() => stream.setAutoMessageEnabled(!stream.autoMessageEnabled)}
           autoMessageText={stream.autoMessageText}
           onAutoMessageTextChange={stream.setAutoMessageText}
+          autoShoutoutOnRaid={chat.autoShoutoutOnRaid}
+          onToggleAutoShoutoutOnRaid={() => chat.setAutoShoutoutOnRaid(!chat.autoShoutoutOnRaid)}
+          shoutoutMessage={chat.shoutoutMessage}
+          onShoutoutMessageChange={chat.setShoutoutMessage}
         />
 
         <ChatAutomationRules
-          autoSlowMode={chat.autoSlowMode}
-          onToggleAutoSlowMode={() => chat.setAutoSlowMode(!chat.autoSlowMode)}
-          slowModeSpamThreshold={chat.slowModeSpamThreshold}
-          onSlowModeSpamThresholdChange={chat.setSlowModeSpamThreshold}
-          slowModeWaitTime={chat.slowModeWaitTime}
-          onSlowModeWaitTimeChange={chat.setSlowModeWaitTime}
-          autoDeleteMessage={chat.autoDeleteMessage}
-          onToggleAutoDeleteMessage={() => chat.setAutoDeleteMessage(!chat.autoDeleteMessage)}
-          autoTimeoutUser={chat.autoTimeoutUser}
-          onToggleAutoTimeout={() => chat.setAutoTimeoutUser(!chat.autoTimeoutUser)}
-          autoFollowerMode={chat.autoFollowerMode}
-          onToggleAutoFollowerMode={() => chat.setAutoFollowerMode(!chat.autoFollowerMode)}
-          followerModeDuration={chat.followerModeDuration}
-          onFollowerModeDurationChange={chat.setFollowerModeDuration}
-          autoBlockLinks={chat.autoBlockLinks}
-          onToggleAutoBlockLinks={() => chat.setAutoBlockLinks(!chat.autoBlockLinks)}
-          blockedTerms={chat.blockedTerms}
-          onAddBlockedTerm={chat.addBlockedTerm}
-          onRemoveBlockedTerm={chat.removeBlockedTerm}
-          newTerm={newTermLocal}
-          onNewTermChange={setNewTermLocal}
-          autoModerationEnabled={chat.autoModerationEnabled}
-          onToggleAutoModeration={() => chat.setAutoModerationEnabled(!chat.autoModerationEnabled)}
+        autoSlowMode={chat.autoSlowMode}
+        onToggleAutoSlowMode={() => chat.setAutoSlowMode(!chat.autoSlowMode)}
+        slowModeSpamThreshold={chat.slowModeSpamThreshold}
+        onSlowModeSpamThresholdChange={chat.setSlowModeSpamThreshold}
+        slowModeWaitTime={chat.slowModeWaitTime}
+        onSlowModeWaitTimeChange={chat.setSlowModeWaitTime}
+        autoDeleteMessage={chat.autoDeleteMessage}
+        onToggleAutoDeleteMessage={() => chat.setAutoDeleteMessage(!chat.autoDeleteMessage)}
+        autoTimeoutUser={chat.autoTimeoutUser}
+        onToggleAutoTimeout={() => chat.setAutoTimeoutUser(!chat.autoTimeoutUser)}
+        autoFollowerMode={chat.autoFollowerMode}
+        onToggleAutoFollowerMode={() => chat.setAutoFollowerMode(!chat.autoFollowerMode)}
+        followerModeDuration={chat.followerModeDuration}
+        onFollowerModeDurationChange={chat.setFollowerModeDuration}
+        autoBlockLinks={chat.autoBlockLinks}
+        onToggleAutoBlockLinks={() => chat.setAutoBlockLinks(!chat.autoBlockLinks)}
+        blockedTerms={chat.blockedTerms}
+        onAddBlockedTerm={chat.addBlockedTerm}
+        onRemoveBlockedTerm={chat.removeBlockedTerm}
+        newTerm={newTermLocal}
+        onNewTermChange={setNewTermLocal}
+        autoModerationEnabled={chat.autoModerationEnabled}
+        onToggleAutoModeration={() => chat.setAutoModerationEnabled(!chat.autoModerationEnabled)} slowModeDuration={chat.slowModeDuration} setSlowModeDuration={chat.setSlowModeDuration}
+        repeatWindowSeconds={chat.repeatWindowSeconds} setRepeatWindowSeconds={chat.setRepeatWindowSeconds}
+        repeatCountThreshold={chat.repeatCountThreshold} setRepeatCountThreshold={chat.setRepeatCountThreshold}
+         blockedBadges={chat.blockedBadges}
+  onAddBlockedBadge={chat.addBlockedBadge}
+  onRemoveBlockedBadge={chat.removeBlockedBadge}
+  newBadge={newBadge}
+  onNewBadgeChange={setNewBadge}
         />
+
 
         <CustomScripts
           scripts={scripts}

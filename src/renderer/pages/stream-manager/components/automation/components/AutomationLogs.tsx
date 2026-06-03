@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import type { AutomationLog } from "../types";
 
 interface AutomationLogsProps {
@@ -10,10 +10,14 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
   logs,
   onClearLogs,
 }) => {
-  const getDisplayType = (type: string) => {
-    if (type === "warning") return "info"; // or "error"
-    return type as "info" | "success" | "error";
-  };
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom whenever logs change
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, [logs]);
 
   return (
     <div>
@@ -28,7 +32,10 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
           Clear
         </button>
       </div>
-      <div className="space-y-1 max-h-15 overflow-y-auto">
+      <div
+        ref={scrollContainerRef}
+        className="space-y-1 max-h-15 overflow-y-auto"
+      >
         {logs.length === 0 ? (
           <p className="text-xs text-[var(--text-secondary)] italic">
             No automation events yet.

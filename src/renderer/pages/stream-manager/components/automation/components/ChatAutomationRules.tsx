@@ -25,6 +25,17 @@ interface ChatAutomationRulesProps {
   onNewTermChange: (value: string) => void;
   autoModerationEnabled: boolean;
   onToggleAutoModeration: () => void;
+  slowModeDuration: number;
+  setSlowModeDuration: (value: number) => void;
+  repeatWindowSeconds: number;
+  setRepeatWindowSeconds: (value: number) => void;
+  repeatCountThreshold: number;
+  setRepeatCountThreshold: (value: number) => void;
+    blockedBadges: string[];
+  onAddBlockedBadge: (badge: string) => void;
+  onRemoveBlockedBadge: (badge: string) => void;
+  newBadge: string;
+  onNewBadgeChange: (value: string) => void;
 }
 
 export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
@@ -51,6 +62,17 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
   onNewTermChange,
   autoModerationEnabled,
   onToggleAutoModeration,
+  slowModeDuration,
+  setSlowModeDuration,
+  repeatWindowSeconds,
+  setRepeatWindowSeconds,
+  repeatCountThreshold,
+  setRepeatCountThreshold,
+  blockedBadges,
+  onAddBlockedBadge,
+  onRemoveBlockedBadge,
+  newBadge,
+  onNewBadgeChange,
 }) => {
   const handleAddTerm = () => {
     if (!newTerm.trim()) return;
@@ -63,15 +85,19 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
       <h4 className="text-xs font-medium text-[var(--text-secondary)] uppercase mb-2 flex items-center gap-1">
         <Shield className="w-3 h-3" /> Chat Automation
       </h4>
-      <div className="space-y-3">
+      <div className="space-y-3 overflow-y-scroll max-h-[390px] pr-2 pb-3">
         {/* Auto slow mode */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-[var(--text-primary)]">Auto‑enable Slow Mode on spam</span>
+          <span className="text-sm text-[var(--text-primary)]">
+            Auto‑enable Slow Mode on spam
+          </span>
           <button
             onClick={onToggleAutoSlowMode}
             className={`relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)] ${autoSlowMode ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoSlowMode ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoSlowMode ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
         {autoSlowMode && (
@@ -81,7 +107,9 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
               <input
                 type="number"
                 value={slowModeSpamThreshold}
-                onChange={(e) => onSlowModeSpamThresholdChange(Number(e.target.value))}
+                onChange={(e) =>
+                  onSlowModeSpamThresholdChange(Number(e.target.value))
+                }
                 className="w-16 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1 text-center"
               />
             </div>
@@ -89,7 +117,9 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
               <span>Slow mode wait time (seconds)</span>
               <select
                 value={slowModeWaitTime}
-                onChange={(e) => onSlowModeWaitTimeChange(Number(e.target.value))}
+                onChange={(e) =>
+                  onSlowModeWaitTimeChange(Number(e.target.value))
+                }
                 className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
               >
                 <option value={5}>5 sec</option>
@@ -97,41 +127,64 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
                 <option value={30}>30 sec</option>
               </select>
             </div>
+            <div className="flex justify-between text-xs">
+              <span>Slow mode duration (seconds)</span>
+              <input
+                type="number"
+                value={slowModeDuration}
+                onChange={(e) => setSlowModeDuration(Number(e.target.value))}
+                min={10}
+                max={300}
+                step={10}
+                className="w-20 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
+              />
+            </div>
           </div>
         )}
 
         {/* Auto-delete */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-[var(--text-primary)] flex items-center gap-1">
-            <Ban className="w-3 h-3" /> Auto‑delete messages containing blocked terms
+            <Ban className="w-3 h-3" /> Auto‑delete messages containing blocked
+            terms
           </span>
           <button
             onClick={onToggleAutoDeleteMessage}
             className={`relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)] ${autoDeleteMessage ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoDeleteMessage ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoDeleteMessage ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
 
         {/* Timeout user */}
         <div className="flex items-center justify-between mt-2">
-          <span className="text-sm text-[var(--text-primary)]">Timeout user</span>
+          <span className="text-sm text-[var(--text-primary)]">
+            Timeout user
+          </span>
           <button
             onClick={onToggleAutoTimeout}
             className={`relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)] ${autoTimeoutUser ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoTimeoutUser ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoTimeoutUser ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
 
         {/* Auto follower mode on raid */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-[var(--text-primary)]">Auto‑enable Follower Mode during raid</span>
+          <span className="text-sm text-[var(--text-primary)]">
+            Auto‑enable Follower Mode during raid
+          </span>
           <button
             onClick={onToggleAutoFollowerMode}
             className={`relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)] ${autoFollowerMode ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoFollowerMode ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoFollowerMode ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
         {autoFollowerMode && (
@@ -141,7 +194,9 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
               <input
                 type="number"
                 value={followerModeDuration}
-                onChange={(e) => onFollowerModeDurationChange(Number(e.target.value))}
+                onChange={(e) =>
+                  onFollowerModeDurationChange(Number(e.target.value))
+                }
                 className="w-20 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-1"
               />
             </div>
@@ -157,7 +212,9 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
             onClick={onToggleAutoBlockLinks}
             className={`relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)] ${autoBlockLinks ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoBlockLinks ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoBlockLinks ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
 
@@ -165,7 +222,9 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Ban className="w-3 h-3 text-[var(--text-secondary)]" />
-            <span className="text-xs text-[var(--text-secondary)]">Blocked terms</span>
+            <span className="text-xs text-[var(--text-secondary)]">
+              Blocked terms
+            </span>
           </div>
           <div className="flex gap-2 mb-2">
             <input
@@ -175,7 +234,10 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
               placeholder="Add a word or phrase"
               className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
             />
-            <button onClick={handleAddTerm} className="px-2 py-1 bg-[var(--primary-color)] rounded text-xs">
+            <button
+              onClick={handleAddTerm}
+              className="px-2 py-1 bg-[var(--primary-color)] rounded text-xs"
+            >
               Add
             </button>
           </div>
@@ -186,13 +248,97 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
                 className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--btn-secondary-bg)] rounded-full text-xs"
               >
                 {term}
-                <button onClick={() => onRemoveBlockedTerm(term)} className="hover:text-red-400">
+                <button
+                  onClick={() => onRemoveBlockedTerm(term)}
+                  className="hover:text-red-400"
+                >
                   ×
                 </button>
               </span>
             ))}
           </div>
         </div>
+
+        <div className="mt-3 pt-2 border-t border-[var(--border-color)]">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-medium text-[var(--text-secondary)]">
+              Spam Detection (Repeated Messages)
+            </span>
+          </div>
+          <div className="flex gap-4">
+            <label className="flex-1 text-xs">
+              <span>Window (seconds)</span>
+              <input
+                type="number"
+                value={repeatWindowSeconds}
+                onChange={(e) => setRepeatWindowSeconds(Number(e.target.value))}
+                min={1}
+                max={60}
+                className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1"
+              />
+            </label>
+            <label className="flex-1 text-xs">
+              <span>Threshold (repeats)</span>
+              <input
+                type="number"
+                value={repeatCountThreshold}
+                onChange={(e) =>
+                  setRepeatCountThreshold(Number(e.target.value))
+                }
+                min={2}
+                max={10}
+                className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1"
+              />
+            </label>
+          </div>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+            Auto‑timeout user if same message is sent &gt;= threshold within
+            window.
+          </p>
+        </div>
+
+        <div>
+  <div className="flex items-center gap-2 mb-1 mt-2">
+    <Shield className="w-3 h-3 text-[var(--text-secondary)]" />
+    <span className="text-xs text-[var(--text-secondary)]">
+      Blocked Badges (auto‑timeout)
+    </span>
+  </div>
+  <div className="flex gap-2 mb-2">
+    <input
+      type="text"
+      value={newBadge}
+      onChange={(e) => onNewBadgeChange(e.target.value)}
+      placeholder="e.g., troll, known_spammer"
+      className="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded px-2 py-1 text-sm"
+    />
+    <button
+      onClick={() => {
+        if (newBadge.trim()) onAddBlockedBadge(newBadge);
+        onNewBadgeChange('');
+      }}
+      className="px-2 py-1 bg-[var(--primary-color)] rounded text-xs"
+    >
+      Add
+    </button>
+  </div>
+  <div className="flex flex-wrap gap-1 max-h-10 overflow-y-auto">
+    {blockedBadges.map((badge) => (
+      <span
+        key={badge}
+        className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--btn-secondary-bg)] rounded-full text-xs"
+      >
+        {badge}
+        <button onClick={() => onRemoveBlockedBadge(badge)} className="hover:text-red-400">
+          ×
+        </button>
+      </span>
+    ))}
+  </div>
+  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+    Users with any of these badges will be automatically timed out.
+  </p>
+</div>
 
         {/* Master toggle for Chat Auto-Moderation */}
         <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-3 mt-3">
@@ -203,7 +349,9 @@ export const ChatAutomationRules: React.FC<ChatAutomationRulesProps> = ({
             onClick={onToggleAutoModeration}
             className={`relative w-10 h-5 rounded-full transition-colors bg-[var(--input-border)] ${autoModerationEnabled ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoModerationEnabled ? "translate-x-5" : ""}`} />
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoModerationEnabled ? "translate-x-5" : ""}`}
+            />
           </button>
         </div>
         {/* {autoModerationEnabled && (
