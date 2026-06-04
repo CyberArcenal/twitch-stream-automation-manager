@@ -14,7 +14,7 @@
   },
   "build": {
     "appId": "com.CyberArcenal.twitchstreamautomationmanager",
-    "productName": "Twitch Auto Manager",
+    "productName": "TSAM",
     "directories": {
       "output": "release"
     },
