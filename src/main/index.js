@@ -4,7 +4,7 @@
 
 /**
  * @file Main entry point for Twitch Stream Manager
- * @version 1.0.0
+ * @version 0.0.0
  * @author CyberArcenal
  * @description Electron main process with Twitch integration, React + Vite frontend
  */

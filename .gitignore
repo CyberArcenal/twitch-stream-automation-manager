@@ -34,3 +34,4 @@ Thumbs.db
 package-lock.json
 src/main/config/env.js
 TODO
+/release
