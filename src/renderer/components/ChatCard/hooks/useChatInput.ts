@@ -1,6 +1,6 @@
 // src/renderer/pages/stream-manager/hooks/useChatInput.ts
 import { useState, useRef } from 'react';
-import type { ChatMessage } from '../../../../../api/core/chat';
+import type { ChatMessage } from '../../../api/core/chat';
 
 export const useChatInput = () => {
   const [input, setInput] = useState('');

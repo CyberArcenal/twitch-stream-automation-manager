@@ -61,12 +61,12 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
   if (loading) return <div className="bg-[var(--card-bg)] rounded-xl p-5 animate-pulse h-64"></div>;
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--card-bg)] p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Users className="w-5 h-5 text-[#9147ff]" />
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-          Team Management
-        </h3>
+   <div className="bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--border-color)] p-5 flex flex-col h-full">
+    <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+      <Users className="w-5 h-5 text-[#9147ff]" />
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+        Team Management
+      </h3>
       </div>
 
       {/* Add moderator */}
@@ -81,7 +81,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
           />
           <button
             onClick={addModerator}
-            className="px-3 py-1 bg-[var(--primary-color)] rounded-md text-sm flex items-center gap-1"
+            className="px-3 py-1 bg-[var(--primary-color)] rounded-md text-sm flex items-center gap-1 text-white"
           >
             <UserPlus className="w-4 h-4" /> Add
           </button>
@@ -90,7 +90,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
       </div>
 
       {/* Moderators list */}
-      <div className="space-y-2 max-h-48 overflow-y-auto">
+       <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
         {moderators.length === 0 ? (
           <p className="text-center text-[var(--text-secondary)] text-sm">No moderators yet</p>
         ) : (

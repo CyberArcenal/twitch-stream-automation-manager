@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useAutomationLog } from "../../../../../contexts/AutomationLogContext";
-import { streamManagerAPI } from "../../../../../api/core/streamManager";
+import { useAutomationLog } from "../../../contexts/AutomationLogContext";
+import { streamManagerAPI } from "../../../api/core/streamManager";
 
 
 export const useAutomationRunner = () => {

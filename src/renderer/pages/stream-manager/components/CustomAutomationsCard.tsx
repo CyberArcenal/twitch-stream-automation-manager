@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SceneManager from "./SceneManager";
 import AlertConfigurator from "./AlertConfigurator";
-import AutomationPanel from "./automation/AutomationPanel";
+import AutomationPanel from "../../../components/automation/AutomationPanel";
 
 interface CustomAutomationsCardProps {
   isLive: boolean;

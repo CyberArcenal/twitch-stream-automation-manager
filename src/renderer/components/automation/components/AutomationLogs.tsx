@@ -1,18 +1,22 @@
+// AutomationLogs.tsx
 import React, { useRef, useEffect } from "react";
 import type { AutomationLog } from "../types";
 
 interface AutomationLogsProps {
   logs: AutomationLog[];
+  className?: string;          // for the outer container
+  classNameToLog?: string;     // for the scrollable div
   onClearLogs: () => void;
 }
 
 export const AutomationLogs: React.FC<AutomationLogsProps> = ({
   logs,
+  className,
+  classNameToLog,
   onClearLogs,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom whenever logs change
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
@@ -20,8 +24,8 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
   }, [logs]);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
+    <div className={`flex flex-col ${className || ""}`}>
+      <div className="flex justify-between items-center mb-2 flex-shrink-0">
         <h4 className="text-xs font-medium text-[var(--text-secondary)] uppercase">
           Automation Logs
         </h4>
@@ -34,7 +38,7 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
       </div>
       <div
         ref={scrollContainerRef}
-        className="space-y-1 max-h-15 overflow-y-auto"
+        className={`overflow-y-auto ${classNameToLog || "max-h-13"}`}
       >
         {logs.length === 0 ? (
           <p className="text-xs text-[var(--text-secondary)] italic">
@@ -44,7 +48,7 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
           logs.map((log) => (
             <div
               key={log.id}
-              className="text-xs border-l-2 border-[#9147ff] pl-2"
+              className="text-xs border-l-2 border-[#9147ff] pl-2 mb-1"
             >
               <span className="text-[var(--text-secondary)]">
                 {log.timestamp.toLocaleTimeString()}
@@ -54,8 +58,8 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
                   log.type === "error"
                     ? "text-red-400"
                     : log.type === "success"
-                      ? "text-green-400"
-                      : "text-[var(--text-primary)]"
+                    ? "text-green-400"
+                    : "text-[var(--text-primary)]"
                 }`}
               >
                 {log.message}

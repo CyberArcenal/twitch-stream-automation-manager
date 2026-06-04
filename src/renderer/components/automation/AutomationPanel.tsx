@@ -4,8 +4,8 @@ import { ChatAutomationRules } from "./components/ChatAutomationRules";
 import { CustomScripts } from "./components/CustomScripts";
 import { AutomationLogs } from "./components/AutomationLogs";
 import { ControlButtons } from "./components/ControlButtons";
-import { useAutomationLog } from "../../../../contexts/AutomationLogContext";
 import { useAutomationRunner, useChatModeration, useStreamTriggers } from "./hooks";
+import { useAutomationLog } from "../../contexts/AutomationLogContext";
 
 interface AutomationPanelProps {
   isLive: boolean;
@@ -122,8 +122,6 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
         blockedTerms={chat.blockedTerms}
         onAddBlockedTerm={chat.addBlockedTerm}
         onRemoveBlockedTerm={chat.removeBlockedTerm}
-        newTerm={newTermLocal}
-        onNewTermChange={setNewTermLocal}
         autoModerationEnabled={chat.autoModerationEnabled}
         onToggleAutoModeration={() => chat.setAutoModerationEnabled(!chat.autoModerationEnabled)} slowModeDuration={chat.slowModeDuration} setSlowModeDuration={chat.setSlowModeDuration}
         repeatWindowSeconds={chat.repeatWindowSeconds} setRepeatWindowSeconds={chat.setRepeatWindowSeconds}
@@ -131,8 +129,6 @@ const AutomationPanel: React.FC<AutomationPanelProps> = ({ isLive }) => {
         blockedBadges={chat.blockedBadges}
         onAddBlockedBadge={chat.addBlockedBadge}
         onRemoveBlockedBadge={chat.removeBlockedBadge}
-        newBadge={newBadge}
-        onNewBadgeChange={setNewBadge}
         autoClipOnChatSpike={chat.autoClipOnChatSpike}
         onToggleAutoClipOnChatSpike={() => chat.setAutoClipOnChatSpike(!chat.autoClipOnChatSpike)}
         chatSpikeThreshold={chat.chatSpikeThreshold}

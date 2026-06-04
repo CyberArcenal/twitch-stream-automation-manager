@@ -1,3 +1,4 @@
+// ModerationLogs.tsx (updated)
 import React, { useState, useEffect } from "react";
 import { History, Undo, Ban, Clock, UserX } from "lucide-react";
 import { moderationLogAPI, type ModerationLogEntry } from "../../../api/core/moderationLog";
@@ -6,14 +7,16 @@ import { formatDistanceToNow } from "date-fns";
 
 interface ModerationLogsProps {
   broadcasterId: string;
+  className?: string;
 }
 
-export const ModerationLogs: React.FC<ModerationLogsProps> = ({ broadcasterId }) => {
+export const ModerationLogs: React.FC<ModerationLogsProps> = ({ broadcasterId, className }) => {
   const [logs, setLogs] = useState<ModerationLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchLogs = async () => {
     try {
+      setLoading(true);
       const res = await moderationLogAPI.getLogs();
       if (res.status) setLogs(res.data || []);
     } catch (err) {
@@ -31,8 +34,7 @@ export const ModerationLogs: React.FC<ModerationLogsProps> = ({ broadcasterId })
     if (log.action === "ban" || log.action === "timeout") {
       try {
         await streamManagerAPI.unbanUser(log.targetUserName);
-        // Mark as undone in logs (optional: refresh logs)
-        await moderationLogAPI.clearLogs(); // simplistic; better to have an update endpoint
+        await moderationLogAPI.clearLogs(); // simplistic refresh
         fetchLogs();
       } catch (err) {
         console.error("Undo failed", err);
@@ -52,14 +54,14 @@ export const ModerationLogs: React.FC<ModerationLogsProps> = ({ broadcasterId })
   if (loading) return <div className="bg-[var(--card-bg)] rounded-xl p-5 animate-pulse h-64"></div>;
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--card-bg)] p-5">
-      <div className="flex items-center gap-2 mb-4">
+    <div className={`bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--border-color)] p-5 flex flex-col h-full ${className || ""}`}>
+      <div className="flex items-center gap-2 mb-4 flex-shrink-0">
         <History className="w-5 h-5 text-[#9147ff]" />
         <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
           Moderation Logs
         </h3>
       </div>
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
         {logs.length === 0 ? (
           <p className="text-center text-[var(--text-secondary)] text-sm">No moderation actions yet</p>
         ) : (

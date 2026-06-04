@@ -7,7 +7,7 @@ import QuickActionsCard from "./components/QuickActionsCard";
 import ConnectionHubCard from "./components/ConnectionHubCard";
 import ConnectedSoftwareCard from "./components/ConnectedSoftwareCard";
 import StreamHealthCard from "./components/StreamHealthCard";
-import ChatCard from "./components/ChatCard";
+import ChatCard from "../../components/ChatCard";
 import CustomAutomationsCard from "./components/CustomAutomationsCard";
 import AlertsCard from "./components/AlertsCard";
 import CollaborationCard from "./components/CollaborationCard";

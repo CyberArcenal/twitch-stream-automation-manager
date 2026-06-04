@@ -1,8 +1,8 @@
 // hooks/useChatMessages.ts
 import { useState, useEffect, useRef } from 'react';
-import { chatAPI, type ChatMessage } from '../../../../../api/core/chat';
-import { streamManagerAPI } from '../../../../../api/core/streamManager';
-import { dialogs } from '../../../../../utils/dialogs';
+import { chatAPI, type ChatMessage } from '../../../api/core/chat';
+import { streamManagerAPI } from '../../../api/core/streamManager';
+import { dialogs } from '../../../utils/dialogs';
 
 export const useChatMessages = (channelName?: string, currentUser?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);

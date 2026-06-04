@@ -8,7 +8,8 @@ export { useAutomationRunner } from './useAutomationRunner';
 import { useStreamTriggers } from './useStreamTriggers';
 import { useChatModeration } from './useChatModeration';
 import { useAutomationRunner } from './useAutomationRunner';
-import { useAutomationLog } from '../../../../../contexts/AutomationLogContext';
+import { useAutomationLog } from '../../../contexts/AutomationLogContext';
+
 
 export const useAutomation = () => {
   const stream = useStreamTriggers();

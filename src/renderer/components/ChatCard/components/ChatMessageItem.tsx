@@ -1,8 +1,9 @@
 // src/renderer/pages/stream-manager/components/ChatMessageItem.tsx
 import React, { memo } from "react";
 import { Loader2 } from "lucide-react";
-import type { ChatMessage } from "../../../../../api/core/chat";
+import type { ChatMessage } from "../../../api/core/chat";
 
+// Badge component (unchanged)
 const Badge: React.FC<{ name: string; version: string; imageUrl?: string }> = ({
   name,
   version,
@@ -78,10 +79,10 @@ interface ChatMessageItemProps {
   onDeleteClick: (msgId: string) => void;
   onBanClick?: (username: string) => void;
   onTimeoutClick?: (username: string, duration: number) => void;
+  onSelectUser?: (userId: string, userName: string) => void;
   currentUser: string;
   isLive: boolean;
   isPinned?: boolean;
-  // ✅ Loading states – mga string identifier, hindi boolean
   isDeletingId?: string | null;
   isBanningUser?: string | null;
   isTimeoutingUser?: string | null;
@@ -97,6 +98,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
     onDeleteClick,
     onBanClick,
     onTimeoutClick,
+    onSelectUser,
     currentUser,
     isLive,
     isPinned,
@@ -122,6 +124,14 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
     const handleTimeout = () =>
       !isLoadingTimeout && onTimeoutClick?.(message.user, 600);
 
+    const handleUserClick = () => {
+      if (onSelectUser && !isDeleted) {
+        // Use message.user_id if available, fallback to username
+        const userId = (message as any).user_id || message.user;
+        onSelectUser(userId, message.user);
+      }
+    };
+
     return (
       <div
         className={`group relative flex flex-col text-sm leading-relaxed px-2 py-1.5 rounded-lg transition-all duration-150
@@ -146,18 +156,21 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
               ))}
             </div>
           )}
-          <span
-            className={`font-semibold flex-shrink-0 ${
+          {/* Username as clickable button */}
+          <button
+            onClick={handleUserClick}
+            className={`font-semibold flex-shrink-0 text-left hover:underline focus:outline-none ${
               isOwnMessage && !isDeleted
                 ? "text-[#9147ff]"
                 : "text-[var(--text-primary)]"
             } ${isDeleted ? "line-through text-gray-400" : ""}`}
+            disabled={isDeleted}
           >
             {message.user}
             {isOwnMessage && !isDeleted && (
               <span className="text-xs ml-1 text-[#9147ff]/70">(you)</span>
             )}
-          </span>
+          </button>
           <div className="flex-1 overflow-x-hidden break-words">
             {message.replyParentMsgId && !isDeleted && (
               <span className="text-[var(--text-secondary)] text-xs block mb-0.5">

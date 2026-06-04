@@ -1,41 +1,41 @@
-const { ipcMain } = require('electron');
-const { shortcutService } = require('../../../../services/shortcut.service');
+const { ipcMain } = require("electron");
+const { shortcutService } = require("../../../../services/shortcut.service");
 
 async function handleShortcutRequest(event, payload) {
   const { method, params = {} } = payload;
 
   switch (method) {
-    case 'register':
+    case "register":
       shortcutService.registerShortcuts(params.shortcuts);
       return true;
-    case 'unregisterAll':
+    case "unregisterAll":
       shortcutService.unregisterAll();
       return true;
-    case 'unregister':
+    case "unregister":
       shortcutService.unregister(params.accelerators);
       return true;
-    case 'isRegistered':
+    case "isRegistered":
       return shortcutService.isRegistered(params.accelerator);
-      case 'getShortcuts':
-  return shortcutStorage.getShortcuts();
-case 'setShortcuts':
-  shortcutStorage.setShortcuts(params.shortcuts);
-  return true;
-case 'resetShortcuts':
-  shortcutStorage.resetToDefaults();
-  return true;
+    case "getShortcuts":
+      return shortcutStorage.getShortcuts();
+    case "setShortcuts":
+      shortcutStorage.setShortcuts(params.shortcuts);
+      return true;
+    case "resetShortcuts":
+      shortcutStorage.resetToDefaults();
+      return true;
     default:
       throw new Error(`Unknown shortcut method: ${method}`);
   }
 }
 
-ipcMain.handle('shortcut', async (event, payload) => {
+ipcMain.handle("shortcut", async (event, payload) => {
   try {
     const result = await handleShortcutRequest(event, payload);
-    return { status: true, message: 'OK', data: result };
+    return { status: true, message: "OK", data: result };
   } catch (err) {
-    console.error('[IPC:shortcut]', err);
+    console.error("[IPC:shortcut]", err);
     return { status: false, message: err.message, data: null };
   }
 });
-console.log('[IPC] Shortcut handler registered');
+console.log("[IPC] Shortcut handler registered");

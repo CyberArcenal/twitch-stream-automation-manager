@@ -1,3 +1,4 @@
+// src/renderer/pages/creator-dashboard/index.tsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { StreamInfoCard } from "./components/StreamInfoCard";
@@ -5,12 +6,12 @@ import { RecentActivityFeed } from "./components/RecentActivityFeed";
 import { QuickActionsCard } from "./components/QuickActionsCard";
 import { AlertsRemindersCard } from "./components/AlertsRemindersCard";
 import { StreamGoalsCard } from "./components/StreamGoalsCard";
+import { ErrorBoundary } from "../../components/UI/ErrorBoundary";
 import LoadingSpinner from "../../components/Shared/LoadingSpinner";
 
 const CreatorDashboard: React.FC = () => {
   const { user } = useAuth();
   const [broadcasterId, setBroadcasterId] = useState<string>("");
-  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (user?.id) setBroadcasterId(user.id);
@@ -18,33 +19,36 @@ const CreatorDashboard: React.FC = () => {
 
   if (!broadcasterId) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <LoadingSpinner/>
+      <div className="flex justify-center items-center h-full">
+        <LoadingSpinner size="medium" text="Loading dashboard..." />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 bg-[var(--background-color)] min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Creator Dashboard</h1>
-        <p className="text-[var(--text-secondary)]">
-          Manage your stream and engage with your community
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column: Stream Info */}
-        <div className="lg:col-span-2 space-y-6">
-          <StreamInfoCard broadcasterId={broadcasterId} />
-          <RecentActivityFeed />
+    <div className="h-full min-h-full !p-4 bg-[var(--background-color)]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+        {/* Left column */}
+        <div className="flex flex-col gap-4 h-full">
+          <ErrorBoundary>
+            <StreamInfoCard broadcasterId={broadcasterId} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <RecentActivityFeed />
+          </ErrorBoundary>
         </div>
 
-        {/* Right column: Quick Actions, Alerts, Goals */}
-        <div className="space-y-6">
-          <QuickActionsCard broadcasterId={broadcasterId} />
-          <AlertsRemindersCard broadcasterId={broadcasterId} />
-          <StreamGoalsCard broadcasterId={broadcasterId} />
+        {/* Right column */}
+        <div className="flex flex-col gap-4 h-full">
+          <ErrorBoundary>
+            <QuickActionsCard broadcasterId={broadcasterId} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <AlertsRemindersCard broadcasterId={broadcasterId} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <StreamGoalsCard broadcasterId={broadcasterId} />
+          </ErrorBoundary>
         </div>
       </div>
     </div>

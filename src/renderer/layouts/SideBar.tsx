@@ -121,12 +121,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onGoLive }) => {
       category: "core",
     },
     {
-      path: "/stream-settings",
-      name: "Stream Settings",
-      icon: Settings,
-      category: "core",
-    },
-    {
       path: "/settings",
       name: "Settings",
       icon: Settings,

@@ -118,7 +118,8 @@ export const StreamInfoCard: React.FC<StreamInfoCardProps> = ({
     );
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--card-bg)] p-5">
+// In StreamInfoCard.tsx, change the outer div:
+<div className="bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--border-color)] p-5 flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
           Stream Information

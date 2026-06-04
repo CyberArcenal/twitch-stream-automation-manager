@@ -1,21 +1,35 @@
 // src/renderer/pages/stream-manager/components/ChatCard.tsx
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Trash2 } from 'lucide-react';
-import { useChatConnection, useChatInput, useChatMessages, useChatModeration } from './hooks';
-import { userAPI } from '../../../../api/core/user';
-import { ChatInput } from './components/ChatInput';
-import ChatMessageItem from './components/ChatMessageItem';
-
+import React, { useEffect, useMemo, useRef } from "react";
+import { MessageSquare, Trash2 } from "lucide-react";
+import {
+  useChatConnection,
+  useChatInput,
+  useChatMessages,
+  useChatModeration,
+} from "./hooks";
+import { userAPI } from "../../api/core/user";
+import { ChatInput } from "./components/ChatInput";
+import ChatMessageItem from "./components/ChatMessageItem";
 
 interface ChatCardProps {
   channelName?: string;
   broadcasterId?: string;
   isLive: boolean;
+  fromModeration?: boolean;
+  className?: string;
+  onSelectUser?: (userId: string, userName: string) => void;
 }
 
-const ChatCard: React.FC<ChatCardProps> = ({ channelName, broadcasterId, isLive }) => {
+const ChatCard: React.FC<ChatCardProps> = ({
+  channelName,
+  broadcasterId,
+  isLive,
+  fromModeration = false,
+  className,
+  onSelectUser,
+}) => {
   const { connected } = useChatConnection(channelName, isLive);
-  const [currentUser, setCurrentUser] = React.useState('You');
+  const [currentUser, setCurrentUser] = React.useState("You");
 
   const {
     messages,
@@ -36,7 +50,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ channelName, broadcasterId, isLive 
     isBanningUser,
     isTimeoutingUser,
     isClearingChat,
-  } = useChatModeration(broadcasterId || '');
+  } = useChatModeration(broadcasterId || "");
 
   const {
     input,
@@ -56,7 +70,8 @@ const ChatCard: React.FC<ChatCardProps> = ({ channelName, broadcasterId, isLive 
   useEffect(() => {
     const fetchUser = async () => {
       const res = await userAPI.getCurrentUser();
-      if (res.status && res.data?.display_name) setCurrentUser(res.data.display_name);
+      if (res.status && res.data?.display_name)
+        setCurrentUser(res.data.display_name);
     };
     fetchUser();
   }, []);
@@ -66,31 +81,52 @@ const ChatCard: React.FC<ChatCardProps> = ({ channelName, broadcasterId, isLive 
   }, [connected]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages, pinnedMessages]);
 
   const handleSend = async () => {
     const success = await sendMessage(input, replyingTo?.id);
     if (success) {
-      setInput('');
+      setInput("");
       cancelReply();
     }
   };
 
   const displayedMessages = useMemo(
     () => [
-      ...pinnedMessages.map(msg => ({ ...msg, isPinned: true })),
-      ...messages.filter(msg => !pinnedMessages.some(p => p.id === msg.id)),
+      ...pinnedMessages.map((msg) => ({ ...msg, isPinned: true })),
+      ...messages.filter((msg) => !pinnedMessages.some((p) => p.id === msg.id)),
     ],
-    [messages, pinnedMessages]
+    [messages, pinnedMessages],
   );
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col h-full min-h-[300px] min-w-[300px] max-h-[560px]">
-      <div className="p-3 border-b border-[var(--border-color)] flex justify-between items-center">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-          My Chat {connected ? '🟢' : '🔴'}
-        </h3>
+     <div
+      className={`
+        bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] 
+        flex flex-col 
+        ${fromModeration ? 'h-full' : 'h-full max-h-[560px]'}
+        min-h-[300px] min-w-[300px]
+        ${className || ''}
+      `}
+    >
+      <div
+        className={`p-3 border-b border-[var(--border-color)] flex justify-between items-center`}
+      >
+        <div className="text-sm font-semibold text-[var(--text-primary)]">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-[#9147ff]" />
+
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+              Live Chat
+            </h3>
+            {connected ? (
+              <span className="ml-2 text-xs text-green-400">● LIVE</span>
+            ) : (
+              <span className="ml-2 text-xs text-red-400">● OFFLINE</span>
+            )}
+          </div>
+        </div>
         <button
           onClick={clearChat}
           disabled={isClearingChat}
@@ -102,7 +138,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ channelName, broadcasterId, isLive 
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {displayedMessages.map(msg => (
+        {displayedMessages.map((msg) => (
           <ChatMessageItem
             key={msg.id}
             message={msg}
@@ -119,6 +155,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ channelName, broadcasterId, isLive 
             isDeletingId={isDeletingId}
             isBanningUser={isBanningUser}
             isTimeoutingUser={isTimeoutingUser}
+            onSelectUser={onSelectUser}
           />
         ))}
         <div ref={messagesEndRef} />

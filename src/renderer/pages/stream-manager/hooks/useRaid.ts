@@ -1,4 +1,5 @@
 import { streamManagerAPI } from '../../../api/core/streamManager';
+import { dialogs } from '../../../utils/dialogs';
 
 export const useRaid = () => {
   const startRaid = async (fromBroadcasterId: string) => {

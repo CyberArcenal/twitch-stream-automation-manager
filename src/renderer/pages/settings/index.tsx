@@ -30,7 +30,6 @@ const SettingsPage: React.FC = () => {
   const tabs = [
     { id: "general", name: "General", icon: Settings },
     { id: "notifications", name: "Notifications", icon: Bell },
-    { id: "chat-moderation", name: "Chat & Moderation", icon: Shield },
     { id: "shortcuts", name: "Keyboard Shortcuts", icon: Keyboard },
     { id: "obs", name: "OBS WebSocket", icon: Monitor },
     { id: "accounts", name: "Accounts", icon: Users },

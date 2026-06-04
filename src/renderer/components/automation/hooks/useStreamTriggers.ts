@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { streamManagerAPI } from '../../../../../api/core/streamManager';
+import { streamManagerAPI } from '../../../api/core/streamManager';
 
 export const useStreamTriggers = () => {
   const [autoRaidEnabled, setAutoRaidEnabled] = useState(false);

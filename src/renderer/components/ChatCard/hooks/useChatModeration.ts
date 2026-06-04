@@ -1,7 +1,7 @@
 // hooks/useChatModeration.ts
 import { useState } from 'react';
-import { useModeration } from '../../../hooks/useModeration';
-import { dialogs } from '../../../../../utils/dialogs';
+import { useModeration } from '../../../pages/stream-manager/hooks/useModeration';
+import { dialogs } from '../../../utils/dialogs';
 
 export const useChatModeration = (broadcasterId: string) => {
   const { banUser, timeoutUser, clearChat } = useModeration(broadcasterId);

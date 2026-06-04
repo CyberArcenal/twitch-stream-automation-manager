@@ -1,6 +1,6 @@
 // hooks/useChatConnection.ts
 import { useState, useEffect, useRef } from 'react';
-import { chatAPI } from '../../../../../api/core/chat';
+import { chatAPI } from '../../../api/core/chat';
 
 export const useChatConnection = (channelName?: string, isLive?: boolean) => {
   const [connected, setConnected] = useState(false);
