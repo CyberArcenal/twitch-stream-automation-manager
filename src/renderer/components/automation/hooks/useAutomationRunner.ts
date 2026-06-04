@@ -2,18 +2,14 @@ import { useState, useEffect } from "react";
 import { useAutomationLog } from "../../../contexts/AutomationLogContext";
 import { streamManagerAPI } from "../../../api/core/streamManager";
 
-
 export const useAutomationRunner = () => {
   const [automationRunning, setAutomationRunning] = useState(false);
   const { addLog } = useAutomationLog();
 
-  // Load initial running status
   useEffect(() => {
     const load = async () => {
-      const res = await streamManagerAPI.getAutomationStatus();
-      if (res.status && res.data) {
-        setAutomationRunning(res.data.running ?? false);
-      }
+      const running = await streamManagerAPI.isAutomationRunning();
+      setAutomationRunning(running);
     };
     load();
   }, []);

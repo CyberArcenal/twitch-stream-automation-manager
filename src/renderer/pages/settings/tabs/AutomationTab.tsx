@@ -1,107 +1,180 @@
+// src/renderer/pages/settings/tabs/AutomationTab.tsx
 import React, { useState, useEffect } from "react";
-import { Rocket, MessageCircle, Video, Users } from "lucide-react";
+import { useLiveStatus } from "../../stream-manager/hooks/useLiveStatus";
+
+import { useAutomationLog } from "../../../contexts/AutomationLogContext";
+import { useAutomationRunner, useChatModeration, useStreamTriggers } from "../../../components/automation/hooks";
+import { StreamTriggers } from "../../../components/automation/components/StreamTriggers";
+import { ChatAutomationRules } from "../../../components/automation/components/ChatAutomationRules";
+import { CustomScripts } from "../../../components/automation/components/CustomScripts";
+import { AutomationLogs } from "../../../components/automation/components/AutomationLogs";
+import { ControlButtons } from "../../../components/automation/components/ControlButtons";
 import { streamManagerAPI } from "../../../api/core/streamManager";
 
-export const AutomationTab: React.FC = () => {
-  const [autoRaid, setAutoRaid] = useState(false);
-  const [autoClip, setAutoClip] = useState(false);
-  const [autoMessage, setAutoMessage] = useState(false);
-  const [autoMessageText, setAutoMessageText] = useState("Thanks for the follow/sub! 🎉");
-  const [raidTarget, setRaidTarget] = useState("");
-  const [loading, setLoading] = useState(true);
+const STORAGE_KEY = "automation_custom_scripts";
 
+interface CustomScript {
+  name: string;
+  enabled: boolean;
+}
+
+export const AutomationTab: React.FC = () => {
+  const { isLive } = useLiveStatus();
+  const stream = useStreamTriggers();
+  const chat = useChatModeration();
+  const { automationRunning, startAutomation, stopAutomation, setAutomationRunning } = useAutomationRunner();
+  const { logs, clearLogs, addLog } = useAutomationLog();
+
+  const [scripts, setScripts] = useState<CustomScript[]>([]);
+  const [newTermLocal, setNewTermLocal] = useState("");
+  const [newBadgeLocal, setNewBadgeLocal] = useState("");
+
+  // Load scripts from localStorage
   useEffect(() => {
-    const load = async () => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
       try {
-        const res = await streamManagerAPI.getAutomationStatus();
-        if (res.status && res.data) {
-          setAutoRaid(res.data.config.autoRaid);
-          setAutoClip(res.data.config.autoClip);
-          setAutoMessage(res.data.config.autoMessage);
-          setAutoMessageText(res.data.config.autoMessageText);
-          setRaidTarget(res.data.config.raidTarget || "");
-        }
-      } catch (err) {
-        console.error("Failed to load automation settings", err);
-      } finally {
-        setLoading(false);
+        setScripts(JSON.parse(stored));
+      } catch (e) {
+        console.error(e);
       }
-    };
-    load();
+    }
   }, []);
 
-  const saveSettings = async () => {
-    const config = { autoRaid, autoClip, autoMessage, autoMessageText, raidTarget: raidTarget || null };
-    await streamManagerAPI.startAutomation(config); // startAutomation also saves config
+  useEffect(() => {
+  const load = async () => {
+    const running = await streamManagerAPI.isAutomationRunning();
+    setAutomationRunning(running);
+  };
+  load();
+}, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scripts));
+  }, [scripts]);
+
+  const addScript = (name: string) => {
+    setScripts([...scripts, { name, enabled: true }]);
+    addLog(`Custom script "${name}" added`, "success");
   };
 
-  if (loading) return <div className="animate-pulse h-64 bg-[var(--card-bg)] rounded-xl"></div>;
+  const toggleScript = (index: number) => {
+    setScripts(scripts.map((s, i) => (i === index ? { ...s, enabled: !s.enabled } : s)));
+    const script = scripts[index];
+    addLog(`Script "${script.name}" ${script.enabled ? "disabled" : "enabled"}`, "info");
+  };
+
+  const removeScript = (index: number) => {
+    const script = scripts[index];
+    setScripts(scripts.filter((_, i) => i !== index));
+    addLog(`Script "${script.name}" removed`, "error");
+  };
+
+  const handleStart = async () => {
+    const fullConfig = {
+      ...stream.getConfig(),
+      ...chat.getConfig(),
+    };
+    await startAutomation(fullConfig);
+  };
+
+  const handleStop = async () => {
+    await stopAutomation();
+  };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-[var(--text-primary)]">Automation Defaults</h2>
-      <div className="bg-[var(--card-bg)] rounded-xl p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#9147ff]" />
-            <span className="text-[var(--text-primary)]">Auto‑raid when stream ends</span>
-          </div>
-          <button
-            onClick={() => setAutoRaid(!autoRaid)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoRaid ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
-          >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoRaid ? "translate-x-5" : ""}`} />
-          </button>
-        </div>
-        {autoRaid && (
-          <div className="ml-7">
-            <input
-              type="text"
-              value={raidTarget}
-              onChange={(e) => setRaidTarget(e.target.value)}
-              placeholder="Target channel name"
-              className="w-full bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-3 py-2 text-[var(--text-primary)] text-sm"
+      <h2 className="text-xl font-bold text-[var(--text-primary)]">Automation Settings</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left column: Stream Triggers + Chat Rules */}
+        <div className="space-y-6">
+          <div className="bg-[var(--card-bg)] rounded-xl p-5 border border-[var(--border-color)]">
+            <StreamTriggers
+              isLive={isLive}
+              autoRaidEnabled={stream.autoRaidEnabled}
+              onToggleAutoRaid={() => stream.setAutoRaidEnabled(!stream.autoRaidEnabled)}
+              raidTarget={stream.raidTarget}
+              onRaidTargetChange={stream.setRaidTarget}
+              autoClipEnabled={stream.autoClipEnabled}
+              onToggleAutoClip={() => stream.setAutoClipEnabled(!stream.autoClipEnabled)}
+              autoMessageEnabled={stream.autoMessageEnabled}
+              onToggleAutoMessage={() => stream.setAutoMessageEnabled(!stream.autoMessageEnabled)}
+              autoMessageText={stream.autoMessageText}
+              onAutoMessageTextChange={stream.setAutoMessageText}
+              autoShoutoutOnRaid={chat.autoShoutoutOnRaid}
+              onToggleAutoShoutoutOnRaid={() => chat.setAutoShoutoutOnRaid(!chat.autoShoutoutOnRaid)}
+              shoutoutMessage={chat.shoutoutMessage}
+              onShoutoutMessageChange={chat.setShoutoutMessage}
+              autoStreamMarkers={chat.autoStreamMarkers}
+              onToggleAutoStreamMarkers={() => chat.setAutoStreamMarkers(!chat.autoStreamMarkers)}
+              markerIntervalMinutes={chat.markerIntervalMinutes}
+              onMarkerIntervalMinutesChange={chat.setMarkerIntervalMinutes}
             />
           </div>
-        )}
-
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-[#9147ff]" />
-            <span className="text-[var(--text-primary)]">Auto‑clip on stream offline</span>
-          </div>
-          <button
-            onClick={() => setAutoClip(!autoClip)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoClip ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
-          >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoClip ? "translate-x-5" : ""}`} />
-          </button>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-[#9147ff]" />
-            <span className="text-[var(--text-primary)]">Auto‑message on follow/sub</span>
-          </div>
-          <button
-            onClick={() => setAutoMessage(!autoMessage)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${autoMessage ? "bg-[var(--primary-color)]" : "bg-[#2a2a2e]"}`}
-          >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${autoMessage ? "translate-x-5" : ""}`} />
-          </button>
-        </div>
-        {autoMessage && (
-          <div className="ml-7">
-            <input
-              type="text"
-              value={autoMessageText}
-              onChange={(e) => setAutoMessageText(e.target.value)}
-              className="w-full bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-3 py-2 text-[var(--text-primary)] text-sm"
+          <div className="bg-[var(--card-bg)] rounded-xl p-5 border border-[var(--border-color)]">
+            <ChatAutomationRules
+              fromModerationPage={false}
+              autoSlowMode={chat.autoSlowMode}
+              onToggleAutoSlowMode={() => chat.setAutoSlowMode(!chat.autoSlowMode)}
+              slowModeSpamThreshold={chat.slowModeSpamThreshold}
+              onSlowModeSpamThresholdChange={chat.setSlowModeSpamThreshold}
+              slowModeWaitTime={chat.slowModeWaitTime}
+              onSlowModeWaitTimeChange={chat.setSlowModeWaitTime}
+              autoDeleteMessage={chat.autoDeleteMessage}
+              onToggleAutoDeleteMessage={() => chat.setAutoDeleteMessage(!chat.autoDeleteMessage)}
+              autoTimeoutUser={chat.autoTimeoutUser}
+              onToggleAutoTimeout={() => chat.setAutoTimeoutUser(!chat.autoTimeoutUser)}
+              autoFollowerMode={chat.autoFollowerMode}
+              onToggleAutoFollowerMode={() => chat.setAutoFollowerMode(!chat.autoFollowerMode)}
+              followerModeDuration={chat.followerModeDuration}
+              onFollowerModeDurationChange={chat.setFollowerModeDuration}
+              autoBlockLinks={chat.autoBlockLinks}
+              onToggleAutoBlockLinks={() => chat.setAutoBlockLinks(!chat.autoBlockLinks)}
+              blockedTerms={chat.blockedTerms}
+              onAddBlockedTerm={chat.addBlockedTerm}
+              onRemoveBlockedTerm={chat.removeBlockedTerm}
+              autoModerationEnabled={chat.autoModerationEnabled}
+              onToggleAutoModeration={() => chat.setAutoModerationEnabled(!chat.autoModerationEnabled)}
+              slowModeDuration={chat.slowModeDuration}
+              setSlowModeDuration={chat.setSlowModeDuration}
+              repeatWindowSeconds={chat.repeatWindowSeconds}
+              setRepeatWindowSeconds={chat.setRepeatWindowSeconds}
+              repeatCountThreshold={chat.repeatCountThreshold}
+              setRepeatCountThreshold={chat.setRepeatCountThreshold}
+              blockedBadges={chat.blockedBadges}
+              onAddBlockedBadge={chat.addBlockedBadge}
+              onRemoveBlockedBadge={chat.removeBlockedBadge}
+              autoClipOnChatSpike={chat.autoClipOnChatSpike}
+              onToggleAutoClipOnChatSpike={() => chat.setAutoClipOnChatSpike(!chat.autoClipOnChatSpike)}
+              chatSpikeThreshold={chat.chatSpikeThreshold}
+              onChatSpikeThresholdChange={chat.setChatSpikeThreshold}
+              chatSpikeCooldownMinutes={chat.chatSpikeCooldownMinutes}
+              onChatSpikeCooldownMinutesChange={chat.setChatSpikeCooldownMinutes}
             />
           </div>
-        )}
+        </div>
 
-        <button onClick={saveSettings} className="w-full mt-4 py-2 bg-[var(--primary-color)] rounded-md text-[var(--text-primary)]">Save Automation Settings</button>
+        {/* Right column: Custom Scripts + Automation Logs + Control Buttons */}
+        <div className="space-y-6">
+          <div className="bg-[var(--card-bg)] rounded-xl p-5 border border-[var(--border-color)]">
+            <CustomScripts
+              scripts={scripts}
+              onAddScript={addScript}
+              onToggleScript={toggleScript}
+              onRemoveScript={removeScript}
+            />
+          </div>
+          <div className="bg-[var(--card-bg)] rounded-xl p-5 border border-[var(--border-color)]">
+            <AutomationLogs logs={logs} onClearLogs={clearLogs} />
+          </div>
+          <div className="bg-[var(--card-bg)] rounded-xl p-5 border border-[var(--border-color)]">
+            <ControlButtons
+              automationRunning={automationRunning}
+              onStart={handleStart}
+              onStop={handleStop}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

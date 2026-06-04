@@ -8,7 +8,6 @@ import StreamManagerPage from "../pages/stream-manager";
 import AnalyticsPage from "../pages/analytics";
 import ModerationPage from "../pages/moderation";
 import CreatorDashboard from "../pages/creator-dashboard";
-import StreamSettingsPage from "../pages/stream-settings";
 import SettingsPage from "../pages/settings";
 import SchedulerPage from "../pages/scheduler";
 import ChatCommandsPage from "../pages/chat-commands";
@@ -140,7 +139,6 @@ function App() {
         <Route path="/predictions" element={<PredictionsPage />} />
         <Route path="/chat-commands" element={<ChatCommandsPage />} />
         <Route path="/creator-dashboard" element={<CreatorDashboard />} />
-        <Route path="/stream-settings" element={<StreamSettingsPage />} />
         <Route path="/scheduler" element={<SchedulerPage />} />
         <Route path="/settings" element={<SettingsPage />} />
 

@@ -1,28 +1,24 @@
+// src/renderer/pages/predictions/index.tsx
 import React, { useState, useEffect } from "react";
-import { TrendingUp, Plus, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Plus, Clock } from "lucide-react";
 import { predictionsAPI, type Prediction } from "../../api/core/predictions";
 import { useAuth } from "../../hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import LoadingSpinner from "../../components/Shared/LoadingSpinner";
+import { ErrorBoundary } from "../../components/UI/ErrorBoundary";
 import { dialogs } from "../../utils/dialogs";
+import { CreatePredictionModal } from "./components/CreatePredictionModal";
 
 const PredictionsPage: React.FC = () => {
   const { user } = useAuth();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    outcomes: ["", ""],
-    predictionWindow: 60,
-  });
-  const [creating, setCreating] = useState(false);
 
   const fetchPredictions = async () => {
     if (!user?.id) return;
     try {
       const res = await predictionsAPI.getActive(user.id);
-      console.log(`Fetched predictions: ${JSON.stringify(res)}`);
       if (res.status) setPredictions(res.data);
     } catch (err) {
       console.error("Failed to fetch predictions", err);
@@ -33,48 +29,16 @@ const PredictionsPage: React.FC = () => {
 
   useEffect(() => {
     fetchPredictions();
-    const interval = setInterval(fetchPredictions, 10000); // refresh every 10s
+    const interval = setInterval(fetchPredictions, 10000);
     return () => clearInterval(interval);
   }, [user?.id]);
 
-  const handleCreate = async () => {
-    if (!user?.id) return;
-    if (!formData.title.trim() || formData.outcomes.some((o) => !o.trim())) {
-      dialogs.error("Please fill all fields");
-      return;
-    }
-    setCreating(true);
-    try {
-      await predictionsAPI.create(
-        user.id,
-        formData.title,
-        formData.outcomes,
-        formData.predictionWindow,
-      );
-      setShowCreateModal(false);
-      setFormData({ title: "", outcomes: ["", ""], predictionWindow: 60 });
-      fetchPredictions();
-    } catch (err) {
-      console.error("Failed to create prediction", err);
-      dialogs.error(
-        "Failed to create prediction. Make sure you have the required scope.",
-      );
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleResolve = async (
-    predictionId: string,
-    winningOutcomeId: string,
-  ) => {
-    if (
-      !(await dialogs.confirm({
-        title: "Resolve prediction with this outcome?",
-        message: "This action cannot be undone.",
-      }))
-    )
-      return;
+  const handleResolve = async (predictionId: string, winningOutcomeId: string) => {
+    const confirmed = await dialogs.confirm({
+      title: "Resolve prediction with this outcome?",
+      message: "This action cannot be undone.",
+    });
+    if (!confirmed) return;
     try {
       await predictionsAPI.resolve(predictionId, winningOutcomeId);
       fetchPredictions();
@@ -84,36 +48,17 @@ const PredictionsPage: React.FC = () => {
     }
   };
 
-  const addOutcome = () => {
-    if (formData.outcomes.length >= 10) return;
-    setFormData({ ...formData, outcomes: [...formData.outcomes, ""] });
-  };
-
-  const removeOutcome = (index: number) => {
-    if (formData.outcomes.length <= 2) return;
-    const newOutcomes = formData.outcomes.filter((_, i) => i !== index);
-    setFormData({ ...formData, outcomes: newOutcomes });
-  };
-
-  const updateOutcome = (index: number, value: string) => {
-    const newOutcomes = [...formData.outcomes];
-    newOutcomes[index] = value;
-    setFormData({ ...formData, outcomes: newOutcomes });
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <LoadingSpinner />
+      <div className="flex justify-center items-center h-full">
+        <LoadingSpinner size="medium" text="Loading predictions..." />
       </div>
     );
   }
 
-  console.log(predictions);
-
   return (
-    <div className="p-6 space-y-6 bg-[var(--background-color)] min-h-screen">
-      <div className="flex justify-between items-center">
+    <div className="h-full min-h-full !p-4 bg-[var(--background-color)]">
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             Predictions
@@ -124,27 +69,23 @@ const PredictionsPage: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] transition"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--primary-color)] rounded-lg hover:bg-[#772ce8] transition text-sm"
         >
           <Plus className="w-4 h-4" /> New Prediction
         </button>
       </div>
 
-      {/* Active Predictions */}
-      <div>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
-          Active Predictions
-        </h2>
+      <ErrorBoundary>
         {predictions.length === 0 ? (
-          <div className="bg-[var(--card-bg)] rounded-xl p-8 text-center text-[var(--text-secondary)]">
-            No active predictions. Start one!
+          <div className="bg-[var(--card-bg)] rounded-xl p-8 text-center text-[var(--text-secondary)] border border-[var(--border-color)]">
+            No active predictions. Click "New Prediction" to start one.
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {predictions?.map((pred) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {predictions.map((pred) => (
               <div
                 key={pred.id}
-                className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-bg)] p-5"
+                className="bg-[var(--card-bg)] rounded-xl border border-[var(--border-color)] p-5 flex flex-col"
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -165,8 +106,7 @@ const PredictionsPage: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Outcomes */}
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 space-y-3 flex-1">
                   {pred.outcomes.map((outcome) => (
                     <div
                       key={outcome.id}
@@ -200,101 +140,14 @@ const PredictionsPage: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
+      </ErrorBoundary>
 
-      {/* Create Prediction Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[var(--card-bg)] rounded-xl w-full max-w-lg p-6 border border-[var(--card-bg)] max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
-              Create Prediction
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-[var(--text-secondary)] mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="e.g., Will I win this match?"
-                  className="w-full bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-3 py-2 text-[var(--text-primary)]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-[var(--text-secondary)] mb-1">
-                  Outcomes (2–10 options)
-                </label>
-                {formData.outcomes.map((outcome, idx) => (
-                  <div key={idx} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={outcome}
-                      onChange={(e) => updateOutcome(idx, e.target.value)}
-                      placeholder={`Option ${idx + 1}`}
-                      className="flex-1 bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-3 py-2 text-[var(--text-primary)]"
-                    />
-                    {formData.outcomes.length > 2 && (
-                      <button
-                        onClick={() => removeOutcome(idx)}
-                        className="px-2 text-red-400 hover:text-red-300"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {formData.outcomes.length < 10 && (
-                  <button
-                    onClick={addOutcome}
-                    className="text-sm text-[#9147ff] hover:text-[#772ce8]"
-                  >
-                    + Add outcome
-                  </button>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm text-[var(--text-secondary)] mb-1">
-                  Prediction Window (seconds)
-                </label>
-                <select
-                  value={formData.predictionWindow}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      predictionWindow: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full bg-[var(--background-color)] border border-[var(--card-bg)] rounded px-3 py-2 text-[var(--text-primary)]"
-                >
-                  <option value={60}>60 seconds</option>
-                  <option value={120}>120 seconds</option>
-                  <option value={300}>5 minutes</option>
-                  <option value={600}>10 minutes</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-[#2a2a2e] rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={creating}
-                className="px-4 py-2 bg-[var(--primary-color)] rounded-md disabled:opacity-50"
-              >
-                {creating ? "Creating..." : "Create Prediction"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CreatePredictionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={fetchPredictions}
+        broadcasterId={user?.id || ""}
+      />
     </div>
   );
 };
