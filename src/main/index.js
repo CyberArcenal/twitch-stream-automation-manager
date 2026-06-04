@@ -33,6 +33,7 @@ const {
   analyticsCollector,
 } = require("../services/analytics-collector.service.js");
 const { schedulerService } = require("../services/scheduler.service.js");
+const { startLogCleanupScheduler } = require("../scheduler/logCleanupScheduler.js");
 
 // ===================== CONFIGURATION =====================
 const IS_DEV = process.env.NODE_ENV === "development" || !app.isPackaged;
@@ -662,6 +663,7 @@ async function startup() {
   await registerIpcHandlers();
   await createMainWindow();
   await initializeServices();
+  startLogCleanupScheduler();
   log(LogLevel.SUCCESS, `${APP_NAME} started successfully`, null, true);
 }
 

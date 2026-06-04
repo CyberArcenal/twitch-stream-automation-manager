@@ -1,4 +1,54 @@
 // src/utils/logger.js
+const fs = require('fs');
+const path = require('path');
+const { app } = require('electron'); // Only works in main process; if used in renderer, we need a different approach.
+// For safety, we'll attempt to get the userData path only if app is available.
+
+let logFilePath = null;
+
+function getLogFilePath() {
+  if (logFilePath) return logFilePath;
+  try {
+    // Try to get the app's userData path (only works in main process)
+    const userData = app.getPath('userData');
+    const logsDir = path.join(userData, 'logs');
+    if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+    logFilePath = path.join(logsDir, 'app.log');
+    return logFilePath;
+  } catch (err) {
+    // Fallback: create logs folder in current working directory
+    const logsDir = path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+    logFilePath = path.join(logsDir, 'app.log');
+    return logFilePath;
+  }
+}
+
+function writeToFile(level, message, meta) {
+  const filePath = getLogFilePath();
+  const timestamp = new Date().toISOString();
+  let logLine = `[${timestamp}] [${level}] ${message}`;
+  if (meta !== null && meta !== undefined) {
+    let metaStr;
+    if (meta instanceof Error) {
+      metaStr = `${meta.stack || meta.message}`;
+    } else {
+      try {
+        metaStr = JSON.stringify(meta);
+      } catch (e) {
+        metaStr = String(meta);
+      }
+    }
+    logLine += `\n${metaStr}`;
+  }
+  logLine += '\n';
+
+  // Append asynchronously
+  fs.appendFile(filePath, logLine, (err) => {
+    if (err) console.error('Failed to write log to file:', err);
+  });
+}
+
 function formatTimestamp() {
   return new Date().toLocaleString('en-US', {
     year: 'numeric',
@@ -49,9 +99,8 @@ function log(level, message, meta = null) {
   const ts = formatTimestamp();
   const lvl = formatLevel(level);
   
-  // Format the main log line
+  // Console output
   const line = `\x1b[90m${ts}\x1b[0m ${lvl} ${message}`;
-  
   if (level === "ERROR") {
     console.error(line);
     if (meta !== null && meta !== undefined) {
@@ -73,6 +122,9 @@ function log(level, message, meta = null) {
       }
     }
   }
+
+  // Write to file (using original level string without colors)
+  writeToFile(level, message, meta);
 }
 
 // Convenience shortcuts - now accepts meta as second parameter
@@ -82,6 +134,8 @@ const logger = {
   success: (msg, meta = null) => log("SUCCESS", msg, meta),
   warn: (msg, meta = null) => log("WARN", msg, meta),
   error: (msg, meta = null) => log("ERROR", msg, meta),
+  // Optional: manually set log file path
+  setLogFilePath: (filePath) => { logFilePath = filePath; }
 };
 
 module.exports = { log, logger, safeStringify };

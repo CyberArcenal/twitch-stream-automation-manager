@@ -1,5 +1,4 @@
 // src/main/services/auto-moderation.service.js
-//@ts-check
 const { settingsService } = require("./settings.service");
 const { streamManagerService } = require("./stream-manager.service");
 const { moderationLogService } = require("./moderation-log.service");
@@ -13,7 +12,7 @@ class AutoModerationService {
       maxEmojis: 5,
       blockedWords: [],
       trustedUsers: [],
-      blockedBadges: [], // ✅ bagong array: mga badge name na dapat i‑timeout
+      blockedBadges: [],
       repeatWindowSeconds: 10,
       repeatCountThreshold: 3,
     };
@@ -22,18 +21,22 @@ class AutoModerationService {
     this.enabled = false;
     this.level = "basic";
     this.userMessageHistory = new Map();
+
+    logger.info("[AutoMod] Service created, loading settings");
     this.loadSettings();
   }
 
   loadSettings() {
     const autoMod = settingsService.get("autoModeration") || {};
+    logger.debug("[AutoMod] loadSettings - stored config keys:", Object.keys(autoMod));
+
     this.rules = {
       links: autoMod.links !== undefined ? autoMod.links : true,
       maxCapsPercent: autoMod.maxCapsPercent || 70,
       maxEmojis: autoMod.maxEmojis || 5,
       blockedWords: autoMod.blockedWords || [],
       trustedUsers: autoMod.trustedUsers || [],
-      blockedBadges: autoMod.blockedBadges || [], // ✅ load
+      blockedBadges: autoMod.blockedBadges || [],
       repeatWindowSeconds: autoMod.repeatWindowSeconds ?? 10,
       repeatCountThreshold: autoMod.repeatCountThreshold ?? 3,
     };
@@ -42,9 +45,12 @@ class AutoModerationService {
     this.autoDeleteMessage = autoMod.autoDeleteMessage || false;
     this.autoTimeoutUser =
       autoMod.autoTimeoutUser !== undefined ? autoMod.autoTimeoutUser : true;
+
+    logger.info(`[AutoMod] Settings loaded: enabled=${this.enabled}, level=${this.level}, autoDelete=${this.autoDeleteMessage}, autoTimeout=${this.autoTimeoutUser}`);
   }
 
   saveSettings() {
+    logger.debug("[AutoMod] saveSettings called");
     settingsService.set("autoModeration", {
       enabled: this.enabled,
       level: this.level,
@@ -53,18 +59,20 @@ class AutoModerationService {
       maxEmojis: this.rules.maxEmojis,
       blockedWords: this.rules.blockedWords,
       trustedUsers: this.rules.trustedUsers,
-      blockedBadges: this.rules.blockedBadges, // ✅ i‑save
+      blockedBadges: this.rules.blockedBadges,
       autoDeleteMessage: this.autoDeleteMessage,
       autoTimeoutUser: this.autoTimeoutUser,
       repeatWindowSeconds: this.rules.repeatWindowSeconds,
       repeatCountThreshold: this.rules.repeatCountThreshold,
     });
+    logger.debug("[AutoMod] Settings saved");
   }
 
   /**
    * @param {boolean} enabled
    */
   setAutoDeleteMessage(enabled) {
+    logger.debug(`[AutoMod] setAutoDeleteMessage: ${enabled}`);
     this.autoDeleteMessage = enabled;
     this.saveSettings();
   }
@@ -73,6 +81,7 @@ class AutoModerationService {
    * @param {boolean} enabled
    */
   setAutoTimeoutUser(enabled) {
+    logger.debug(`[AutoMod] setAutoTimeoutUser: ${enabled}`);
     this.autoTimeoutUser = enabled;
     this.saveSettings();
     logger.info(
@@ -84,15 +93,17 @@ class AutoModerationService {
    * @param {boolean} enabled
    */
   setEnabled(enabled) {
+    logger.info(`[AutoMod] setEnabled called with value: ${enabled}`);
     this.enabled = enabled;
     this.saveSettings();
-    logger.info(`[AutoMod] ${enabled ? "Enabled" : "Disabled"}`);
+    logger.info(`[AutoMod] Auto-moderation ${enabled ? "Enabled" : "Disabled"}`);
   }
 
   /**
    * @param {{ links: boolean; blockedWords: any; repeatWindowSeconds: any; repeatCountThreshold: any; }} newRules
    */
   updateRules(newRules) {
+    logger.debug("[AutoMod] updateRules called with:", Object.keys(newRules));
     this.rules = { ...this.rules, ...newRules };
     this.saveSettings();
   }
@@ -105,6 +116,9 @@ class AutoModerationService {
     if (!this.rules.trustedUsers.includes(lower)) {
       this.rules.trustedUsers.push(lower);
       this.saveSettings();
+      logger.info(`[AutoMod] Added trusted user: ${username}`);
+    } else {
+      logger.debug(`[AutoMod] User ${username} already trusted, skipping`);
     }
   }
 
@@ -113,10 +127,14 @@ class AutoModerationService {
    */
   removeTrustedUser(username) {
     const lower = username.toLowerCase();
+    const before = this.rules.trustedUsers.length;
     this.rules.trustedUsers = this.rules.trustedUsers.filter(
       (u) => u !== lower,
     );
-    this.saveSettings();
+    if (this.rules.trustedUsers.length < before) {
+      this.saveSettings();
+      logger.info(`[AutoMod] Removed trusted user: ${username}`);
+    }
   }
 
   /**
@@ -142,12 +160,16 @@ class AutoModerationService {
     const threshold = this.rules.repeatCountThreshold;
 
     let history = this.userMessageHistory.get(userId) || [];
-    history = history.filter((/** @type {{ timestamp: number; }} */ entry) => now - entry.timestamp < windowMs);
+    history = history.filter((entry) => now - entry.timestamp < windowMs);
     history.push({ message, timestamp: now });
     this.userMessageHistory.set(userId, history);
 
-    const count = history.filter((/** @type {{ message: any; }} */ entry) => entry.message === message).length;
-    return count >= threshold;
+    const count = history.filter((entry) => entry.message === message).length;
+    const isRepeat = count >= threshold;
+    if (isRepeat) {
+      logger.debug(`[AutoMod] Repeated message detected for user ${userId}: ${message} (count=${count}, threshold=${threshold})`);
+    }
+    return isRepeat;
   }
 
   /**
@@ -159,7 +181,8 @@ class AutoModerationService {
    * @param {import("@twurple/chat").ChatMessage} msg
    */
   async processMessage(channel, userId, userName, message, broadcasterId, msg) {
-    logger.debug(`[AutoMod] Processing message from ${userName}: "${message}"`);
+    logger.debug(`[AutoMod] processMessage() called: user=${userName}, msg="${message}"`);
+
     if (!this.enabled) {
       logger.debug("[AutoMod] Auto-moderation is disabled, skipping checks.");
       return false;
@@ -170,17 +193,23 @@ class AutoModerationService {
       return false;
     }
 
+    // Validate broadcasterId
+    if (!broadcasterId) {
+      logger.warn("[AutoMod] Cannot process message: broadcasterId is missing");
+      return false;
+    }
+
     let timeoutSeconds = 0;
     let reason = "";
 
-    // ✅ 0. Check blocked badges (pinakamataas na priyoridad)
-    const userBadges = msg.userInfo?.badges; // object: { badgeName: version }
+    // ✅ 0. Check blocked badges (highest priority)
+    const userBadges = msg.userInfo?.badges;
     const blockedBadge = this.hasBlockedBadge(userBadges);
     if (blockedBadge) {
-      timeoutSeconds = 60; // 1 minuto timeout
+      timeoutSeconds = 60;
       reason = `Blocked badge: ${blockedBadge}`;
       logger.info(
-        `[AutoMod] User ${userName} has blocked badge "${blockedBadge}", timing out.`,
+        `[AutoMod] User ${userName} has blocked badge "${blockedBadge}" → timeout ${timeoutSeconds}s`,
       );
     }
     // 1. Repeated message (spam)
@@ -188,25 +217,23 @@ class AutoModerationService {
       timeoutSeconds = 60;
       reason = "Repeated message (spam)";
       logger.info(
-        `[AutoMod] Detected repeated message from ${userName}: "${message}"`,
+        `[AutoMod] Repeated message from ${userName}: "${message}" → timeout ${timeoutSeconds}s`,
       );
     }
     // 2. Links
     else if (this.rules.links && /https?:\/\//i.test(message)) {
       timeoutSeconds = 300;
       reason = "Link posted";
-      logger.info(`[AutoMod] Detected link in message from ${userName}`);
+      logger.info(`[AutoMod] Link detected from ${userName} → timeout ${timeoutSeconds}s`);
     }
-    // 3. Caps (non-Latin friendly)
+    // 3. Caps
     else if (this.rules.maxCapsPercent > 0) {
       const letters = (message.match(/\p{L}/gu) || []).length;
       const caps = (message.match(/\p{Lu}/gu) || []).length;
       if (letters > 5 && (caps / letters) * 100 > this.rules.maxCapsPercent) {
         timeoutSeconds = 60;
         reason = "Excessive caps";
-        logger.info(
-          `[AutoMod] Detected excessive caps in message from ${userName}`,
-        );
+        logger.info(`[AutoMod] Excessive caps from ${userName} → timeout ${timeoutSeconds}s`);
       }
     }
     // 4. Emojis
@@ -216,9 +243,7 @@ class AutoModerationService {
       if (emojis.length > this.rules.maxEmojis) {
         timeoutSeconds = 60;
         reason = `Too many emojis (${emojis.length})`;
-        logger.info(
-          `[AutoMod] Detected too many emojis in message from ${userName}`,
-        );
+        logger.info(`[AutoMod] Too many emojis from ${userName} → timeout ${timeoutSeconds}s`);
       }
     }
 
@@ -229,9 +254,7 @@ class AutoModerationService {
         if (lowerMsg.includes(word)) {
           timeoutSeconds = 300;
           reason = `Blocked word: ${word}`;
-          logger.info(
-            `[AutoMod] Detected blocked word "${word}" in message from ${userName}`,
-          );
+          logger.info(`[AutoMod] Blocked word "${word}" from ${userName} → timeout ${timeoutSeconds}s`);
           break;
         }
       }
@@ -279,6 +302,7 @@ class AutoModerationService {
           actionTaken = true;
         }
 
+        logger.info(`[AutoMod] Action taken against ${userName}: ${reason} (delete=${this.autoDeleteMessage}, timeout=${this.autoTimeoutUser})`);
         return actionTaken;
       } catch (err) {
         logger.error(`[AutoMod] Failed to act on ${userName}:`, err);
@@ -286,6 +310,7 @@ class AutoModerationService {
       }
     }
 
+    logger.debug(`[AutoMod] Message from ${userName} passed all checks, no action.`);
     return false;
   }
 
@@ -293,12 +318,14 @@ class AutoModerationService {
    * @param {string} level
    */
   setLevel(level) {
+    logger.info(`[AutoMod] setLevel called: ${level}`);
     this.level = level;
     this._applyLevelRules();
     this.saveSettings();
   }
 
   _applyLevelRules() {
+    logger.debug(`[AutoMod] Applying level rules for: ${this.level}`);
     switch (this.level) {
       case "none":
         this.rules.links = false;
@@ -306,8 +333,8 @@ class AutoModerationService {
         this.rules.maxEmojis = 0;
         this.rules.repeatWindowSeconds = 0;
         this.rules.repeatCountThreshold = 0;
-        // Hindi binabago ang blockedBadges – panatilihin ang nakaimbak
         this.enabled = false;
+        logger.debug("[AutoMod] Level 'none' applied: disabled, all rules off");
         break;
       case "basic":
         this.rules.links = true;
@@ -316,6 +343,7 @@ class AutoModerationService {
         this.rules.repeatWindowSeconds = 10;
         this.rules.repeatCountThreshold = 3;
         this.enabled = true;
+        logger.debug("[AutoMod] Level 'basic' applied: enabled, standard rules");
         break;
       case "aggressive":
         this.rules.links = true;
@@ -324,11 +352,13 @@ class AutoModerationService {
         this.rules.repeatWindowSeconds = 5;
         this.rules.repeatCountThreshold = 2;
         this.enabled = true;
+        logger.debug("[AutoMod] Level 'aggressive' applied: enabled, strict rules");
         break;
     }
   }
 
   getConfig() {
+    logger.debug("[AutoMod] getConfig called");
     return { enabled: this.enabled, level: this.level, rules: this.rules };
   }
 }
