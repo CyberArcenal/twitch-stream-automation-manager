@@ -7,7 +7,7 @@ import { NotificationToastListener } from "../components/Shared/NotificationToas
 import { ShortcutsOverlay } from "../components/Shared/ShortcutsOverlay";
 
 const Layout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true); // default open
+  const [sidebarOpen, setSidebarOpen] = useState(false); // default open
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

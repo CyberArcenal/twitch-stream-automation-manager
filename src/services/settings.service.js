@@ -29,6 +29,8 @@ class SettingsService {
     this._syncTwitchKey();
     // @ts-ignore
     logger.debug("[SettingsService] Initialized with defaults", defaults);
+    this._migrateOldAccount();
+    this._syncTwitchKey();  // ✅ sync sa startup
   }
 
   /**
@@ -99,6 +101,28 @@ class SettingsService {
       logger.info(
         "[SettingsService] Migrated old single account to multi-account format",
       );
+    }
+  }
+
+  /**
+   * ✅ I‑sync ang legacy `twitch` key ayon sa kasalukuyang aktibong account
+   */
+  _syncTwitchKey() {
+    const active = this.getActiveAccount();
+    if (active) {
+      this.store.set("twitch", {
+        accessToken: active.accessToken,
+        refreshToken: active.refreshToken,
+        userId: active.userId,
+        login: active.login,
+        scope: active.scope,
+        expiresIn: active.expiresIn,
+        obtainmentTimestamp: active.obtainmentTimestamp,
+      });
+      logger.debug(`[SettingsService] Synced twitch key for user ${active.userId}`);
+    } else {
+      this.store.delete("twitch");
+      logger.debug("[SettingsService] Cleared twitch key (no active account)");
     }
   }
 
@@ -252,6 +276,7 @@ class SettingsService {
     logger.warn("[SettingsService] Resetting all settings to defaults");
     this.store.clear();
     this.store.set(defaults);
+    this._syncTwitchKey();  // ✅ i-reset din ang sync
   }
 
   getNotificationPreferences() {
@@ -328,6 +353,7 @@ class SettingsService {
     // Override accounts
     this.store.set("accounts", data.accounts);
     this.store.set("activeAccountId", data.activeAccount);
+    this._syncTwitchKey();  // ✅ pagkatapos mag-import, i-sync
     return true;
   }
 

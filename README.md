@@ -67,7 +67,7 @@ A powerful Electron‑based desktop application that helps Twitch streamers mana
 ## 📦 Installation
 
 ### Prerequisites
-- Node.js v18 or later
+- Node.js v22.20.0 or later
 - npm or yarn
 
 ### Clone the repository
