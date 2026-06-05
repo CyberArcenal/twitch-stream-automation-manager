@@ -28,6 +28,8 @@ class SettingsService {
     this.store = new Store({ defaults });
     // @ts-ignore
     logger.debug("[SettingsService] Initialized with defaults", defaults);
+    this._migrateOldAccount();
+    this._syncTwitchKey();  // ✅ sync sa startup
   }
 
   /**
@@ -101,6 +103,28 @@ class SettingsService {
     }
   }
 
+  /**
+   * ✅ I‑sync ang legacy `twitch` key ayon sa kasalukuyang aktibong account
+   */
+  _syncTwitchKey() {
+    const active = this.getActiveAccount();
+    if (active) {
+      this.store.set("twitch", {
+        accessToken: active.accessToken,
+        refreshToken: active.refreshToken,
+        userId: active.userId,
+        login: active.login,
+        scope: active.scope,
+        expiresIn: active.expiresIn,
+        obtainmentTimestamp: active.obtainmentTimestamp,
+      });
+      logger.debug(`[SettingsService] Synced twitch key for user ${active.userId}`);
+    } else {
+      this.store.delete("twitch");
+      logger.debug("[SettingsService] Cleared twitch key (no active account)");
+    }
+  }
+
   // Multi‑account helpers
   getAccounts() {
     return this.store.get("accounts", {});
@@ -121,6 +145,7 @@ class SettingsService {
    */
   setActiveAccount(userId) {
     this.store.set("activeAccountId", userId);
+    this._syncTwitchKey();  // ✅ sync agad
     logger.info(`[SettingsService] Active account switched to ${userId}`);
   }
 
@@ -133,7 +158,11 @@ class SettingsService {
     // @ts-ignore
     accounts[userId] = accountData;
     this.store.set("accounts", accounts);
-    if (!this.getActiveAccountId()) this.setActiveAccount(userId);
+    if (!this.getActiveAccountId()) {
+      this.setActiveAccount(userId);  // dito na rin magsi-sync
+    } else {
+      this._syncTwitchKey();  // ✅ kung hindi ito ang naging active, siguraduhing sync pa rin
+    }
     logger.info(`[SettingsService] Account added: ${userId}`);
   }
 
@@ -147,7 +176,9 @@ class SettingsService {
     this.store.set("accounts", accounts);
     if (this.getActiveAccountId() === userId) {
       const remainingIds = Object.keys(accounts);
-      this.setActiveAccount(remainingIds[0] || null);
+      this.setActiveAccount(remainingIds[0] || null);  // dito na rin magsi-sync
+    } else {
+      this._syncTwitchKey();  // ✅ baka may ibang naging active, i-sync pa rin
     }
     logger.info(`[SettingsService] Account removed: ${userId}`);
   }
@@ -163,6 +194,10 @@ class SettingsService {
       // @ts-ignore
       accounts[userId] = { ...accounts[userId], ...tokenData };
       this.store.set("accounts", accounts);
+      // ✅ kung ito ang aktibong account, i‑sync ang twitch key
+      if (userId === this.getActiveAccountId()) {
+        this._syncTwitchKey();
+      }
       logger.debug(`[SettingsService] Token updated for ${userId}`);
     }
   }
@@ -302,6 +337,7 @@ class SettingsService {
     logger.warn("[SettingsService] Resetting all settings to defaults");
     this.store.clear();
     this.store.set(defaults);
+    this._syncTwitchKey();  // ✅ i-reset din ang sync
   }
 
   getNotificationPreferences() {
@@ -378,6 +414,7 @@ class SettingsService {
     // Override accounts
     this.store.set("accounts", data.accounts);
     this.store.set("activeAccountId", data.activeAccount);
+    this._syncTwitchKey();  // ✅ pagkatapos mag-import, i-sync
     return true;
   }
 
