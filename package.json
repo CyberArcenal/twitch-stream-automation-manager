@@ -1,7 +1,7 @@
 {
   "name": "twitch-stream-automation-manager",
   "private": true,
-  "version": "v1.4.0",
+  "version": "v1.6.0",
   "description": "A modern Twitch desktop client built with Electron, React, TypeScript, and Vite",
   "main": "src/main/index.js",
   "author": {
