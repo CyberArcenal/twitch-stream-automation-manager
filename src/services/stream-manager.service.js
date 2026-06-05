@@ -148,12 +148,13 @@ class StreamManagerService {
     return true;
   }
 
-  async unbanUser(broadcasterId, userName) {
+  async unbanUser(broadcasterId, moderatorId, userName) {
     const user = await twitchApiService.getUserByName(userName);
     if (!user) throw new Error("User not found");
 
     const params = new URLSearchParams({
       broadcaster_id: broadcasterId,
+      moderator_id: moderatorId,
       user_id: user.id,
     });
     await twitchApiService.fetchTwitch(`moderation/bans?${params}`, {

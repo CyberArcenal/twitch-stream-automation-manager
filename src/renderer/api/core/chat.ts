@@ -17,9 +17,10 @@ export interface ChatMessage {
     name?: string;
     id?: string;
   }>;
-   isDeleted?: boolean;
+  isDeleted?: boolean;
   isFromMe?: boolean;
   isPinned?: boolean;
+  deletedReason?: string | null;
 }
 
 export interface ChatConnected {
