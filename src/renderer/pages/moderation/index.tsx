@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import ChatCard from "../../components/ChatCard"; // ✅ use modern chat
 import { UserInfoPanel } from "./components/UserInfoPanel";
-import { ModerationLogs } from "./components/ModerationLogs";
+import { ModerationLogCard } from "./components/ModerationLogCard";
 import { TeamManagement } from "./components/TeamManagement";
 import {
   AutomationLogProvider,
@@ -71,7 +71,7 @@ const ModerationPageContent: React.FC<{
             </ErrorBoundary>
           )}
           <ErrorBoundary>
-            <ModerationLogs broadcasterId={broadcasterId} className="" />
+            <ModerationLogCard broadcasterId={broadcasterId} className="flex-1" />
           </ErrorBoundary>
           <ErrorBoundary>
             <TeamManagement broadcasterId={broadcasterId} />
@@ -197,7 +197,7 @@ const ModerationPageContent: React.FC<{
               <AutomationLogs
                 logs={logs}
                 onClearLogs={clearLogs}
-                className="flex-1 flex flex-col h-full min-h-0 max-h-[880px]"
+                className="flex-1 flex flex-col h-full min-h-[300px] max-h-[880px]"
                 classNameToLog="flex-1 overflow-y-scroll"
               />
             </div>
