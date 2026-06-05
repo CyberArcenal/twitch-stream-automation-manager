@@ -225,12 +225,10 @@ const ModerationPage: React.FC = () => {
   }
 
   return (
-    <AutomationLogProvider>
       <ModerationPageContent
         broadcasterId={broadcasterId}
         userLogin={user?.login || ""}
       />
-    </AutomationLogProvider>
   );
 };
 

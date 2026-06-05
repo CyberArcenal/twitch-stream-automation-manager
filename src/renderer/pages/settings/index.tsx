@@ -29,7 +29,6 @@ const SettingsPage: React.FC = () => {
   ];
 
   return (
-    <AutomationLogProvider>   {/* ✅ Wrap the whole page */}
       <div className="flex h-full bg-[var(--background-color)]">
         {/* Sidebar */}
         <div className="w-64 border-r border-[var(--card-border)] bg-[var(--card-bg)] p-4 space-y-1 rounded-2xl m-4">
@@ -62,7 +61,6 @@ const SettingsPage: React.FC = () => {
           {activeTab === "about" && <AboutTab />}
         </div>
       </div>
-    </AutomationLogProvider>
   );
 };
 
