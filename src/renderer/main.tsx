@@ -10,6 +10,7 @@ import App from "./routes/App";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext"; // new
 import { DashboardLayoutProvider } from "./contexts/DashboardLayoutContext";
+import { AutomationLogProvider } from "./contexts/AutomationLogContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <ThemeProvider>
         <DashboardLayoutProvider>
           <ConditionalRouter>
-            <App />
+            <AutomationLogProvider>
+              <App />
+            </AutomationLogProvider>
           </ConditionalRouter>
         </DashboardLayoutProvider>
       </ThemeProvider>

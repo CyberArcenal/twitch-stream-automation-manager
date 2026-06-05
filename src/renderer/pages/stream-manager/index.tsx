@@ -14,8 +14,6 @@ import CollaborationCard from "./components/CollaborationCard";
 import { StreamGoalsPreviewCard } from "./components/StreamGoalsPreviewCard";
 import { ErrorBoundary } from "../../components/UI/ErrorBoundary";
 import { ViewerListCard } from "./components/ViewerListCard";
-import { ActivePredictionCard } from "./components/ActivePredictionCard";
-import { AutomationLogProvider } from "../../contexts/AutomationLogContext";
 // ❌ tanggalin: import { useDashboardLayout } from "../../contexts/DashboardLayoutContext";
 
 const StreamManagerPage: React.FC = () => {
@@ -38,7 +36,6 @@ const StreamManagerPage: React.FC = () => {
   };
 
   return (
-    <AutomationLogProvider>
       <div className="h-full min-h-full !p-4 bg-[var(--background-color)]">
         <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 h-full">
           {/* Column 1: Main Video Card */}
@@ -113,7 +110,6 @@ const StreamManagerPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </AutomationLogProvider>
   );
 };
 

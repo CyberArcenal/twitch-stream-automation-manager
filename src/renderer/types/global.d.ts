@@ -55,6 +55,7 @@ declare global {
       "moderation-log": (payload: any) => Promise<any>;
       scheduler: (payload: any) => Promise<any>;
       "chat-commands": (payload: any) => Promise<any>;
+      "pinned-messages": (payload: any) => Promise<any>;
 
       appInfo: () => Promise<any>;
 

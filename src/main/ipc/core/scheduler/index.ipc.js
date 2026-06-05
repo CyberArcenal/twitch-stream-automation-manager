@@ -1,6 +1,7 @@
 //@ts-check
 const { ipcMain } = require('electron');
 const { schedulerService } = require('../../../../services/scheduler.service');
+const { logger } = require('../../../../utils/logger');
 
 async function handleSchedulerRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -20,6 +21,7 @@ async function handleSchedulerRequest(event, payload) {
 
 ipcMain.handle('scheduler', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleSchedulerRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

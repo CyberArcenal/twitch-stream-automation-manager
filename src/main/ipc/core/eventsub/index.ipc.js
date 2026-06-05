@@ -1,6 +1,7 @@
 //@ts-check
 const { ipcMain } = require("electron");
 const { eventSubService } = require("../../../../services/eventsub.service");
+const { logger } = require("../../../../utils/logger");
 
 async function handleEventSubRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -29,6 +30,7 @@ async function handleEventSubRequest(event, payload) {
 
 ipcMain.handle("eventsub", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleEventSubRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {

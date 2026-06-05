@@ -148,12 +148,13 @@ class StreamManagerService {
     return true;
   }
 
-  async unbanUser(broadcasterId, userName) {
+  async unbanUser(broadcasterId, moderatorId, userName) {
     const user = await twitchApiService.getUserByName(userName);
     if (!user) throw new Error("User not found");
 
     const params = new URLSearchParams({
       broadcaster_id: broadcasterId,
+      moderator_id: moderatorId,
       user_id: user.id,
     });
     await twitchApiService.fetchTwitch(`moderation/bans?${params}`, {
@@ -203,16 +204,22 @@ class StreamManagerService {
     }
   }
 
-  async addModerator(broadcasterId, userId) {
-    const params = new URLSearchParams({
-      broadcaster_id: broadcasterId,
-      user_id: userId,
-    });
-    await twitchApiService.fetchTwitch(`moderation/moderators?${params}`, {
-      method: "POST",
-    });
-    return true;
+async addModerator(broadcasterId, userId) {
+  // Iwasan ang pag‑add ng sarili bilang moderator
+  if (broadcasterId === userId) {
+    logger.info("[StreamManager] Skipping addModerator for self (broadcaster is already moderator)");
+    return true; // Huwag mag-error, para hindi masira ang UI flow
   }
+  
+  const params = new URLSearchParams({
+    broadcaster_id: broadcasterId,
+    user_id: userId,
+  });
+  await twitchApiService.fetchTwitch(`moderation/moderators?${params}`, {
+    method: "POST",
+  });
+  return true;
+}
 
   async removeModerator(broadcasterId, userId) {
     const params = new URLSearchParams({

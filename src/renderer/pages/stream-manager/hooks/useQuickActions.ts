@@ -19,20 +19,20 @@ export const useQuickActions = (isLive: boolean) => {
     if (!length) return;
     try {
       await streamManagerAPI.runCommercial(parseInt(length));
-      dialogs.alert({ message: `Running ${length}s commercial...` });
+      dialogs.dialogs.error({ message: `Running ${length}s commercial...` });
     } catch (err) {
       dialogs.error("Failed to run ads");
     }
   }, [isLive]);
 
   const openGoals = useCallback(() => {
-    dialogs.alert({ message: "Goal management coming soon" });
+    dialogs.dialogs.error({ message: "Goal management coming soon" });
   }, []);
 
   const raidShortcut = useCallback(() => {
     const target = prompt("Enter channel name to raid:");
     if (target) {
-      dialogs.alert({ message: `Raid shortcut: /raid ${target}` });
+      dialogs.dialogs.error({ message: `Raid shortcut: /raid ${target}` });
     }
   }, []);
 
@@ -41,7 +41,7 @@ export const useQuickActions = (isLive: boolean) => {
     if (!target) return;
     try {
       await sendShoutout(target);
-      dialogs.alert({ message: `Shoutout sent to ${target}!` });
+      dialogs.dialogs.error({ message: `Shoutout sent to ${target}!` });
     } catch (err: any) {
       dialogs.error(err.message);
     }

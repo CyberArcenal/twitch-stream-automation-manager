@@ -47,7 +47,7 @@ const ConnectionHubCard: React.FC<ConnectionHubCardProps> = ({ isLive, onRefresh
       await streamManagerAPI.obsStartStream();
     } catch (err) {
       console.error("Failed to start stream", err);
-      alert("Failed to start stream. Make sure OBS is connected and not already streaming.");
+      dialogs.error("Failed to start stream. Make sure OBS is connected and not already streaming.");
     }
   };
 
@@ -56,7 +56,7 @@ const ConnectionHubCard: React.FC<ConnectionHubCardProps> = ({ isLive, onRefresh
       await streamManagerAPI.obsStopStream();
     } catch (err) {
       console.error("Failed to stop stream", err);
-      alert("Failed to stop stream.");
+      dialogs.error("Failed to stop stream.");
     }
   };
 
@@ -65,7 +65,7 @@ const ConnectionHubCard: React.FC<ConnectionHubCardProps> = ({ isLive, onRefresh
     setSelectedIngestId(ingestId);
     // Open Twitch dashboard to change ingest server manually
     window.backendAPI.openDashboard("https://dashboard.twitch.tv/settings/stream");
-    alert("Ingest server changed in Twitch dashboard. Please update your OBS settings accordingly.");
+    dialogs.error("Ingest server changed in Twitch dashboard. Please update your OBS settings accordingly.");
   };
 
   const handleCheckLiveStatus = async () => {

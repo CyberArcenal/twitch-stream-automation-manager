@@ -10,10 +10,17 @@ class PictureInPictureService {
     this.mainWindow = null;
   }
 
+  /**
+   * @param {BrowserWindow | null} mainWindow
+   */
   initialize(mainWindow) {
     this.mainWindow = mainWindow;
   }
 
+  /**
+   * @param {string} channel
+   * @param {{}} data
+   */
   _sendToRenderers(channel, data) {
     try {
       const windows = BrowserWindow.getAllWindows();
@@ -67,6 +74,9 @@ class PictureInPictureService {
     return this.pipWindow;
   }
 
+  /**
+   * @param {string} streamUrl
+   */
   async setVideoSource(streamUrl) {
     const win = this.createPipWindow();
     await win.webContents.executeJavaScript(`

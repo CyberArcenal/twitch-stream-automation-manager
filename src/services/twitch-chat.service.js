@@ -16,7 +16,7 @@ const { autoModerationService } = require("./auto-moderation.service");
 const { chatCommandsService } = require("./chat-commands.service");
 const EventEmitter = require("events");
 
-class TwitchChatService {
+class TwitchChatServiceOld {
   constructor() {
     this.events = new EventEmitter();
     this.chatClient = null; // channel chat client
@@ -367,18 +367,18 @@ class TwitchChatService {
         )
         .catch((err) => logger.error("[AutoMod] Error:", err));
 
-      if (moderated) {
-        // Huwag ipadala sa UI at huwag i-save sa history
-        return;
-      }
+      // if (moderated) {
+      //   // Huwag ipadala sa UI at huwag i-save sa history
+      //   return;
+      // }
 
       // ✅ 3. UI filter (pang-display lang, hindi na-moderate)
-      const filters = settingsService.get("chatFilters") || [];
-      const isFiltered = filters.some((f) => message.toLowerCase().includes(f));
-      if (isFiltered) {
-        logger.debug(`[Chat] Message filtered (UI) from ${user}: "${message}"`);
-        return; // huwag ipakita sa UI, pero hindi na-moderate (no action)
-      }
+      // const filters = settingsService.get("chatFilters") || [];
+      // const isFiltered = filters.some((f) => message.toLowerCase().includes(f));
+      // if (isFiltered) {
+      //   logger.debug(`[Chat] Message filtered (UI) from ${user}: "${message}"`);
+      //   return; // huwag ipakita sa UI, pero hindi na-moderate (no action)
+      // }
 
       // 3️⃣ Kunin ang badges (pareho pa rin)
       let badgesArray = [];
@@ -417,23 +417,47 @@ class TwitchChatService {
       }));
 
       const isFromMe = user === this.currentUserLogin;
-      const chatMessage = {
+      let chatMessage = {
         messageId: msg.id,
         channel: channel,
         user: user,
         message: message,
         parsedMessage: parseChatMessage(message, msg.emoteOffsets),
-        badges: badgesWithUrl,
+        badges: [], // will fill later
         emotes: msg.emoteOffsets,
         timestamp: new Date().toISOString(),
-        isFromMe: isFromMe,
+        isFromMe: user === this.currentUserLogin,
         replyParentMsgId: msg.parentMessageId || null,
+        isDeleted: false,
+        deletedReason: null,
       };
 
       if (isFromMe) {
         logger.success(
           `[Chat] OWN MESSAGE received via onMessage: "${message}" (ID: ${msg.id})`,
         );
+      }
+
+      // If moderation suppressed the message, mark as deleted
+      if (moderated.shouldSuppress) {
+        chatMessage.isDeleted = true;
+        chatMessage.deletedReason = moderated.reason || "Auto-moderation";
+        chatMessage.message = `[Message removed: ${chatMessage.deletedReason}]`;
+        // Clear parsed content
+        chatMessage.parsedMessage = [
+          { type: "text", text: chatMessage.message },
+        ];
+      }
+
+      const filters = settingsService.get("chatFilters") || [];
+      const isFiltered = filters.some((f) => message.toLowerCase().includes(f));
+      if (isFiltered && !chatMessage.isDeleted) {
+        chatMessage.isDeleted = true;
+        chatMessage.deletedReason = "Filtered by chat filter";
+        chatMessage.message = `[Message filtered: ${chatMessage.deletedReason}]`;
+        chatMessage.parsedMessage = [
+          { type: "text", text: chatMessage.message },
+        ];
       }
 
       this.messageBuffer.push(chatMessage);
@@ -719,5 +743,5 @@ class TwitchChatService {
   }
 }
 
-const twitchChatService = new TwitchChatService();
+const { twitchChatService, TwitchChatService } = require("./chat");
 module.exports = { twitchChatService, TwitchChatService };

@@ -1,11 +1,13 @@
 // hooks/useChatModeration.ts
-import { useState } from 'react';
-import { useModeration } from '../../../pages/stream-manager/hooks/useModeration';
-import { dialogs } from '../../../utils/dialogs';
+import { useState } from "react";
+import { useModeration } from "../../../pages/stream-manager/hooks/useModeration";
+import { dialogs } from "../../../utils/dialogs";
+import { streamManagerAPI } from "../../../api/core/streamManager";
 
 export const useChatModeration = (broadcasterId: string) => {
   const { banUser, timeoutUser, clearChat } = useModeration(broadcasterId);
   const [isBanningUser, setIsBanningUser] = useState<string | null>(null);
+  const [isUnbanningUser, setIsUnbanningUser] = useState<string | null>(null);
   const [isTimeoutingUser, setIsTimeoutingUser] = useState<string | null>(null);
   const [isClearingChat, setIsClearingChat] = useState(false);
 
@@ -17,6 +19,24 @@ export const useChatModeration = (broadcasterId: string) => {
       dialogs.error(`Failed to ban ${username}`);
     } finally {
       setIsBanningUser(null);
+    }
+  };
+
+  const unbanUserWithLoading = async (username: string) => {
+    const confirmed = await dialogs.confirm({
+      title: "Unban User",
+      message: `Are you sure you want to unban ${username}?`,
+    });
+    if (!confirmed) return;
+
+    setIsUnbanningUser(username);
+    try {
+      await streamManagerAPI.unbanUser(username);
+      dialogs.success(`Unbanned ${username}`);
+    } catch (err: any) {
+      dialogs.error(`Failed to unban: ${err.message}`);
+    } finally {
+      setIsUnbanningUser(null);
     }
   };
 
@@ -36,7 +56,7 @@ export const useChatModeration = (broadcasterId: string) => {
     try {
       await clearChat();
     } catch {
-      dialogs.error('Could not clear chat.');
+      dialogs.error("Could not clear chat.");
     } finally {
       setIsClearingChat(false);
     }
@@ -44,9 +64,12 @@ export const useChatModeration = (broadcasterId: string) => {
 
   return {
     banUser: banUserWithLoading,
+    unbanUser: unbanUserWithLoading,
+
     timeoutUser: timeoutUserWithLoading,
     clearChat: clearChatWithLoading,
     isBanningUser,
+    isUnbanningUser,
     isTimeoutingUser,
     isClearingChat,
   };

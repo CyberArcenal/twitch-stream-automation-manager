@@ -71,7 +71,7 @@ const ModerationPageContent: React.FC<{
             </ErrorBoundary>
           )}
           <ErrorBoundary>
-            <ModerationLogs broadcasterId={broadcasterId} className="flex-1" />
+            <ModerationLogs broadcasterId={broadcasterId} className="" />
           </ErrorBoundary>
           <ErrorBoundary>
             <TeamManagement broadcasterId={broadcasterId} />
@@ -197,8 +197,8 @@ const ModerationPageContent: React.FC<{
               <AutomationLogs
                 logs={logs}
                 onClearLogs={clearLogs}
-                className="flex-1 flex flex-col h-full min-h-0"
-                classNameToLog="flex-1 overflow-y-auto"
+                className="flex-1 flex flex-col h-full min-h-0 max-h-[880px]"
+                classNameToLog="flex-1 overflow-y-scroll"
               />
             </div>
           </ErrorBoundary>
@@ -225,12 +225,10 @@ const ModerationPage: React.FC = () => {
   }
 
   return (
-    <AutomationLogProvider>
       <ModerationPageContent
         broadcasterId={broadcasterId}
         userLogin={user?.login || ""}
       />
-    </AutomationLogProvider>
   );
 };
 

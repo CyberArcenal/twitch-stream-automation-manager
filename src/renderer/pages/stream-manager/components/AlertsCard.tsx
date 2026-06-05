@@ -9,28 +9,62 @@ import { useAutomationLog } from "../../../contexts/AutomationLogContext";
 interface AlertsCardProps {
   isLive: boolean;
   channelId?: string;
+  fromModeration?: boolean;
 }
 
-const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
+const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId, fromModeration }) => {
   const navigate = useNavigate();
   const { events, clearEvents } = useAlertsFeed(channelId || "");
   const { soundEnabled } = useAlertSettings();
   const [alertsActive, setAlertsActive] = useState(true);
-  const [logToAutomation, setLogToAutomation] = useState(false);
-  const { addLog } = useAutomationLog();
-  const previousEventCount = useRef(0);
-  const latestEvents = events.slice(0, 5);
+  const [logToAutomation, setLogToAutomation] = useState(() => {
+    const saved = localStorage.getItem("alertsCardLogToAutomation");
+    return saved ? JSON.parse(saved) : false;
+  });
+  const { addLog, logs: automationLogs, clearLogs } = useAutomationLog();
 
-  // Log new events to automation log if toggle is ON
+  // Use a ref to store IDs of events already logged
+  const loggedEventIds = useRef<Set<string>>(new Set());
+
+  const latestEvents = events.slice(0, 5);
+  const displayLogs = logToAutomation ? automationLogs.slice(0, 5) : latestEvents;
+
+  // Save toggle state to localStorage
   useEffect(() => {
-    if (events.length > previousEventCount.current && logToAutomation) {
-      const newestEvent = events[0];
-      if (newestEvent) {
-        addLog(`Alert: ${newestEvent.message}`, "info");
-      }
+    localStorage.setItem("alertsCardLogToAutomation", JSON.stringify(logToAutomation));
+  }, [logToAutomation]);
+
+  // Handle toggle
+  const handleToggleLogging = () => {
+    const newState = !logToAutomation;
+    setLogToAutomation(newState);
+    if (newState) {
+      addLog("✅ Alert logging enabled – future alerts will appear here", "info");
     }
-    previousEventCount.current = events.length;
+  };
+
+  // Log new events (those not yet logged)
+  useEffect(() => {
+    if (!logToAutomation) return;
+    
+    // Find events that haven't been logged yet
+    events.forEach(event => {
+      if (!loggedEventIds.current.has(event.id)) {
+        addLog(`Alert: ${event.message}`, "info");
+        loggedEventIds.current.add(event.id);
+      }
+    });
   }, [events, logToAutomation, addLog]);
+
+  // Clear logged IDs when events are cleared (optional)
+  const handleClearEvents = () => {
+    if (logToAutomation) {
+      clearLogs();
+    } else {
+      clearEvents();
+    }
+    loggedEventIds.current.clear();
+  };
 
   // Play sound when new event arrives
   const playAlertSound = () => {
@@ -65,22 +99,20 @@ const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
   };
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden flex-1 min-w-[300px]">
+    <div className={`bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden flex-1 min-w-[300px] ${fromModeration? '': 'max-h-[330px]'}`}>
       <div className="p-3 border-b border-[var(--border-color)] flex justify-between items-center">
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">Alerts</h3>
         <div className="flex items-center gap-3">
-          {/* Toggle: Log to Automation Log */}
           <label className="flex items-center gap-1 text-xs text-[var(--text-secondary)] cursor-pointer">
             <FileText className="w-3 h-3" />
             <span>Log to automation</span>
             <button
-              onClick={() => setLogToAutomation(!logToAutomation)}
+              onClick={handleToggleLogging}
               className={`relative w-8 h-4 rounded-full transition-colors ${logToAutomation ? "bg-[var(--primary-color)]" : "bg-[var(--input-border)]"} ml-1`}
             >
               <span className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${logToAutomation ? "translate-x-4" : ""}`} />
             </button>
           </label>
-          {/* Mute / Alerts toggle */}
           <button
             onClick={() => setAlertsActive(!alertsActive)}
             className="px-2 py-0.5 rounded text-xs bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover)] transition"
@@ -90,10 +122,31 @@ const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
         </div>
       </div>
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
-        {!isLive ? (
+        {!isLive && !logToAutomation ? (
           <p className="text-center text-[var(--text-secondary)] text-sm italic">No live stream → no alerts</p>
-        ) : latestEvents.length === 0 ? (
-          <p className="text-center text-[var(--text-secondary)] text-sm italic">No recent alerts</p>
+        ) : displayLogs.length === 0 ? (
+          <p className="text-center text-[var(--text-secondary)] text-sm italic">
+            {logToAutomation ? "No automation logs" : "No recent alerts"}
+          </p>
+        ) : logToAutomation ? (
+          automationLogs.slice(0, 5).map((log) => (
+            <div
+              key={log.id}
+              className="flex items-start gap-2 text-sm p-1 rounded"
+            >
+              <FileText className="w-4 h-4 mt-0.5 flex-shrink-0"
+                style={{
+                  color: log.type === "error" ? "#f87171" : log.type === "success" ? "#4ade80" : "#fbbf24"
+                }}
+              />
+              <div className="flex-1">
+                <span className="text-[var(--text-primary)]">{log.message}</span>
+                <span className="text-[var(--text-secondary)] text-xs ml-2">
+                  {log.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+            </div>
+          ))
         ) : (
           latestEvents.map((event) => (
             <div
@@ -114,7 +167,7 @@ const AlertsCard: React.FC<AlertsCardProps> = ({ isLive, channelId }) => {
       </div>
       <div className="p-3 border-t border-[var(--border-color)]">
         <button
-          onClick={clearEvents}
+          onClick={handleClearEvents}
           className="w-full text-center text-sm bg-[var(--primary-color)] py-1.5 rounded-lg hover:bg-[#772ce8] transition"
         >
           Clear Alerts

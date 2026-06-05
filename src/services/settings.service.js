@@ -26,6 +26,7 @@ const defaults = {
 class SettingsService {
   constructor() {
     this.store = new Store({ defaults });
+    this._syncTwitchKey();
     // @ts-ignore
     logger.debug("[SettingsService] Initialized with defaults", defaults);
     this._migrateOldAccount();
@@ -138,68 +139,6 @@ class SettingsService {
     const activeId = this.getActiveAccountId();
     const accounts = this.getAccounts();
     return activeId ? accounts[activeId] : null;
-  }
-
-  /**
-   * @param {unknown} userId
-   */
-  setActiveAccount(userId) {
-    this.store.set("activeAccountId", userId);
-    this._syncTwitchKey();  // ✅ sync agad
-    logger.info(`[SettingsService] Active account switched to ${userId}`);
-  }
-
-  /**
-   * @param {string | number} userId
-   * @param {any} accountData
-   */
-  addAccount(userId, accountData) {
-    const accounts = this.getAccounts();
-    // @ts-ignore
-    accounts[userId] = accountData;
-    this.store.set("accounts", accounts);
-    if (!this.getActiveAccountId()) {
-      this.setActiveAccount(userId);  // dito na rin magsi-sync
-    } else {
-      this._syncTwitchKey();  // ✅ kung hindi ito ang naging active, siguraduhing sync pa rin
-    }
-    logger.info(`[SettingsService] Account added: ${userId}`);
-  }
-
-  /**
-   * @param {string | number | null} userId
-   */
-  removeAccount(userId) {
-    const accounts = this.getAccounts();
-    // @ts-ignore
-    delete accounts[userId];
-    this.store.set("accounts", accounts);
-    if (this.getActiveAccountId() === userId) {
-      const remainingIds = Object.keys(accounts);
-      this.setActiveAccount(remainingIds[0] || null);  // dito na rin magsi-sync
-    } else {
-      this._syncTwitchKey();  // ✅ baka may ibang naging active, i-sync pa rin
-    }
-    logger.info(`[SettingsService] Account removed: ${userId}`);
-  }
-
-  /**
-   * @param {string | number} userId
-   * @param {any} tokenData
-   */
-  updateAccountToken(userId, tokenData) {
-    const accounts = this.getAccounts();
-    // @ts-ignore
-    if (accounts[userId]) {
-      // @ts-ignore
-      accounts[userId] = { ...accounts[userId], ...tokenData };
-      this.store.set("accounts", accounts);
-      // ✅ kung ito ang aktibong account, i‑sync ang twitch key
-      if (userId === this.getActiveAccountId()) {
-        this._syncTwitchKey();
-      }
-      logger.debug(`[SettingsService] Token updated for ${userId}`);
-    }
   }
 
   // Backward compatibility for existing code that expects 'twitch' getter
@@ -427,6 +366,81 @@ class SettingsService {
   setChatDisplayDelay(seconds) {
     this.store.set("chatDisplayDelay", seconds);
   }
+
+  /**
+   * @param {string | number | null} userId
+   */
+  removeAccount(userId) {
+    const accounts = this.getAccounts();
+    delete accounts[userId];
+    this.store.set("accounts", accounts);
+    if (this.getActiveAccountId() === userId) {
+      const remainingIds = Object.keys(accounts);
+      this.setActiveAccount(remainingIds[0] || null); // setActiveAccount already syncs
+    } else {
+      this._syncTwitchKey(); // <-- add this to refresh twitch key if needed
+    }
+    logger.info(`[SettingsService] Account removed: ${userId}`);
+  }
+
+  /**
+   * @param {string | number | null} userId
+   * @param {any} tokenData
+   */
+  updateAccountToken(userId, tokenData) {
+    const accounts = this.getAccounts();
+    if (accounts[userId]) {
+      accounts[userId] = { ...accounts[userId], ...tokenData };
+      this.store.set("accounts", accounts);
+      // If the updated account is the active one, sync the twitch key
+      if (userId === this.getActiveAccountId()) {
+        this._syncTwitchKey(); // <-- add this
+      }
+      logger.debug(`[SettingsService] Token updated for ${userId}`);
+    }
+  }
+
+  /**
+   * @param {string | number} userId
+   * @param {any} accountData
+   */
+  addAccount(userId, accountData) {
+    const accounts = this.getAccounts();
+    accounts[userId] = accountData;
+    this.store.set("accounts", accounts);
+    if (!this.getActiveAccountId()) {
+      this.setActiveAccount(userId); // this already calls _syncTwitchKey
+    } else {
+      this._syncTwitchKey(); // <-- add this if active account unchanged but we might have added a different account
+    }
+    logger.info(`[SettingsService] Account added: ${userId}`);
+  }
+
+  /**
+   * @param {unknown} userId
+   */
+  setActiveAccount(userId) {
+    this.store.set("activeAccountId", userId);
+    this._syncTwitchKey(); // <-- add this
+    logger.info(`[SettingsService] Active account switched to ${userId}`);
+  }
+
+  _syncTwitchKey() {
+    const active = this.getActiveAccount();
+    if (active) {
+      this.store.set("twitch", {
+        accessToken: active.accessToken,
+        refreshToken: active.refreshToken,
+        userId: active.userId,
+        login: active.login,
+        scope: active.scope,
+        expiresIn: active.expiresIn,
+        obtainmentTimestamp: active.obtainmentTimestamp,
+      });
+    } else {
+      this.store.delete("twitch");
+    }
+  };
 }
 
 const settingsService = new SettingsService();

@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld("backendAPI", {
   "moderation-log": (payload) => ipcRenderer.invoke("moderation-log", payload),
   scheduler: (payload) => ipcRenderer.invoke("scheduler", payload),
   "chat-commands": (payload) => ipcRenderer.invoke("chat-commands", payload),
+  "pinned-messages": (payload) => ipcRenderer.invoke("pinned-messages", payload),
 
   // 🆕 Utility methods
   openLogFolder: () => ipcRenderer.invoke("app:open-log-folder"),

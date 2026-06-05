@@ -1,5 +1,7 @@
+//@ts-check
 const { ipcMain } = require('electron');
 const { pipService } = require('../../../../services/picture-in-picture.service');
+const { logger } = require('../../../../utils/logger');
 
 async function handlePipRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -20,6 +22,7 @@ async function handlePipRequest(event, payload) {
 
 ipcMain.handle('pip', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handlePipRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

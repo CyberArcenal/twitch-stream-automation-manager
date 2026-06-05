@@ -80,6 +80,8 @@ interface ChatMessageItemProps {
   onBanClick?: (username: string) => void;
   onTimeoutClick?: (username: string, duration: number) => void;
   onSelectUser?: (userId: string, userName: string) => void;
+  onUnbanClick?: (username: string) => void;
+  isUnbanningUser: string | null;
   currentUser: string;
   isLive: boolean;
   isPinned?: boolean;
@@ -99,6 +101,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
     onBanClick,
     onTimeoutClick,
     onSelectUser,
+    onUnbanClick,
+    isUnbanningUser,
     currentUser,
     isLive,
     isPinned,
@@ -106,8 +110,9 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
     isBanningUser = null,
     isTimeoutingUser = null,
   }) => {
+    const userName = message.user || "Unknown";
     const isOwnMessage =
-      currentUser && message.user.toLowerCase() === currentUser.toLowerCase();
+      currentUser && message.user?.toLowerCase() === currentUser.toLowerCase();
     const badges = message.badges || [];
     const isDeleted = message.isDeleted === true;
 
@@ -123,6 +128,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
     const handleBan = () => !isLoadingBan && onBanClick?.(message.user);
     const handleTimeout = () =>
       !isLoadingTimeout && onTimeoutClick?.(message.user, 600);
+    const isLoadingUnban = isUnbanningUser === userName;
+    const handleUnban = () => !isLoadingUnban && onUnbanClick?.(userName);
 
     const handleUserClick = () => {
       if (onSelectUser && !isDeleted) {
@@ -166,7 +173,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
             } ${isDeleted ? "line-through text-gray-400" : ""}`}
             disabled={isDeleted}
           >
-            {message.user}
+            {message.user || "Deleted User"}
             {isOwnMessage && !isDeleted && (
               <span className="text-xs ml-1 text-[#9147ff]/70">(you)</span>
             )}
@@ -194,7 +201,9 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
                   disabled={isLoadingTimeout}
                   className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-50 flex items-center gap-1"
                 >
-                  {isLoadingTimeout && <Loader2 className="w-3 h-3 animate-spin" />}
+                  {isLoadingTimeout && (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  )}
                   Timeout
                 </button>
                 <button
@@ -205,12 +214,28 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
                   {isLoadingBan && <Loader2 className="w-3 h-3 animate-spin" />}
                   Ban
                 </button>
+                {onUnbanClick && (
+                  <button
+                    onClick={handleUnban}
+                    disabled={isLoadingUnban}
+                    className="text-xs text-green-400 hover:text-green-300 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {isLoadingUnban && (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    )}
+                    Unban
+                  </button>
+                )}
               </>
             )}
             {isPinned ? (
-              <button onClick={handleUnpin} className="text-xs">Unpin</button>
+              <button onClick={handleUnpin} className="text-xs">
+                Unpin
+              </button>
             ) : (
-              <button onClick={handlePin} className="text-xs">Pin</button>
+              <button onClick={handlePin} className="text-xs">
+                Pin
+              </button>
             )}
             <button
               onClick={handleDelete}
@@ -227,7 +252,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = memo(
         )}
       </div>
     );
-  }
+  },
 );
 
 export default ChatMessageItem;
