@@ -17,23 +17,13 @@ const fsSync = require("fs");
 const url = require("url");
 
 // ===================== SERVICES =====================
-const { notificationService } = require("../services/notification.service");
-const { playerService } = require("../services/player.service");
-// @ts-ignore
 const { settingsService } = require("../services/settings.service");
 const { twitchAuthService } = require("../services/twitch-auth.service");
-const { twitchApiService } = require("../services/twitch-api.service");
 const { twitchChatService } = require("../services/twitch-chat.service");
-const { followsService } = require("../services/follows.service");
-const { eventSubService } = require("../services/eventsub.service");
-const { pipService } = require("../services/picture-in-picture.service");
 const { obsWebSocketService } = require("../services/obs-websocket.service.js");
-const updaterModule = require("./ipc/utils/updater/index.ipc.js");
-const {
-  analyticsCollector,
-} = require("../services/analytics-collector.service.js");
-const { schedulerService } = require("../services/scheduler.service.js");
 const { startLogCleanupScheduler } = require("../scheduler/logCleanupScheduler.js");
+const { ipcModules } = require("./ipcModules.js");
+const { initializeServices } = require("./initializers/service.js");
 
 // ===================== CONFIGURATION =====================
 const IS_DEV = process.env.NODE_ENV === "development" || !app.isPackaged;
@@ -446,44 +436,7 @@ async function createMainWindow() {
   return mainWindow;
 }
 
-// ===================== SERVICE INITIALIZATION =====================
-async function initializeServices() {
-  log(LogLevel.INFO, "Initializing services...", null, true);
-  // @ts-ignore
-  updaterModule.setMainWindow(mainWindow);
-  // @ts-ignore
-  notificationService.initialize(mainWindow);
-  twitchChatService.initChatService(mainWindow);
-  followsService.initialize(mainWindow);
-  playerService.initialize(mainWindow);
-  eventSubService.initialize(mainWindow);
-  pipService.initialize(mainWindow);
-  analyticsCollector.startCollecting(15);
-  schedulerService.loadSchedules();
 
-  if (twitchAuthService.isLoggedIn()) {
-    try {
-      await twitchApiService.getCurrentUser();
-      log(
-        LogLevel.INFO,
-        "User already logged in – starting stream monitor",
-        null,
-        true,
-      );
-    } catch (err) {
-      log(
-        LogLevel.WARN,
-        "Stored token invalid – clearing and requiring re-login",
-        err,
-      );
-      await twitchAuthService.logout();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("auth:invalid", {});
-      }
-    }
-  }
-  log(LogLevel.SUCCESS, "All services initialized", null, true);
-}
 
 // ===================== IPC HANDLERS =====================
 async function registerIpcHandlers() {
@@ -590,38 +543,6 @@ async function registerIpcHandlers() {
     return overlayService.generateFullOverlayHTML();
   });
 
-  const ipcModules = [
-    "./ipc/utils/updater/index.ipc.js",
-    "./ipc/core/player/index.ipc.js",
-    "./ipc/core/notification/index.ipc.js",
-    "./ipc/core/settings/index.ipc.js",
-    "./ipc/core/twitch-auth/index.ipc.js",
-    "./ipc/core/twitch-chat/index.ipc.js",
-    "./ipc/core/follows/index.ipc.js",
-    "./ipc/core/games/index.ipc.js",
-    "./ipc/core/user/index.ipc.js",
-    "./ipc/core/clips/index.ipc.js",
-    "./ipc/core/eventsub/index.ipc.js",
-    "./ipc/core/history/index.ipc.js",
-    "./ipc/core/shortcut/index.ipc.js",
-    "./ipc/core/themes/index.ipc.js",
-    "./ipc/core/ad-block/index.ipc.js",
-    "./ipc/core/pip/index.ipc.js",
-    "./ipc/core/download/index.ipc.js",
-    "./ipc/core/predictions/index.ipc.js",
-    "./ipc/core/search/index.ipc.js",
-    "./ipc/core/streams/index.ipc.js",
-    "./ipc/core/whisper/index.ipc.js",
-    "./ipc/core/notification-store/index.ipc.js",
-    "./ipc/core/stream-settings/index.ipc.js",
-    "./ipc/core/stream-manager/index.ipc.js",
-    "./ipc/core/analytics/index.ipc.js",
-    "./ipc/core/chat-history/index.ipc.js",
-    "./ipc/core/moderation-log/index.ipc.js",
-    "./ipc/core/scheduler/index.ipc.js",
-    "./ipc/core/chat-commands/index.ipc.js",
-  ];
-
   for (const modulePath of ipcModules) {
     const fullPath = path.join(__dirname, modulePath);
     if (fsSync.existsSync(fullPath)) {
@@ -662,7 +583,7 @@ async function startup() {
   await createSplashWindow();
   await registerIpcHandlers();
   await createMainWindow();
-  await initializeServices();
+  await initializeServices(mainWindow);
   startLogCleanupScheduler();
   log(LogLevel.SUCCESS, `${APP_NAME} started successfully`, null, true);
 }

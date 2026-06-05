@@ -47,6 +47,8 @@ const ChatCard: React.FC<ChatCardProps> = ({
     banUser,
     timeoutUser,
     clearChat,
+    unbanUser,
+    isUnbanningUser,
     isBanningUser,
     isTimeoutingUser,
     isClearingChat,
@@ -101,13 +103,13 @@ const ChatCard: React.FC<ChatCardProps> = ({
   );
 
   return (
-     <div
+    <div
       className={`
         bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] 
         flex flex-col 
-        ${fromModeration ? 'h-full' : 'h-full max-h-[560px]'}
+        ${fromModeration ? "h-full" : "h-full max-h-[560px]"}
         min-h-[300px] min-w-[300px]
-        ${className || ''}
+        ${className || ""}
       `}
     >
       <div
@@ -156,6 +158,8 @@ const ChatCard: React.FC<ChatCardProps> = ({
             isBanningUser={isBanningUser}
             isTimeoutingUser={isTimeoutingUser}
             onSelectUser={onSelectUser}
+            onUnbanClick={unbanUser}
+            isUnbanningUser={isUnbanningUser}
           />
         ))}
         <div ref={messagesEndRef} />

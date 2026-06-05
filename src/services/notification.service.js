@@ -10,8 +10,7 @@ class NotificationService {
   }
 
   /**
-   * Initialize service with main window reference (for event sending)
-   * @param {Electron.BrowserWindow} window
+   * @param {BrowserWindow | null} window
    */
   initialize(window) {
     this.mainWindow = window;

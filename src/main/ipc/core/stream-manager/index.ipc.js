@@ -172,8 +172,11 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
         params.userId,
       );
     case "unbanUser":
+      const userId = settingsService.get("twitch")?.userId;
+      if (!userId) throw new Error("Not logged in");
       return await streamManagerService.unbanUser(
-        settingsService.get("twitch").userId,
+        userId,
+        userId,
         params.userName,
       );
     case "getUserByName":
@@ -249,12 +252,22 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
 
 ipcMain.handle("stream-manager", async (event, payload) => {
   try {
-    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+    // exclude noisy methods from debug logging
+    const excludedMethods = [
+      "getCommercialCooldown",
+      "getStreamElapsedHours",
+      "isOBSRunning",
+    ];
+    if (!excludedMethods.includes(payload?.method)) {
+      logger.debug(
+        `[IPC:stream-manager] sender=${event.sender.id}, method=${payload?.method}, payload=${JSON.stringify(payload)}`,
+      );
+    }
+
     const result = await handleStreamManagerRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {
     logger.error("[IPC:stream-manager]", err);
-
     return { status: false, message: err.message, data: null };
   }
 });
