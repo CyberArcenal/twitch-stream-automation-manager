@@ -1,6 +1,7 @@
 //@ts-check
 const { ipcMain } = require('electron');
 const { chatHistoryService } = require('../../../../services/chat-history.service');
+const { logger } = require('../../../../utils/logger');
 
 
 async function handleChatHistoryRequest(event, payload) {
@@ -26,6 +27,7 @@ async function handleChatHistoryRequest(event, payload) {
 
 ipcMain.handle('chat-history', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleChatHistoryRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

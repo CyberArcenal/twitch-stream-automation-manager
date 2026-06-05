@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { app } = require('electron'); // Only works in main process; if used in renderer, we need a different approach.
 // For safety, we'll attempt to get the userData path only if app is available.
-
 let logFilePath = null;
 
 function getLogFilePath() {
+  
   if (logFilePath) return logFilePath;
   try {
     // Try to get the app's userData path (only works in main process)
@@ -124,7 +124,7 @@ function log(level, message, meta = null) {
   }
 
   // Write to file (using original level string without colors)
-  writeToFile(level, message, meta);
+  // writeToFile(level, message, meta);
 }
 
 // Convenience shortcuts - now accepts meta as second parameter
