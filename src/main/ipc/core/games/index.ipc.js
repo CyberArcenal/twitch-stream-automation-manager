@@ -1,5 +1,7 @@
+//@ts-check
 const { ipcMain } = require("electron");
 const { gamesService } = require("../../../../services/games.service");
+const { logger } = require("../../../../utils/logger");
 
 async function handleGamesRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -13,9 +15,8 @@ async function handleGamesRequest(event, payload) {
       return await gamesService.getStreamsByGame(params.gameId, params.first);
     case "getGameByName":
       return await gamesService.getGameByName(params.name);
-    case "searchCategories": // ✅ bagong case
-      result = await gamesService.searchCategories(params.query, params.first);
-      break;
+    case "searchCategories":
+      return await gamesService.searchCategories(params.query, params.first);
     default:
       throw new Error(`Unknown games method: ${method}`);
   }
@@ -23,6 +24,7 @@ async function handleGamesRequest(event, payload) {
 
 ipcMain.handle("games", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleGamesRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {

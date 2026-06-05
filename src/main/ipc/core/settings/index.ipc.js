@@ -4,6 +4,7 @@ const { settingsService } = require("../../../../services/settings.service");
 const {
   autoModerationService,
 } = require("../../../../services/auto-moderation.service");
+const { logger } = require("../../../../utils/logger");
 
 /**
  * @param {Electron.IpcMainInvokeEvent} event
@@ -64,6 +65,7 @@ async function handleSettingsRequest(event, payload) {
 
 ipcMain.handle("settings", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleSettingsRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {

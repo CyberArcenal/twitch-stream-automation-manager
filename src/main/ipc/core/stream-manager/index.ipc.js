@@ -21,11 +21,7 @@ const { twitchApiService } = require("../../../../services/twitch-api.service");
 /**
  * @param {Electron.IpcMainInvokeEvent} event
  */
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
+
 async function handleStreamManagerRequest(event, { method, params = {} }) {
   const broadcasterId = settingsService.get("twitch")?.userId;
   if (
@@ -41,53 +37,50 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
   switch (method) {
     case "updateStreamInfo":
       return await streamManagerService.updateStreamInfo(broadcasterId, {
-        // @ts-ignore
         title: params.title,
-        // @ts-ignore
+
         game_id: params.game_id,
-        // @ts-ignore
+
         go_live_notification: params.go_live_notification,
-        // @ts-ignore
+
         broadcaster_language: params.broadcaster_language,
-        // @ts-ignore
+
         tags: params.tags,
-        // @ts-ignore
+
         is_branded_content: params.is_branded_content,
-        // @ts-ignore
+
         content_classification_labels: params.content_classification_labels,
-        // @ts-ignore
+
         is_rerun: params.is_rerun,
       });
     case "deleteMessage":
-      
       return await streamManagerService.deleteMessage(
         broadcasterId,
         broadcasterId,
         params.messageId,
       );
     case "createClip":
-      
       return await streamManagerService.createClip(broadcasterId);
     case "startRaid":
       return await streamManagerService.startRaid(
         broadcasterId,
-        // @ts-ignore
+
         params.toBroadcasterLogin,
       );
     case "banUser":
       return await streamManagerService.banUser(
         broadcasterId,
         moderatorId,
-        // @ts-ignore
+
         params.userName,
       );
     case "timeoutUser":
       return await streamManagerService.timeoutUser(
         broadcasterId,
         moderatorId,
-        // @ts-ignore
+
         params.userName,
-        // @ts-ignore
+
         params.duration,
       );
     case "clearChat":
@@ -95,36 +88,30 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
     case "getGoals":
       return streamManagerService.getGoals();
     case "addGoal":
-      // @ts-ignore
       return streamManagerService.addGoal(params.goal);
     case "updateGoalProgress":
       return streamManagerService.updateGoalProgress(
-        // @ts-ignore
         params.goalId,
-        // @ts-ignore
+
         params.currentValue,
       );
     case "deleteGoal":
-      // @ts-ignore
       return streamManagerService.deleteGoal(params.goalId);
     case "getStreamKey":
       return streamManagerService.getStreamKey();
     case "saveStreamKey":
-      // @ts-ignore
       streamManagerService.saveStreamKey(params.key);
       return true;
     case "isOBSRunning":
       return await obsDetectionService.isOBSRunning();
     case "runCommercial":
       return await streamManagerService.runCommercial(
-        // @ts-ignore
         params.broadcasterId,
-        // @ts-ignore
+
         params.length,
       );
 
     case "startAutomation":
-      // @ts-ignore
       automationService.start(params.config);
       return true;
     case "stopAutomation":
@@ -138,17 +125,16 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
     case "obsConnect":
       try {
         const result = await obsWebSocketService.connect(
-          // @ts-ignore
           params.host,
-          // @ts-ignore
+
           params.port,
-          // @ts-ignore
+
           params.password,
         );
         return result;
       } catch (err) {
         // Throw error so outer handler returns { status: false, message: err.message }
-        // @ts-ignore
+
         throw new Error(err.message);
       }
     case "obsDisconnect":
@@ -161,14 +147,12 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
     case "getCurrentScene":
       return await obsWebSocketService.getCurrentScene();
     case "setCurrentScene":
-      // @ts-ignore
       return await obsWebSocketService.setCurrentScene(params.sceneName);
     case "getStreamStatus":
       return await obsWebSocketService.getStreamStatus();
     case "getOBSStats":
       return await obsWebSocketService.getStats();
     case "obsUpdatePassword":
-      // @ts-ignore
       return await obsWebSocketService.updatePassword(params.password);
     case "obsClearPassword":
       return await obsWebSocketService.clearPassword();
@@ -178,13 +162,13 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
     case "addModerator":
       return await streamManagerService.addModerator(
         broadcasterId,
-        // @ts-ignore
+
         params.userId,
       );
     case "removeModerator":
       return await streamManagerService.removeModerator(
         broadcasterId,
-        // @ts-ignore
+
         params.userId,
       );
     case "unbanUser":
@@ -265,12 +249,12 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
 
 ipcMain.handle("stream-manager", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleStreamManagerRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {
-    // @ts-ignore
     logger.error("[IPC:stream-manager]", err);
-    // @ts-ignore
+
     return { status: false, message: err.message, data: null };
   }
 });

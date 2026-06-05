@@ -1,5 +1,8 @@
+//@ts-check
 const { ipcMain } = require("electron");
 const { shortcutService } = require("../../../../services/shortcut.service");
+const { logger } = require("../../../../utils/logger");
+const { shortcutStorage } = require("../../../../services/shortcut-storage.service");
 
 async function handleShortcutRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -31,6 +34,7 @@ async function handleShortcutRequest(event, payload) {
 
 ipcMain.handle("shortcut", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleShortcutRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {

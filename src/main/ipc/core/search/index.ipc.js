@@ -1,5 +1,7 @@
+//@ts-check
 const { ipcMain } = require('electron');
 const { searchService } = require('../../../../services/search.service');
+const { logger } = require('../../../../utils/logger');
 
 async function handleSearchRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -20,6 +22,7 @@ async function handleSearchRequest(event, payload) {
 
 ipcMain.handle('search', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleSearchRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

@@ -1,6 +1,8 @@
 // src/main/ipc/index.ipc.js
+//@ts-check
 const { ipcMain } = require('electron');
 const { chatCommandsService } = require('../../../../services/chat-commands.service');
+const { logger } = require('../../../../utils/logger');
 
 async function handleChatCommandsRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -24,6 +26,7 @@ async function handleChatCommandsRequest(event, payload) {
 
 ipcMain.handle('chat-commands', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleChatCommandsRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

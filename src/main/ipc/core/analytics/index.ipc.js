@@ -1,6 +1,7 @@
 //@ts-check
 const { ipcMain } = require('electron');
 const { analyticsCollector } = require('../../../../services/analytics-collector.service');
+const { logger } = require('../../../../utils/logger');
 
 
 async function handleAnalyticsRequest(event, payload) {
@@ -29,6 +30,7 @@ async function handleAnalyticsRequest(event, payload) {
 
 ipcMain.handle('analytics', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleAnalyticsRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

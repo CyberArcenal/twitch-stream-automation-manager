@@ -1,6 +1,7 @@
 //@ts-check
 const { ipcMain } = require('electron');
 const { adBlockService } = require('../../../../services/ad-block.service');
+const { logger } = require('../../../../utils/logger');
 
 async function handleAdBlockRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -21,6 +22,7 @@ async function handleAdBlockRequest(event, payload) {
 
 ipcMain.handle('ad-block', async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleAdBlockRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {
