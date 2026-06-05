@@ -2,6 +2,7 @@
 //@ts-check
 const { ipcMain } = require("electron");
 const { playerService } = require("../../../../services/player.service");
+const { logger } = require("../../../../utils/logger");
 
 /**
  * @param {Electron.IpcMainInvokeEvent} event
@@ -48,6 +49,7 @@ async function handlePlayerRequest(event, payload) {
 
 ipcMain.handle("player", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handlePlayerRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {

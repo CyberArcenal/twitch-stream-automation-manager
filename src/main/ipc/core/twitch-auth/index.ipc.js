@@ -1,6 +1,8 @@
 // src/main/ipc/core/twitch-auth/index.ipc.js (modified)
+//@ts-check
 const { ipcMain } = require("electron");
 const { twitchAuthService } = require("../../../../services/twitch-auth.service");
+const { logger } = require("../../../../utils/logger");
 
 async function handleAuthRequest(event, payload) {
   const { method, params = {} } = payload;
@@ -21,6 +23,7 @@ async function handleAuthRequest(event, payload) {
 
 ipcMain.handle("twitch-auth", async (event, payload) => {
   try {
+    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
     const result = await handleAuthRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {
