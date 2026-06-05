@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Users, UserPlus, Trash2, ExternalLink, Loader2, Search, Shield } from "lucide-react";
 import { useCollaboration } from "../hooks/useCollaboration";
+import { dialogs } from "../../../utils/dialogs";
 
 const CollaborationCard: React.FC = () => {
   const {
@@ -17,6 +18,7 @@ const CollaborationCard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Filter moderators based on search term
   const filteredModerators = useMemo(() => {
@@ -36,7 +38,7 @@ const CollaborationCard: React.FC = () => {
       await addModeratorByUsername(newModUsername);
       setNewModUsername("");
     } catch (err: any) {
-      alert(err.message);
+      dialogs.error(err.message);
     } finally {
       setAdding(false);
     }
@@ -47,9 +49,18 @@ const CollaborationCard: React.FC = () => {
     try {
       await removeModeratorById(userId);
     } catch (err: any) {
-      alert(err.message);
+     dialogs.error(err.message);
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshModerators();
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -68,11 +79,12 @@ const CollaborationCard: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={refreshModerators}
-            className="p-1 rounded hover:bg-[var(--btn-secondary-bg)]"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-1 rounded hover:bg-[var(--btn-secondary-bg)] disabled:opacity-50"
             title="Refresh moderators"
           >
-            <Loader2 className="w-3 h-3 text-[var(--text-secondary)]" />
+            <Loader2 className={`w-3 h-3 text-[var(--text-secondary)] ${refreshing ? "animate-spin" : ""}`} />
           </button>
           {streamTogetherUrl && (
             <button

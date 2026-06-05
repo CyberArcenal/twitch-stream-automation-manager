@@ -204,16 +204,22 @@ class StreamManagerService {
     }
   }
 
-  async addModerator(broadcasterId, userId) {
-    const params = new URLSearchParams({
-      broadcaster_id: broadcasterId,
-      user_id: userId,
-    });
-    await twitchApiService.fetchTwitch(`moderation/moderators?${params}`, {
-      method: "POST",
-    });
-    return true;
+async addModerator(broadcasterId, userId) {
+  // Iwasan ang pag‑add ng sarili bilang moderator
+  if (broadcasterId === userId) {
+    logger.info("[StreamManager] Skipping addModerator for self (broadcaster is already moderator)");
+    return true; // Huwag mag-error, para hindi masira ang UI flow
   }
+  
+  const params = new URLSearchParams({
+    broadcaster_id: broadcasterId,
+    user_id: userId,
+  });
+  await twitchApiService.fetchTwitch(`moderation/moderators?${params}`, {
+    method: "POST",
+  });
+  return true;
+}
 
   async removeModerator(broadcasterId, userId) {
     const params = new URLSearchParams({

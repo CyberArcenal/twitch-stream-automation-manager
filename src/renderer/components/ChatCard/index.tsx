@@ -107,7 +107,7 @@ const ChatCard: React.FC<ChatCardProps> = ({
       className={`
         bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] 
         flex flex-col 
-        ${fromModeration ? "h-full" : "h-full max-h-[560px]"}
+        ${fromModeration ? "h-full min-h-[600px]" : "h-full max-h-[560px]"}
         min-h-[300px] min-w-[300px]
         ${className || ""}
       `}

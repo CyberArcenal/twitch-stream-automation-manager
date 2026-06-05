@@ -21,19 +21,19 @@ export const useModeration = (broadcasterId: string) => {
   const undoLastAction = useCallback(async () => {
     const logsRes = await moderationLogAPI.getLogs();
     if (!logsRes.status || logsRes.data.length === 0) {
-      alert('No actions to undo');
+      dialogs.error('No actions to undo');
       return;
     }
     const lastAction = logsRes.data[0];
     if (lastAction.action === 'ban' || lastAction.action === 'timeout') {
       const unbanRes = await streamManagerAPI.unbanUser(lastAction.targetUserName);
       if (unbanRes.status) {
-        alert(`Undid ${lastAction.action} on ${lastAction.targetUserName}`);
+        dialogs.error(`Undid ${lastAction.action} on ${lastAction.targetUserName}`);
       } else {
-        alert('Undo failed');
+        dialogs.error('Undo failed');
       }
     } else {
-      alert(`Cannot undo ${lastAction.action}`);
+      dialogs.error(`Cannot undo ${lastAction.action}`);
     }
   }, []);
 
