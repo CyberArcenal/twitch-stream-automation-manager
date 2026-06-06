@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require("electron");
-const { moderationLogService } = require("../../../../services/moderation-log.service");
+const { moderationLogService } = require("../../../../services/moderation-log");
 const { logger } = require("../../../../utils/logger");
 
 
