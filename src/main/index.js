@@ -1,5 +1,4 @@
 //@ts-check
-
 // src/main/index.js – Twitch Stream Manager (aligned with Collectly structure)
 
 /**
