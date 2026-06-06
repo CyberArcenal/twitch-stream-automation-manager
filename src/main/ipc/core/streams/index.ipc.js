@@ -2,7 +2,7 @@
 //@ts-check
 const { ipcMain } = require("electron");
 const { settingsService } = require("../../../../services/settings.service");
-const { twitchApiService } = require("../../../../services/twitch-api.service");
+const { twitchApiService } = require("../../../../services/twitch-api");
 const { logger } = require("../../../../utils/logger");
 
 /**

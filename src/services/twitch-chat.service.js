@@ -12,7 +12,7 @@ const { CLIENT_ID, CLIENT_SECRET, SCOPES } = require("../shared/config");
 const { BrowserWindow } = require("electron");
 const { logger } = require("../utils/logger");
 const { chatHistoryService } = require("./chat-history.service");
-const { autoModerationService } = require("./auto-moderation.service");
+const { autoModerationService } = require("./auto-moderation");
 const { chatCommandsService } = require("./chat-commands.service");
 const EventEmitter = require("events");
 

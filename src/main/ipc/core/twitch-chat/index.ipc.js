@@ -3,7 +3,7 @@ const { ipcMain } = require("electron");
 const {
   twitchChatService,
 } = require("../../../../services/twitch-chat.service");
-const { twitchApiService } = require("../../../../services/twitch-api.service");
+const { twitchApiService } = require("../../../../services/twitch-api");
 const { logger } = require("../../../../utils/logger");
 
 /**

@@ -1,6 +1,6 @@
 // src/main/services/clips.service.js
 //@ts-check
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 
 // @ts-ignore
 let cachedTopGameId = null;

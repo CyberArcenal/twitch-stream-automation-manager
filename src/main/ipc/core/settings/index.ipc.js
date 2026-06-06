@@ -3,7 +3,7 @@ const { ipcMain } = require("electron");
 const { settingsService } = require("../../../../services/settings.service");
 const {
   autoModerationService,
-} = require("../../../../services/auto-moderation.service");
+} = require("../../../../services/auto-moderation");
 const { logger } = require("../../../../utils/logger");
 
 /**

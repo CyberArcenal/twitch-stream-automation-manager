@@ -1,33 +1,34 @@
 // services/chat/handlers/onMessage.js
+//@ts-check
 const { parseChatMessage } = require("@twurple/chat");
 const { settingsService } = require("../../settings.service");
-const { autoModerationService } = require("../../auto-moderation.service");
+const { autoModerationService } = require("../../auto-moderation");
 const { chatHistoryService } = require("../../chat-history.service");
 const { logger } = require("../../../utils/logger");
 const { sendToRenderers } = require("../chat-utils");
 
-module.exports = function createOnMessageHandler(badgesModule, messageBuffer, currentUserLoginRef) {
+module.exports = function createOnMessageHandler(
+  badgesModule,
+  messageBuffer,
+  currentUserLoginRef,
+) {
   return async function onMessage(channel, user, message, msg) {
     const twitchData = settingsService.get("twitch");
     const broadcasterId = twitchData?.userId;
-    const currentUserLogin = typeof currentUserLoginRef === "function"
-      ? currentUserLoginRef()
-      : currentUserLoginRef;
+    const currentUserLogin =
+      typeof currentUserLoginRef === "function"
+        ? currentUserLoginRef()
+        : currentUserLoginRef;
 
     // 1. Auto-moderation
-    const moderationResult = await autoModerationService
-      .processMessage(
-        channel,
-        msg.userInfo.userId,
-        user,
-        message,
-        broadcasterId,
-        msg
-      )
-      .catch((err) => {
-        logger.error("[AutoMod] Error:", err);
-        return { shouldSuppress: false };
-      });
+    const moderationResult = await autoModerationService.processMessage(
+      channel,
+      msg.userInfo.userId,
+      user,
+      message,
+      broadcasterId,
+      msg,
+    );
 
     // 2. Parse badges (original logic)
     let badgesArray = [];
@@ -89,7 +90,7 @@ module.exports = function createOnMessageHandler(badgesModule, messageBuffer, cu
       chatMessage.deletedReason = moderationResult.reason || "Auto-moderation";
       chatMessage.message = `[Message removed: ${chatMessage.deletedReason}]`;
       chatMessage.parsedMessage = [{ type: "text", text: chatMessage.message }];
-      chatMessage.badges = []; // clear badges for deleted messages
+      chatMessage.badges = [];
     }
 
     // 5. Apply UI filters (only if not already deleted)
@@ -116,7 +117,7 @@ module.exports = function createOnMessageHandler(badgesModule, messageBuffer, cu
       user,
       chatMessage.message,
       msg.id,
-      badgesArray
+      badgesArray,
     );
   };
 };

@@ -16,7 +16,7 @@ const {
   obsWebSocketService,
 } = require("../../../../services/obs-websocket.service");
 const { languagesService } = require("../../../../services/languages.service");
-const { twitchApiService } = require("../../../../services/twitch-api.service");
+const { twitchApiService } = require("../../../../services/twitch-api");
 
 /**
  * @param {Electron.IpcMainInvokeEvent} event

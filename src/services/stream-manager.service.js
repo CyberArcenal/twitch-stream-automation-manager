@@ -1,5 +1,5 @@
 // src/main/services/stream-manager.service.js
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 const { settingsService } = require("./settings.service");
 const Store = require("electron-store");
 const { logger } = require("../utils/logger");
