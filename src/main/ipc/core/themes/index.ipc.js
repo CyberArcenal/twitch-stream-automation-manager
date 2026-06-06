@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { themesService } = require('../../../../services/themes.service');
+const { themesService } = require('../../../../services/themes');
 const { logger } = require('../../../../utils/logger');
 
 async function handleThemesRequest(event, payload) {

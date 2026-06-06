@@ -1,9 +1,9 @@
 // services/chat/handlers/onMessage.js
 //@ts-check
 const { parseChatMessage } = require("@twurple/chat");
-const { settingsService } = require("../../settings.service");
+const { settingsService } = require("../../settings");
 const { autoModerationService } = require("../../auto-moderation");
-const { chatHistoryService } = require("../../chat-history.service");
+const { chatHistoryService } = require("../../chat-history");
 const { logger } = require("../../../utils/logger");
 const { sendToRenderers } = require("../chat-utils");
 

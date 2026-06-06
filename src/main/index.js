@@ -16,10 +16,10 @@ const fsSync = require("fs");
 const url = require("url");
 
 // ===================== SERVICES =====================
-const { settingsService } = require("../services/settings.service");
+const { settingsService } = require("../services/settings/index.js");
 const { twitchAuthService } = require("../services/twitch-auth");
-const { twitchChatService } = require("../services/twitch-chat.service");
-const { obsWebSocketService } = require("../services/obs-websocket.service.js");
+const { twitchChatService } = require("../services/chat");
+const { obsWebSocketService } = require("../services/obs-websocket");
 const { startLogCleanupScheduler } = require("../scheduler/logCleanupScheduler.js");
 const { ipcModules } = require("./ipcModules.js");
 const { initializeServices } = require("./initializers/service.js");
@@ -523,7 +523,7 @@ async function registerIpcHandlers() {
   ipcMain.handle("overlay:goal-html", () => {
     const {
       overlayService,
-    } = require("../services/overlay.service.js");
+    } = require("../services/overlay.js");
     return overlayService.generateGoalOverlayHTML();
   });
 
@@ -538,7 +538,7 @@ async function registerIpcHandlers() {
   ipcMain.handle("overlay:full-html", () => {
        const {
       overlayService,
-    } = require("../services/overlay.service.js");
+    } = require("../services/overlay.js");
     return overlayService.generateFullOverlayHTML();
   });
 

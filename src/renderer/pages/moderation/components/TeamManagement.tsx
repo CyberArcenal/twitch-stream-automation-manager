@@ -6,9 +6,10 @@ import { dialogs } from "../../../utils/dialogs";
 
 interface TeamManagementProps {
   broadcasterId: string;
+  className?: string;
 }
 
-export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId }) => {
+export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId, className }) => {
   const [moderators, setModerators] = useState<any[]>([]);
   const [newModUsername, setNewModUsername] = useState("");
   const [loading, setLoading] = useState(true);
@@ -61,7 +62,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ broadcasterId })
   if (loading) return <div className="bg-[var(--card-bg)] rounded-xl p-5 animate-pulse h-64"></div>;
 
   return (
-   <div className="bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--border-color)] p-5 flex flex-col h-full min-h-[300px] max-h-[600px]">
+   <div className={`bg-[var(--card-bg)] rounded-xl shadow-md border border-[var(--border-color)] p-5 flex flex-col h-full min-h-[300px] max-h-[600px] ${className? className: ''}`}>
     <div className="flex items-center gap-2 mb-4 flex-shrink-0">
       <Users className="w-5 h-5 text-[#9147ff]" />
       <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider">

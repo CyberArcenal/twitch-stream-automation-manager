@@ -2,8 +2,8 @@
 const { ipcMain } = require("electron");
 const {
   notificationService,
-} = require("../../../../services/notification.service");
-const { settingsService } = require("../../../../services/settings.service");
+} = require("../../../../services/notification");
+const { settingsService } = require("../../../../services/settings");
 const { logger } = require("../../../../utils/logger");
 
 /**

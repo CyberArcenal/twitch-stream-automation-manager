@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { pipService } = require('../../../../services/picture-in-picture.service');
+const { pipService } = require('../../../../services/picture-in-picture');
 const { logger } = require('../../../../utils/logger');
 
 async function handlePipRequest(event, payload) {

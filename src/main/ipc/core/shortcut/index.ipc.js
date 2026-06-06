@@ -1,8 +1,8 @@
 //@ts-check
 const { ipcMain } = require("electron");
-const { shortcutService } = require("../../../../services/shortcut.service");
+const { shortcutService } = require("../../../../services/shortcut");
 const { logger } = require("../../../../utils/logger");
-const { shortcutStorage } = require("../../../../services/shortcut-storage.service");
+const { shortcutStorage } = require("../../../../services/shortcut-storage");
 
 async function handleShortcutRequest(event, payload) {
   const { method, params = {} } = payload;

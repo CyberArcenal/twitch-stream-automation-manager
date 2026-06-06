@@ -1,21 +1,21 @@
 // src/main/ipc/core/stream-manager/index.ipc.js
 //@ts-check
 const { ipcMain } = require("electron");
-const { settingsService } = require("../../../../services/settings.service");
+const { settingsService } = require("../../../../services/settings");
 const {
   streamManagerService,
-} = require("../../../../services/stream-manager.service");
+} = require("../../../../services/stream-manager");
 const { logger } = require("../../../../utils/logger");
 const {
   obsDetectionService,
-} = require("../../../../services/obs-detection.service");
+} = require("../../../../services/obs-detection");
 const {
   automationService,
-} = require("../../../../services/automation.service");
+} = require("../../../../services/automation");
 const {
   obsWebSocketService,
-} = require("../../../../services/obs-websocket.service");
-const { languagesService } = require("../../../../services/languages.service");
+} = require("../../../../services/obs-websocket");
+const { languagesService } = require("../../../../services/languages");
 const { twitchApiService } = require("../../../../services/twitch-api");
 
 /**

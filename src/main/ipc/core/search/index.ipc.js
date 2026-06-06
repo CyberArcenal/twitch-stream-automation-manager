@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { searchService } = require('../../../../services/search.service');
+const { searchService } = require('../../../../services/search');
 const { logger } = require('../../../../utils/logger');
 
 async function handleSearchRequest(event, payload) {

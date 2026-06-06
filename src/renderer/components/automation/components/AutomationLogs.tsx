@@ -6,6 +6,7 @@ interface AutomationLogsProps {
   logs: AutomationLog[];
   className?: string;          // for the outer container
   classNameToLog?: string;     // for the scrollable div
+  fromModeration?: boolean;
   onClearLogs: () => void;
 }
 
@@ -13,6 +14,7 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
   logs,
   className,
   classNameToLog,
+  fromModeration,
   onClearLogs,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,7 @@ export const AutomationLogs: React.FC<AutomationLogsProps> = ({
   }, [logs]);
 
   return (
-    <div className={`flex flex-col ${className || ""}`}>
+    <div className={`flex flex-col ${className || ""} ${fromModeration? "min-h-[200px]": ""}`}>
       <div className="flex justify-between items-center mb-2 flex-shrink-0">
         <h4 className="text-xs font-medium text-[var(--text-secondary)] uppercase">
           Automation Logs

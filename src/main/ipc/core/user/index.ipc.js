@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { userService } = require('../../../../services/user.service');
+const { userService } = require('../../../../services/user');
 const { logger } = require('../../../../utils/logger');
 
 async function handleUserRequest(event, payload) {

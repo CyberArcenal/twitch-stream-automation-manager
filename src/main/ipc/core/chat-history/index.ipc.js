@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { chatHistoryService } = require('../../../../services/chat-history.service');
+const { chatHistoryService } = require('../../../../services/chat-history');
 const { logger } = require('../../../../utils/logger');
 
 

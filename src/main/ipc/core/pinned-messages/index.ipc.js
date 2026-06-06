@@ -3,7 +3,7 @@
 const { ipcMain } = require("electron");
 const {
   pinnedMessagesService,
-} = require("../../../../services/pinned-messages.service");
+} = require("../../../../services/pinned-messages");
 const { logger } = require("../../../../utils/logger");
 
 async function handlePinnedRequest(event, payload) {

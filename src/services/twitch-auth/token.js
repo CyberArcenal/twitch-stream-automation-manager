@@ -1,9 +1,11 @@
 // src/main/services/twitch-auth/token.js
+//@ts-check
 const {
   CLIENT_ID,
   CLIENT_SECRET,
   TOKEN_URL,
   REVOKE_URL,
+  REDIRECT_URI,
 } = require("../../shared/config");
 const { logger } = require("../../utils/logger");
 

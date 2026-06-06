@@ -7,7 +7,7 @@ const {
   API_BASE,
 } = require("../../shared/config");
 const { logger } = require("../../utils/logger");
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 
 class LoginHandler {
   constructor(pkceHelper, tokenManager, accountManager) {

@@ -3,7 +3,7 @@ const { PkceHelper } = require("./pkce");
 const { TokenManager } = require("./token");
 const { AccountManager } = require("./account");
 const { LoginHandler } = require("./login");
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 const { logger } = require("../../utils/logger");
 
 class TwitchAuthService {

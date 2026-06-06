@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { adBlockService } = require('../../../../services/ad-block.service');
+const { adBlockService } = require('../../../../services/ad-block');
 const { logger } = require('../../../../utils/logger');
 
 async function handleAdBlockRequest(event, payload) {

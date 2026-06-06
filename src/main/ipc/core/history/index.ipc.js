@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { historyService } = require('../../../../services/history.service');
+const { historyService } = require('../../../../services/history');
 const { logger } = require('../../../../utils/logger');
 
 async function handleHistoryRequest(event, payload) {
