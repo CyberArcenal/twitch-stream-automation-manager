@@ -5,7 +5,7 @@ const { logger } = require("../../../../utils/logger");
 
 
 ipcMain.handle("moderation-log", async (event, payload) => {
-  logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+  logger.debug(`[IPC] request: ${JSON.stringify(payload)}`);
   const { method, params = {} } = payload;
   switch (method) {
     case "getLogs":

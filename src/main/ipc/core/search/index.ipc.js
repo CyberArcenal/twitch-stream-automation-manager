@@ -22,7 +22,7 @@ async function handleSearchRequest(event, payload) {
 
 ipcMain.handle('search', async (event, payload) => {
   try {
-    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+    logger.debug(`[IPC] request: ${JSON.stringify(payload)}`);
     const result = await handleSearchRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

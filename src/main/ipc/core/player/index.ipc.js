@@ -49,7 +49,7 @@ async function handlePlayerRequest(event, payload) {
 
 ipcMain.handle("player", async (event, payload) => {
   try {
-    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+    logger.debug(`[IPC] request: ${JSON.stringify(payload)}`);
     const result = await handlePlayerRequest(event, payload);
     return { status: true, message: "OK", data: result };
   } catch (err) {

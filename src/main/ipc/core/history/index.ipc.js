@@ -27,7 +27,7 @@ async function handleHistoryRequest(event, payload) {
 
 ipcMain.handle('history', async (event, payload) => {
   try {
-    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+    logger.debug(`[IPC] request: ${JSON.stringify(payload)}`);
     const result = await handleHistoryRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

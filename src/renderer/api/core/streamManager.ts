@@ -139,9 +139,11 @@ class StreamManagerAPI {
   async getAutomationStatus(): Promise<
     BaseResponse<{ running: boolean; config: any }>
   > {
-    return window.backendAPI["stream-manager"]({
+    const response = await window.backendAPI["stream-manager"]({
       method: "getAutomationStatus",
     });
+    console.log(response);
+    return response;
   }
 
   async obsConnect(
