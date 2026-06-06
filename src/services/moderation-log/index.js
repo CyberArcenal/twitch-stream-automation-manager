@@ -56,7 +56,7 @@ class ModerationLogService {
     }
 
     const logEntry = {
-      id: Date.now().toString(),
+      id: `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       action,
       broadcasterId,
       targetUserId,

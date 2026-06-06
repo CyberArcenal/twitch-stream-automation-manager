@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { History, Undo, Ban, Clock, UserX, Trash2 } from "lucide-react";
-import { moderationLogAPI, type ModerationLogEntry } from "../../../api/core/moderationLog";
-import { streamManagerAPI } from "../../../api/core/streamManager";
-import { formatDistanceToNow } from "date-fns";
+// src/renderer/pages/moderation/components/ModerationLogCard.tsx
+import React, { useState } from 'react';
+import { History, Undo, Ban, Clock, UserX, Trash2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { streamManagerAPI } from '../../../api/core/streamManager';
+import { useModerationLog } from '../../../contexts/ModerationLogContext';
 
 interface ModerationLogCardProps {
   broadcasterId: string;
@@ -13,72 +14,40 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
   broadcasterId,
   className,
 }) => {
-  const [logs, setLogs] = useState<ModerationLogEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "ban" | "timeout" | "unban">("all");
+  const { logs, clearLogs, isLoading } = useModerationLog();
+  const [filter, setFilter] = useState<'all' | 'ban' | 'timeout' | 'unban' | 'delete'>('all');
 
-  const fetchLogs = async () => {
-    try {
-      setLoading(true);
-      const res = await moderationLogAPI.getLogs(
-        filter !== "all" ? { action: filter } : undefined
-      );
-      if (res.status) setLogs(res.data || []);
-    } catch (err) {
-      console.error("Failed to fetch logs", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
-    return () => clearInterval(interval);
-  }, [filter]);
-
-  const handleUndo = async (log: ModerationLogEntry) => {
-    if (log.action === "ban" || log.action === "timeout") {
+  const handleUndo = async (log: any) => {
+    if (log.action === 'ban' || log.action === 'timeout') {
       try {
         await streamManagerAPI.unbanUser(log.targetUserName);
-        fetchLogs();
+        // Undo event will be broadcast via log:entry
       } catch (err) {
-        console.error("Undo failed", err);
+        console.error('Undo failed', err);
       }
-    }
-  };
-
-  const handleClearLogs = async () => {
-    try {
-      await moderationLogAPI.clearLogs();
-      fetchLogs();
-    } catch (err) {
-      console.error("Failed to clear logs", err);
     }
   };
 
   const getIcon = (action: string) => {
     switch (action) {
-      case "ban":
+      case 'ban':
         return <Ban className="w-4 h-4 text-red-400" />;
-      case "timeout":
+      case 'timeout':
         return <Clock className="w-4 h-4 text-yellow-400" />;
-      case "unban":
+      case 'unban':
         return <UserX className="w-4 h-4 text-green-400" />;
+      case 'delete':
+        return <Trash2 className="w-4 h-4 text-orange-400" />;
       default:
         return <History className="w-4 h-4 text-[var(--text-secondary)]" />;
     }
   };
 
   const filteredLogs =
-    filter === "all" ? logs : logs.filter((log) => log.action === filter);
+    filter === 'all' ? logs : logs.filter((log) => log.action === filter);
 
   return (
-    <div
-      className={`bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden ${
-        className || ""
-      }`}
-    >
+    <div className={`bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden ${className || ''}`}>
       {/* Header */}
       <div className="p-4 border-b border-[var(--border-color)] flex justify-between items-center flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -94,14 +63,14 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
 
       {/* Filter Tabs */}
       <div className="px-4 py-2 border-b border-[var(--border-color)] flex gap-2 flex-shrink-0 overflow-x-auto">
-        {["all", "ban", "timeout", "unban"].map((f) => (
+        {['all', 'ban', 'timeout', 'unban', 'delete'].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f as any)}
             className={`px-3 py-1 text-xs rounded-full font-medium transition whitespace-nowrap ${
               filter === f
-                ? "bg-[var(--primary-color)] text-white"
-                : "bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover)] text-[var(--text-secondary)]"
+                ? 'bg-[var(--primary-color)] text-white'
+                : 'bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover)] text-[var(--text-secondary)]'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -111,7 +80,7 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
 
       {/* Logs List */}
       <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-2">
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-32">
             <div className="animate-spin text-[var(--text-secondary)]">⟳</div>
           </div>
@@ -144,21 +113,18 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
                   </div>
                 )}
                 <div className="text-xs text-[var(--text-secondary)] mt-1">
-                  {formatDistanceToNow(new Date(log.timestamp), {
-                    addSuffix: true,
-                  })}
+                  {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                 </div>
               </div>
-              {!log.undone &&
-                (log.action === "ban" || log.action === "timeout") && (
-                  <button
-                    onClick={() => handleUndo(log)}
-                    className="p-1.5 rounded hover:bg-[#3a3a4a] transition flex-shrink-0"
-                    title="Undo action"
-                  >
-                    <Undo className="w-4 h-4 text-green-400" />
-                  </button>
-                )}
+              {!log.undone && (log.action === 'ban' || log.action === 'timeout') && (
+                <button
+                  onClick={() => handleUndo(log)}
+                  className="p-1.5 rounded hover:bg-[#3a3a4a] transition flex-shrink-0"
+                  title="Undo action"
+                >
+                  <Undo className="w-4 h-4 text-green-400" />
+                </button>
+              )}
             </div>
           ))
         )}
@@ -168,7 +134,7 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
       {filteredLogs.length > 0 && (
         <div className="p-3 border-t border-[var(--border-color)] flex-shrink-0">
           <button
-            onClick={handleClearLogs}
+            onClick={clearLogs}
             className="w-full text-center text-sm bg-[var(--btn-secondary-bg)] hover:bg-red-600/30 text-[var(--text-primary)] py-2 rounded-lg transition flex items-center justify-center gap-2"
           >
             <Trash2 className="w-4 h-4" />

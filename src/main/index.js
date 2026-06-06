@@ -523,7 +523,7 @@ async function registerIpcHandlers() {
   ipcMain.handle("overlay:goal-html", () => {
     const {
       overlayService,
-    } = require("../services/overlay.js");
+    } = require("../services/overlay");
     return overlayService.generateGoalOverlayHTML();
   });
 
@@ -538,7 +538,7 @@ async function registerIpcHandlers() {
   ipcMain.handle("overlay:full-html", () => {
        const {
       overlayService,
-    } = require("../services/overlay.js");
+    } = require("../services/overlay");
     return overlayService.generateFullOverlayHTML();
   });
 

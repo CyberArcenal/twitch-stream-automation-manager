@@ -1,6 +1,8 @@
 // src/main/services/stream-manager/moderation.js
 const { twitchApiService } = require("../twitch-api");
 const { logger } = require("../../utils/logger");
+const { moderationLogService } = require("../moderation-log");
+const { LogCategory } = require("../log");
 
 class ModerationManager {
   async banUser(broadcasterId, moderatorId, userName) {
@@ -16,6 +18,18 @@ class ModerationManager {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+
+    moderationLogService.addLog(
+      "ban",
+      broadcasterId,
+      user.id,
+      userName,
+      null,
+      "Manual ban",
+      LogCategory.MODERATION,
+      `${userName} banned manually`,
+    );
+
     return true;
   }
 
@@ -30,6 +44,18 @@ class ModerationManager {
     await twitchApiService.fetchTwitch(`moderation/bans?${params}`, {
       method: "DELETE",
     });
+
+    moderationLogService.addLog(
+      "unban",
+      broadcasterId,
+      user.id,
+      userName,
+      null,
+      "Manual unban",
+      LogCategory.MODERATION,
+      `${userName} unbanned manually`,
+    );
+
     return true;
   }
 
@@ -46,6 +72,18 @@ class ModerationManager {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+
+    moderationLogService.addLog(
+      "timeout",
+      broadcasterId,
+      user.id,
+      userName,
+      durationSeconds,
+      "Manual timeout",
+      LogCategory.MODERATION,
+      `${userName} timed out for ${durationSeconds}s manually`,
+    );
+
     return true;
   }
 
@@ -57,6 +95,18 @@ class ModerationManager {
     await twitchApiService.fetchTwitch(`moderation/chat?${params}`, {
       method: "DELETE",
     });
+
+    moderationLogService.addLog(
+      "clear",
+      broadcasterId,
+      null,
+      "system",
+      null,
+      "Chat cleared manually",
+      LogCategory.MODERATION,
+      "Chat cleared manually",
+    );
+
     return true;
   }
 
@@ -69,13 +119,27 @@ class ModerationManager {
     await twitchApiService.fetchTwitch(`moderation/chat?${params}`, {
       method: "DELETE",
     });
+
+    moderationLogService.addLog(
+      "delete",
+      broadcasterId,
+      null,
+      "unknown",
+      null,
+      "Message deleted manually",
+      LogCategory.MODERATION,
+      `Message ${messageId} deleted manually`,
+    );
+
     return true;
   }
 
   async getModerators(broadcasterId) {
     try {
       const params = new URLSearchParams({ broadcaster_id: broadcasterId });
-      const result = await twitchApiService.fetchTwitch(`moderation/moderators?${params}`);
+      const result = await twitchApiService.fetchTwitch(
+        `moderation/moderators?${params}`,
+      );
       return result.data || [];
     } catch (err) {
       logger.warn("[ModerationManager] getModerators error:", err.message);

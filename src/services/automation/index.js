@@ -1,5 +1,4 @@
 // src/main/services/automation.js
-//@ts-check
 const { eventSubService } = require("../eventsub");
 const { streamManagerService } = require("../stream-manager");
 const { twitchChatService } = require("../chat");
@@ -8,6 +7,8 @@ const { logger } = require("../../utils/logger");
 const { autoModerationService } = require("../auto-moderation");
 const { chatSettingsService } = require("../chat-settings");
 const { twitchApiService } = require("../twitch-api");
+const { moderationLogService } = require("../moderation-log");
+const { LogCategory } = require("../log");
 
 class AutomationService {
   constructor() {
@@ -26,14 +27,13 @@ class AutomationService {
       autoFollowerMode: false,
       followerModeDuration: 5,
 
-      // ✅ bagong config para sa shoutout sa raid
       autoShoutoutOnRaid: false,
       shoutoutMessage:
         "Thanks for the raid @{fromBroadcasterName}! Check them out at twitch.tv/{fromBroadcasterName}",
 
       autoClipOnChatSpike: false,
-      chatSpikeThreshold: 100, // messages per minute
-      chatSpikeCooldownMinutes: 5, // cooldown in minutes
+      chatSpikeThreshold: 100,
+      chatSpikeCooldownMinutes: 5,
       autoStreamMarkers: false,
       markerIntervalMinutes: 30,
     };
@@ -43,8 +43,8 @@ class AutomationService {
     this.slowModeTriggered = false;
     this.slowModeResetTimer = null;
     this.chatCheckInterval = null;
-    this.messageTimestamps = []; // array of timestamps for messages in current channel
-    this.lastClipTime = 0; // timestamp ng huling clip trigger
+    this.messageTimestamps = [];
+    this.lastClipTime = 0;
     this.markerTimer = null;
     this.isLive = false;
 
@@ -52,10 +52,28 @@ class AutomationService {
     this.loadConfig();
   }
 
+  // Helper to log automation actions to the UI
+  _logAutomation(action, targetUserName, duration = null, reason = null, customMessage = null) {
+    const broadcasterId = settingsService.get("twitch")?.userId;
+    if (!broadcasterId) {
+      logger.warn("[Automation] Cannot log action: no broadcasterId");
+      return;
+    }
+    moderationLogService.addLog(
+      action,
+      broadcasterId,
+      null, // targetUserId not always available
+      targetUserName || "system",
+      duration,
+      reason,
+      LogCategory.AUTOMATION,
+      customMessage
+    );
+  }
+
   start(config) {
     logger.info("[Automation] start() called, config keys:", Object.keys(config || {}));
     
-    // ✅ Check authentication before starting
     const twitchData = settingsService.get("twitch");
     logger.info("[Automation] Twitch data present on start:", {
       hasAccessToken: !!twitchData?.accessToken,
@@ -212,6 +230,7 @@ class AutomationService {
       const description = `Auto marker (${new Date().toLocaleTimeString()})`;
       await twitchApiService.createStreamMarker(broadcasterId, description);
       logger.info(`[Automation] Stream marker created: "${description}"`);
+      this._logAutomation("stream_marker", "system", null, null, `Auto stream marker created: ${description}`);
     } catch (err) {
       logger.error("[Automation] Failed to create stream marker:", err);
     }
@@ -227,7 +246,7 @@ class AutomationService {
       return;
     }
 
-    // ✅ Auto-follower mode (kung naka-on)
+    // Auto-follower mode
     if (this.config.autoFollowerMode) {
       logger.info(
         `[Automation] Raid detected, enabling follower mode for ${this.config.followerModeDuration} minutes`,
@@ -244,15 +263,19 @@ class AutomationService {
           broadcasterId,
           this.config.followerModeDuration,
         );
-      } catch (err) {
-        logger.error(
-          "[Automation] Failed to enable follower mode on raid:",
-          err,
+        this._logAutomation(
+          "follower_mode",
+          "system",
+          this.config.followerModeDuration * 60,
+          `Auto-enabled follower mode after raid from ${data?.fromBroadcasterName || "unknown"}`,
+          `Follower mode enabled for ${this.config.followerModeDuration} minutes (raid)`
         );
+      } catch (err) {
+        logger.error("[Automation] Failed to enable follower mode on raid:", err);
       }
     }
 
-    // ✅ Auto-shoutout on raid (kung naka-on)
+    // Auto-shoutout on raid
     if (this.config.autoShoutoutOnRaid && data?.fromBroadcasterName) {
       const fromName = data.fromBroadcasterName;
       let message = this.config.shoutoutMessage;
@@ -260,6 +283,13 @@ class AutomationService {
       await this.sendChatMessage(message);
       logger.info(
         `[Automation] Sent shoutout on raid from ${fromName}: "${message}"`,
+      );
+      this._logAutomation(
+        "shoutout",
+        fromName,
+        null,
+        `Raid shoutout sent`,
+        `Shoutout to ${fromName}: "${message}"`
       );
     }
   }
@@ -269,6 +299,13 @@ class AutomationService {
     if (this.config.autoMessage && data?.followerName) {
       const msg = `@${data.followerName} ${this.config.autoMessageText}`;
       await this.sendChatMessage(msg);
+      this._logAutomation(
+        "auto_message",
+        data.followerName,
+        null,
+        "Follow auto-message",
+        `Auto-message sent to follower ${data.followerName}: "${msg}"`
+      );
     }
   }
 
@@ -277,6 +314,13 @@ class AutomationService {
     if (this.config.autoMessage && data?.userName) {
       const msg = `@${data.userName} ${this.config.autoMessageText}`;
       await this.sendChatMessage(msg);
+      this._logAutomation(
+        "auto_message",
+        data.userName,
+        null,
+        "Subscription auto-message",
+        `Auto-message sent to subscriber ${data.userName}: "${msg}"`
+      );
     }
   }
 
@@ -338,6 +382,14 @@ class AutomationService {
             this.slowModeTriggered = false;
             this.slowModeResetTimer = null;
           }, this.config.slowModeDuration * 1000);
+
+          this._logAutomation(
+            "slow_mode",
+            user,
+            this.config.slowModeDuration,
+            `Spam detected (${userData.count} msgs/min)`,
+            `Auto slow mode enabled for ${this.config.slowModeDuration}s due to spam from ${user}`
+          );
         } catch (err) {
           logger.error("[Automation] Failed to enable slow mode:", err);
         }
@@ -345,7 +397,7 @@ class AutomationService {
       this.messageCounts.clear();
     }
 
-    // ✅ Auto-clip on chat spike (kung naka-on at hindi pa sa cooldown)
+    // Auto-clip on chat spike
     if (this.config.autoClipOnChatSpike) {
       const now = Date.now();
       this.messageTimestamps.push(now);
@@ -373,6 +425,13 @@ class AutomationService {
             );
             logger.info(
               `[Automation] Auto-clip created due to chat spike. Clip: ${clip.id}`,
+            );
+            this._logAutomation(
+              "auto_clip",
+              "system",
+              null,
+              `Chat spike: ${currentRate} msgs/min`,
+              `Auto-clip created due to chat spike (${currentRate} msgs/min). Clip: ${clip.id}`
             );
           } catch (err) {
             logger.error(
@@ -410,6 +469,13 @@ class AutomationService {
         logger.info(
           `[Automation] Auto-raid to ${this.config.raidTarget} triggered`,
         );
+        this._logAutomation(
+          "auto_raid",
+          this.config.raidTarget,
+          null,
+          "Stream ended",
+          `Auto-raided to ${this.config.raidTarget} after stream offline`
+        );
       } catch (err) {
         logger.error("[Automation] Auto-raid failed:", err);
       }
@@ -418,6 +484,13 @@ class AutomationService {
       try {
         await streamManagerService.createClip(broadcasterId);
         logger.info("[Automation] Auto-clip triggered");
+        this._logAutomation(
+          "auto_clip",
+          "system",
+          null,
+          "Stream ended",
+          "Auto-clip created at stream end"
+        );
       } catch (err) {
         logger.error("[Automation] Auto-clip failed:", err);
       }

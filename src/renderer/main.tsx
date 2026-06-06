@@ -11,6 +11,7 @@ import { SettingsProvider } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext"; // new
 import { DashboardLayoutProvider } from "./contexts/DashboardLayoutContext";
 import { AutomationLogProvider } from "./contexts/AutomationLogContext";
+import { ModerationLogProvider } from "./contexts/ModerationLogContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -19,7 +20,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <DashboardLayoutProvider>
           <ConditionalRouter>
             <AutomationLogProvider>
-              <App />
+              <ModerationLogProvider>
+                <App />
+              </ModerationLogProvider>
             </AutomationLogProvider>
           </ConditionalRouter>
         </DashboardLayoutProvider>
