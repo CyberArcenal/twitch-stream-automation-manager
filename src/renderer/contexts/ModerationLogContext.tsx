@@ -1,7 +1,6 @@
 // src/renderer/contexts/ModerationLogContext.tsx
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { moderationLogAPI, type ModerationLogEntry } from '../api/core/moderationLog';
-
 
 export interface ModerationLogContextType {
   logs: ModerationLogEntry[];
@@ -15,13 +14,17 @@ const ModerationLogContext = createContext<ModerationLogContextType | undefined>
 export const ModerationLogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [logs, setLogs] = useState<ModerationLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Track seen log IDs to avoid duplicates (optional, but adds extra safety)
+  const seenIds = useRef<Set<string>>(new Set());
 
-  // Fetch initial historical logs
   const fetchHistoricalLogs = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await moderationLogAPI.getLogs();
       if (res.status && res.data) {
+        // Clear seen IDs and re-populate
+        seenIds.current.clear();
+        res.data.forEach(log => seenIds.current.add(log.id));
         setLogs(res.data);
       }
     } catch (err) {
@@ -31,16 +34,25 @@ export const ModerationLogProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // Add a single log (used for real‑time events)
+  // Add a single log – skip if we already have the same ID
   const addLog = useCallback((entry: ModerationLogEntry) => {
-    setLogs(prev => [entry, ...prev]);
+    setLogs(prev => {
+      // If this ID already exists, ignore the duplicate
+      if (prev.some(log => log.id === entry.id)) {
+        return prev;
+      }
+      // Keep only last 100 entries (adjust as needed)
+      return [entry, ...prev.slice(0, 99)];
+    });
+    // Also track in ref to prevent future duplicates from rapid fire
+    seenIds.current.add(entry.id);
   }, []);
 
-  // Clear all logs via API and update state
   const clearLogs = useCallback(async () => {
     try {
       await moderationLogAPI.clearLogs();
       setLogs([]);
+      seenIds.current.clear();
     } catch (err) {
       console.error('Failed to clear moderation logs', err);
     }
@@ -50,30 +62,33 @@ export const ModerationLogProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const handleLogEntry = (data: any) => {
       // Only accept moderation category
-      if (data?.category === 'moderation') {
-        // Transform backend log shape to ModerationLogEntry if needed
-        // Backend sends: { id, timestamp, category, message, type, meta: { action, targetUserName, duration, reason, undone, ... } }
-        const newEntry: ModerationLogEntry = {
-          id: data.id || String(Date.now()),
-          action: data.meta?.action || 'unknown',
-          broadcasterId: data.meta?.broadcasterId || '',
-          targetUserId: data.meta?.targetUserId || '',
-          targetUserName: data.meta?.targetUserName || 'Unknown',
-          duration: data.meta?.duration || null,
-          reason: data.meta?.reason || null,
-          category: 'moderation',
-          message: data.message,
-          timestamp: data.timestamp,
-          undone: data.meta?.undone || false,
-          undoneAt: data.meta?.undoneAt || null,
-        };
-        addLog(newEntry);
-      }
+      if (data?.category !== 'moderation') return;
+
+      // Transform backend log shape to ModerationLogEntry
+      const newEntry: ModerationLogEntry = {
+        id: data.id || String(Date.now()),
+        action: data.action || 'unknown',
+        broadcasterId: data.broadcasterId || '',
+        targetUserId: data.targetUserId || '',
+        targetUserName: data.targetUserName || 'Unknown',
+        duration: data.duration ?? null,
+        reason: data.reason ?? null,
+        category: 'moderation',
+        message: data.message,
+        timestamp: data.timestamp,
+        undone: data.undone ?? false,
+        undoneAt: data.undoneAt ?? null,
+      };
+
+      // addLog already deduplicates by ID
+      addLog(newEntry);
     };
 
-    // Assume window.backendAPI.on is available (Electron IPC)
+    // Use a stable reference for the listener so that `off` works correctly
     window.backendAPI?.on?.('log:entry', handleLogEntry);
-    return () => window.backendAPI?.off?.('log:entry', handleLogEntry);
+    return () => {
+      window.backendAPI?.off?.('log:entry', handleLogEntry);
+    };
   }, [addLog]);
 
   // Initial fetch

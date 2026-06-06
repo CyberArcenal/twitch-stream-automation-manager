@@ -1,6 +1,6 @@
 // src/renderer/pages/moderation/components/ModerationLogCard.tsx
 import React, { useState } from 'react';
-import { History, Undo, Ban, Clock, UserX, Trash2 } from 'lucide-react';
+import { History, Undo, Ban, Clock, UserX, Trash2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { streamManagerAPI } from '../../../api/core/streamManager';
 import { useModerationLog } from '../../../contexts/ModerationLogContext';
@@ -16,15 +16,37 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
 }) => {
   const { logs, clearLogs, isLoading } = useModerationLog();
   const [filter, setFilter] = useState<'all' | 'ban' | 'timeout' | 'unban' | 'delete'>('all');
+  
+  // Loading states for actions
+  const [undoingLogId, setUndoingLogId] = useState<string | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
 
   const handleUndo = async (log: any) => {
-    if (log.action === 'ban' || log.action === 'timeout') {
-      try {
-        await streamManagerAPI.unbanUser(log.targetUserName);
-        // Undo event will be broadcast via log:entry
-      } catch (err) {
-        console.error('Undo failed', err);
-      }
+    // Only allow undo for ban/timeout actions
+    if (log.action !== 'ban' && log.action !== 'timeout') return;
+    
+    setUndoingLogId(log.id);
+    try {
+      await streamManagerAPI.unbanUser(log.targetUserName);
+      // The backend will emit a new log entry for the undo action.
+      // Optionally you could optimistically update the local log's `undone` flag here.
+      // For now, we rely on the real‑time log:entry to refresh the list.
+    } catch (err) {
+      console.error('Undo failed', err);
+      // You could show a toast notification here
+    } finally {
+      setUndoingLogId(null);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    setIsClearing(true);
+    try {
+      await clearLogs();
+    } catch (err) {
+      console.error('Failed to clear logs', err);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -47,7 +69,7 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
     filter === 'all' ? logs : logs.filter((log) => log.action === filter);
 
   return (
-    <div className={`bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden ${className || ''}`}>
+    <div className={`bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden max-h-[500px] ${className || ''}`}>
       {/* Header */}
       <div className="p-4 border-b border-[var(--border-color)] flex justify-between items-center flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -82,7 +104,7 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
       <div className="flex-1 overflow-y-auto min-h-0 p-3 space-y-2">
         {isLoading ? (
           <div className="flex justify-center items-center h-32">
-            <div className="animate-spin text-[var(--text-secondary)]">⟳</div>
+            <Loader2 className="w-5 h-5 text-[var(--text-secondary)] animate-spin" />
           </div>
         ) : filteredLogs.length === 0 ? (
           <p className="text-center text-[var(--text-secondary)] text-sm py-8">
@@ -119,10 +141,15 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
               {!log.undone && (log.action === 'ban' || log.action === 'timeout') && (
                 <button
                   onClick={() => handleUndo(log)}
-                  className="p-1.5 rounded hover:bg-[#3a3a4a] transition flex-shrink-0"
+                  disabled={undoingLogId === log.id}
+                  className="p-1.5 rounded hover:bg-[#3a3a4a] transition flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Undo action"
                 >
-                  <Undo className="w-4 h-4 text-green-400" />
+                  {undoingLogId === log.id ? (
+                    <Loader2 className="w-4 h-4 text-green-400 animate-spin" />
+                  ) : (
+                    <Undo className="w-4 h-4 text-green-400" />
+                  )}
                 </button>
               )}
             </div>
@@ -134,10 +161,15 @@ export const ModerationLogCard: React.FC<ModerationLogCardProps> = ({
       {filteredLogs.length > 0 && (
         <div className="p-3 border-t border-[var(--border-color)] flex-shrink-0">
           <button
-            onClick={clearLogs}
-            className="w-full text-center text-sm bg-[var(--btn-secondary-bg)] hover:bg-red-600/30 text-[var(--text-primary)] py-2 rounded-lg transition flex items-center justify-center gap-2"
+            onClick={handleClearLogs}
+            disabled={isClearing}
+            className="w-full text-center text-sm bg-[var(--btn-secondary-bg)] hover:bg-red-600/30 text-[var(--text-primary)] py-2 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Trash2 className="w-4 h-4" />
+            {isClearing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
             Clear Logs
           </button>
         </div>

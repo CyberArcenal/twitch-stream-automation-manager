@@ -29,7 +29,7 @@ class ModerationLogService {
     duration = null,
     reason = null,
     category = LogCategory.MODERATION,
-    customMessage = null
+    customMessage = null,
   ) {
     // Generate default message if not provided
     let message = customMessage;
@@ -63,7 +63,7 @@ class ModerationLogService {
       targetUserName,
       duration,
       reason,
-      category,           // 'automation' or 'moderation'
+      category, // 'automation' or 'moderation'
       message,
       timestamp: new Date().toISOString(),
       undone: false,
@@ -74,26 +74,31 @@ class ModerationLogService {
     logger.info(`[ModerationLog] [${category.toUpperCase()}] ${message}`);
 
     // Send to renderer via central log service
-    sendLog({
+    const logToSend = {
       category,
       message,
-      type: action === "ban" ? "error" : action === "timeout" ? "warning" : "info",
+      type:
+        action === "ban" ? "error" : action === "timeout" ? "warning" : "info",
       meta: {
         id: logEntry.id,
         action,
+        broadcasterId, // ✅ idagdag
+        targetUserId, // ✅ idagdag
         targetUserName,
         duration,
         reason,
         undone: false,
       },
-    });
+    };
+    console.log("Log to send is: ", logToSend);
+    sendLog(logToSend);
 
     return logEntry;
   }
 
   markUndone(logId) {
     const logs = this.storage.getAll();
-    const log = logs.find(l => l.id === logId);
+    const log = logs.find((l) => l.id === logId);
     if (log && !log.undone) {
       log.undone = true;
       log.undoneAt = new Date().toISOString();
@@ -119,15 +124,17 @@ class ModerationLogService {
   getLogs(filter = {}) {
     let logs = this.storage.getAll();
     if (filter.targetUserName) {
-      logs = logs.filter(l =>
-        l.targetUserName.toLowerCase().includes(filter.targetUserName.toLowerCase())
+      logs = logs.filter((l) =>
+        l.targetUserName
+          .toLowerCase()
+          .includes(filter.targetUserName.toLowerCase()),
       );
     }
     if (filter.action) {
-      logs = logs.filter(l => l.action === filter.action);
+      logs = logs.filter((l) => l.action === filter.action);
     }
     if (filter.category) {
-      logs = logs.filter(l => l.category === filter.category);
+      logs = logs.filter((l) => l.category === filter.category);
     }
     return logs;
   }
@@ -135,7 +142,7 @@ class ModerationLogService {
   getUserWarnings(userId) {
     return this.storage
       .getAll()
-      .filter(l => l.targetUserId === userId && l.action === "timeout");
+      .filter((l) => l.targetUserId === userId && l.action === "timeout");
   }
 
   clearLogs() {
