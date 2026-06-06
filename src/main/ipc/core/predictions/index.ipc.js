@@ -2,8 +2,8 @@
 const { ipcMain } = require("electron");
 const {
   predictionsService,
-} = require("../../../../services/twitch-predictions.service");
-const { settingsService } = require("../../../../services/settings.service");
+} = require("../../../../services/twitch-predictions");
+const { settingsService } = require("../../../../services/settings");
 const { logger } = require("../../../../utils/logger");
 
 async function handlePredictionsRequest(event, payload) {

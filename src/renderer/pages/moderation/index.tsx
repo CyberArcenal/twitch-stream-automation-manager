@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import ChatCard from "../../components/ChatCard"; // ✅ use modern chat
 import { UserInfoPanel } from "./components/UserInfoPanel";
-import { ModerationLogCard } from "./components/ModerationLogCard";
 import { TeamManagement } from "./components/TeamManagement";
 import {
   AutomationLogProvider,
@@ -17,6 +16,7 @@ import { useAutomationRunner, useChatModeration, useStreamTriggers } from "../..
 import { ControlButtons } from "../../components/automation/components/ControlButtons";
 import { StreamTriggers } from "../../components/automation/components/StreamTriggers";
 import { ChatAutomationRules } from "../../components/automation/components/ChatAutomationRules";
+import { ModerationLogCard } from "./components/ModerationLogCard";
 
 
 const ModerationPageContent: React.FC<{
@@ -74,7 +74,7 @@ const ModerationPageContent: React.FC<{
             <ModerationLogCard broadcasterId={broadcasterId} className="flex-1" />
           </ErrorBoundary>
           <ErrorBoundary>
-            <TeamManagement broadcasterId={broadcasterId} />
+            <TeamManagement broadcasterId={broadcasterId} className="flex-1" />
           </ErrorBoundary>
         </div>
 
@@ -197,8 +197,9 @@ const ModerationPageContent: React.FC<{
               <AutomationLogs
                 logs={logs}
                 onClearLogs={clearLogs}
-                className="flex-1 flex flex-col h-full min-h-[300px] max-h-[880px]"
+                className="flex-1 flex flex-col h-full min-h-0 max-h-[880px]"
                 classNameToLog="flex-1 overflow-y-scroll"
+                fromModeration={true}
               />
             </div>
           </ErrorBoundary>

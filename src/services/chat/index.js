@@ -20,7 +20,7 @@ class TwitchChatService {
 
   async initChatService(mainWindow) {
     this.mainWindow = mainWindow;
-    this.currentUserLogin = require("../settings.service").settingsService.get("twitch")?.login || null;
+    this.currentUserLogin = require("../settings").settingsService.get("twitch")?.login || null;
     this.whisper.setCurrentUser(this.currentUserLogin);
     this.client = new ChatClientManager(this.badges);
     this.client.setCurrentUser(this.currentUserLogin);

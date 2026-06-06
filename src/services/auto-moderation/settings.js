@@ -1,5 +1,5 @@
 // services/auto-moderation/settings.js
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 const { logger } = require("../../utils/logger");
 
 class ModerationSettings {

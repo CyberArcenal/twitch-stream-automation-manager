@@ -1,5 +1,5 @@
 // src/main/services/twitch-api/streams.js
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 const { logger } = require("../../utils/logger");
 
 function createStreamsModule(client) {

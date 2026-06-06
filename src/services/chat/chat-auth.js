@@ -1,5 +1,5 @@
 const { RefreshingAuthProvider } = require("@twurple/auth");
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 const { logger } = require("../../utils/logger");
 const { CLIENT_ID, CLIENT_SECRET } = require("../../shared/config");
 

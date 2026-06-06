@@ -1,6 +1,6 @@
 // services/auto-moderation/actions.js
 
-const { streamManagerService } = require("../stream-manager.service");
+const { streamManagerService } = require("../stream-manager");
 const { logger } = require("../../utils/logger");
 const { moderationLogService } = require("../moderation-log");
 const { LogCategory } = require("../log");

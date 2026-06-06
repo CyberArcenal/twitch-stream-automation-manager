@@ -1,7 +1,7 @@
 // src/main/ipc/index.ipc.js
 //@ts-check
 const { ipcMain } = require('electron');
-const { chatCommandsService } = require('../../../../services/chat-commands.service');
+const { chatCommandsService } = require('../../../../services/chat-commands');
 const { logger } = require('../../../../utils/logger');
 
 async function handleChatCommandsRequest(event, payload) {

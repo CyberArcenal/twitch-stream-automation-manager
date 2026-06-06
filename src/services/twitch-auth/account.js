@@ -1,5 +1,5 @@
 // src/main/services/twitch-auth/account.js
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 const { BrowserWindow } = require("electron");
 const { logger } = require("../../utils/logger");
 

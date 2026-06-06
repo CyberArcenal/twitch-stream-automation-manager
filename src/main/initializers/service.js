@@ -1,17 +1,17 @@
 //@ts-check
 //src/main/initializers/service.js
 const updaterModule = require("../ipc/utils/updater/index.ipc");
-const { analyticsCollector } = require("../../services/analytics-collector.service");
-const { eventSubService } = require("../../services/eventsub.service");
-const { followsService } = require("../../services/follows.service");
-const { pipService } = require("../../services/picture-in-picture.service");
-const { playerService } = require("../../services/player.service");
-const { schedulerService } = require("../../services/scheduler.service");
-const { twitchApiService } = require("../../services/twitch-api.service");
+const { analyticsCollector } = require("../../services/analytics-collector");
+const { eventSubService } = require("../../services/eventsub");
+const { followsService } = require("../../services/follows");
+const { pipService } = require("../../services/picture-in-picture");
+const { playerService } = require("../../services/player");
+const { schedulerService } = require("../../services/scheduler");
+const { twitchApiService } = require("../../services/twitch-api");
 const { twitchAuthService } = require("../../services/twitch-auth");
-const { twitchChatService } = require("../../services/twitch-chat.service");
+const { twitchChatService } = require("../../services/chat");
 const { logger } = require("../../utils/logger");
-const { notificationService } = require("../../services/notification.service");
+const { notificationService } = require("../../services/notification");
 
 // ===================== SERVICE INITIALIZATION =====================
 /**

@@ -1,7 +1,7 @@
 // src/main/ipc/core/whisper/index.ipc.js
 //@ts-check
 const { ipcMain } = require('electron');
-const { twitchChatService } = require('../../../../services/twitch-chat.service');
+const { twitchChatService } = require('../../../../services/chat');
 const { logger } = require('../../../../utils/logger');
 
 async function handleWhisperRequest(event, payload) {

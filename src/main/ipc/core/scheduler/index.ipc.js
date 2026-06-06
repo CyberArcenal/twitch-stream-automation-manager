@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { schedulerService } = require('../../../../services/scheduler.service');
+const { schedulerService } = require('../../../../services/scheduler');
 const { logger } = require('../../../../utils/logger');
 
 async function handleSchedulerRequest(event, payload) {

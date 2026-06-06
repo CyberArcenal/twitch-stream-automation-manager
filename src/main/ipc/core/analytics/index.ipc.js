@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { analyticsCollector } = require('../../../../services/analytics-collector.service');
+const { analyticsCollector } = require('../../../../services/analytics-collector');
 const { logger } = require('../../../../utils/logger');
 
 

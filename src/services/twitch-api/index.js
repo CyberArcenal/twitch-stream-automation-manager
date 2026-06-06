@@ -10,7 +10,7 @@ const { createBitsModule } = require("./bits");
 const { createChannelModule } = require("./channel");
 const { createGamesModule } = require("./games");
 const { BrowserWindow } = require("electron");
-const { settingsService } = require("../settings.service");
+const { settingsService } = require("../settings");
 const { logger } = require("../../utils/logger");
 
 class TwitchApiService {

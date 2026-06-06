@@ -1,6 +1,6 @@
 // services/chat/handlers/onConnect.js
-const { settingsService } = require("../../settings.service");
-const { chatCommandsService } = require("../../chat-commands.service");
+const { settingsService } = require("../../settings");
+const { chatCommandsService } = require("../../chat-commands");
 const { logger } = require("../../../utils/logger");
 const { sendToRenderers } = require("../chat-utils");
 

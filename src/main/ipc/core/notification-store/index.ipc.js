@@ -1,7 +1,7 @@
 // src/main/ipc/core/notification-store/index.ipc.js
 //@ts-check
 const { ipcMain } = require('electron');
-const { notificationStore } = require('../../../../services/notification-store.service');
+const { notificationStore } = require('../../../../services/notification-store');
 const { logger } = require('../../../../utils/logger');
 
 

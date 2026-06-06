@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require("electron");
-const { gamesService } = require("../../../../services/games.service");
+const { gamesService } = require("../../../../services/games");
 const { logger } = require("../../../../utils/logger");
 
 async function handleGamesRequest(event, payload) {

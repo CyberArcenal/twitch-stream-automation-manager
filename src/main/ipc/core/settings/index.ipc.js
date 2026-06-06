@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require("electron");
-const { settingsService } = require("../../../../services/settings.service");
+const { settingsService } = require("../../../../services/settings");
 const {
   autoModerationService,
 } = require("../../../../services/auto-moderation");
