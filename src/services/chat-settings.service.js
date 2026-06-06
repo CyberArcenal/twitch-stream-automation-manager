@@ -1,6 +1,6 @@
 // src/main/services/chat-settings.service.js
 //@ts-check
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 const { settingsService } = require("./settings.service");
 const { logger } = require("../utils/logger");
 

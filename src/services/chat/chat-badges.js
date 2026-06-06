@@ -1,4 +1,4 @@
-const { twitchApiService } = require("../twitch-api.service");
+const { twitchApiService } = require("../twitch-api");
 const { logger } = require("../../utils/logger");
 
 class ChatBadges {

@@ -6,7 +6,7 @@ const { settingsService } = require("./settings.service");
 const { logger } = require("../utils/logger");
 const { autoModerationService } = require("./auto-moderation.service");
 const { chatSettingsService } = require("./chat-settings.service");
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 
 class AutomationService {
   constructor() {
