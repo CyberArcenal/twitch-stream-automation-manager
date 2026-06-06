@@ -5,6 +5,7 @@ import { useOBSConnection } from "../hooks/useOBSConnection";
 import { useStreamHealth } from "../hooks/useStreamHealth";
 import { streamManagerAPI } from "../../../api/core/streamManager";
 import { streamSettingsAPI, type IngestServer } from "../../../api/core/streamSettings";
+import { dialogs } from "../../../utils/dialogs";
 
 interface ConnectionHubCardProps {
   isLive: boolean;
