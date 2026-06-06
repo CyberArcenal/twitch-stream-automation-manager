@@ -36,80 +36,80 @@ const StreamManagerPage: React.FC = () => {
   };
 
   return (
-      <div className="h-full min-h-full !p-4 bg-[var(--background-color)]">
-        <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 h-full">
-          {/* Column 1: Main Video Card */}
-          <div className="flex flex-col gap-4 h-full">
-            <ErrorBoundary>
-              <MainVideoCard
-                isLive={isLive || false}
-                streamData={streamData}
-                onRefresh={refresh}
-              />
-            </ErrorBoundary>
-            {/* <ErrorBoundary>
+    <div className="h-full min-h-full !p-4 bg-[var(--background-color)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4 h-full">
+        {/* Column 1: Main Video Card */}
+        <div className="flex flex-col gap-4 h-full">
+          <ErrorBoundary>
+            <MainVideoCard
+              isLive={isLive || false}
+              streamData={streamData}
+              onRefresh={refresh}
+            />
+          </ErrorBoundary>
+          {/* <ErrorBoundary>
               <ActivePredictionCard broadcasterId={streamData?.user_id} />
             </ErrorBoundary> */}
-            <ErrorBoundary>
-              <StreamGoalsPreviewCard onManageGoals={handleManageGoals} />
-            </ErrorBoundary>
-          </div>
+          <ErrorBoundary>
+            <StreamGoalsPreviewCard onManageGoals={handleManageGoals} />
+          </ErrorBoundary>
+        </div>
 
-          {/* Column 2: Connection Hub + Quick Actions + Alerts */}
-          <div className="flex flex-col gap-4 h-full">
-            {/* <ErrorBoundary>
+        {/* Column 2: Connection Hub + Quick Actions + Alerts */}
+        <div className="flex flex-col gap-4 h-full">
+          {/* <ErrorBoundary>
               <ConnectionHubCard isLive={isLive || false} onRefresh={refresh} />
             </ErrorBoundary> */}
-            <ErrorBoundary>
-              <CollaborationCard />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <ConnectedSoftwareCard isLive={isLive || false} />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <QuickActionsCard isLive={isLive || false} />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <AlertsCard
-                isLive={isLive || false}
-                channelId={streamData?.user_id}
-              />
-            </ErrorBoundary>
-          </div>
+          <ErrorBoundary>
+            <CollaborationCard />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ConnectedSoftwareCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <QuickActionsCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <AlertsCard
+              isLive={isLive || false}
+              channelId={streamData?.user_id}
+            />
+          </ErrorBoundary>
+        </div>
 
-          {/* Column 3: Stream Health + Viewer List + Chat */}
-          <div className="flex flex-col gap-4 h-full">
-            <ErrorBoundary>
-              <StreamHealthCard isLive={isLive || false} />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <ViewerListCard
-                broadcasterId={streamData?.user_id || ""}
-                moderatorId={streamData?.user_id || ""}
-                isLive={isLive}
-              />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <ChatCard
-                channelName={streamData?.user_login}
-                broadcasterId={streamData?.user_id}
-                isLive={isLive || false}
-              />
-            </ErrorBoundary>
-          </div>
+        {/* Column 3: Stream Health + Viewer List + Chat */}
+        <div className="flex flex-col gap-4 h-full">
+          <ErrorBoundary>
+            <StreamHealthCard isLive={isLive || false} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ViewerListCard
+              broadcasterId={streamData?.user_id || ""}
+              moderatorId={streamData?.user_id || ""}
+              isLive={isLive}
+            />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ChatCard
+              channelName={streamData?.user_login}
+              broadcasterId={streamData?.user_id}
+              isLive={isLive || false}
+            />
+          </ErrorBoundary>
+        </div>
 
-          {/* Column 4: Automations + Collaboration */}
-          <div className="flex flex-col gap-4 h-full">
-            <ErrorBoundary>
-              <CustomAutomationsCard
-                isLive={isLive || false}
-                broadcasterId={streamData?.user_id}
-                moderatorId={streamData?.user_id}
-              />
-            </ErrorBoundary>
-          </div>
+        {/* Column 4: Automations + Collaboration */}
+        <div className="flex flex-col gap-4 h-full">
+          <ErrorBoundary>
+            <CustomAutomationsCard
+              isLive={isLive || false}
+              broadcasterId={streamData?.user_id}
+              moderatorId={streamData?.user_id}
+            />
+          </ErrorBoundary>
         </div>
       </div>
+    </div>
   );
 };
 

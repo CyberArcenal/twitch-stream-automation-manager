@@ -17,6 +17,7 @@ import { ControlButtons } from "../../components/automation/components/ControlBu
 import { StreamTriggers } from "../../components/automation/components/StreamTriggers";
 import { ChatAutomationRules } from "../../components/automation/components/ChatAutomationRules";
 import { ModerationLogCard } from "./components/ModerationLogCard";
+import CollaborationCard from "../stream-manager/components/CollaborationCard";
 
 
 const ModerationPageContent: React.FC<{
@@ -73,8 +74,8 @@ const ModerationPageContent: React.FC<{
           <ErrorBoundary>
             <ModerationLogCard broadcasterId={broadcasterId} className="flex-1" />
           </ErrorBoundary>
-          <ErrorBoundary>
-            <TeamManagement broadcasterId={broadcasterId} className="flex-1" />
+           <ErrorBoundary>
+            <CollaborationCard className="flex-1"/>
           </ErrorBoundary>
         </div>
 

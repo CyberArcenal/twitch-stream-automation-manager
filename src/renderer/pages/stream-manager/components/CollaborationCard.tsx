@@ -1,9 +1,23 @@
 import React, { useState, useMemo } from "react";
-import { Users, UserPlus, Trash2, ExternalLink, Loader2, Search, Shield } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  Trash2,
+  ExternalLink,
+  Loader2,
+  Search,
+  Shield,
+} from "lucide-react";
 import { useCollaboration } from "../hooks/useCollaboration";
 import { dialogs } from "../../../utils/dialogs";
 
-const CollaborationCard: React.FC = () => {
+interface collaborationProps {
+  className?: string;
+}
+
+const CollaborationCard: React.FC<collaborationProps> = ({
+  className
+}) => {
   const {
     moderators,
     loading,
@@ -27,7 +41,7 @@ const CollaborationCard: React.FC = () => {
     return moderators.filter(
       (mod) =>
         mod.user_name.toLowerCase().includes(term) ||
-        mod.user_login.toLowerCase().includes(term)
+        mod.user_login.toLowerCase().includes(term),
     );
   }, [moderators, searchTerm]);
 
@@ -49,7 +63,7 @@ const CollaborationCard: React.FC = () => {
     try {
       await removeModeratorById(userId);
     } catch (err: any) {
-     dialogs.error(err.message);
+      dialogs.error(err.message);
     } finally {
       setRemovingId(null);
     }
@@ -71,11 +85,15 @@ const CollaborationCard: React.FC = () => {
   };
 
   return (
-    <div className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden min-w-[350px] min-h-[200px]">
+    <div
+      className={`bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border-color)] flex flex-col overflow-hidden min-w-[350px] min-h-[200px] ${className ? className : ""}`}
+    >
       <div className="p-3 border-b border-[var(--border-color)] flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#9147ff]" />
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Collaboration</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+            Collaboration
+          </h3>
         </div>
         <div className="flex gap-2">
           <button
@@ -84,7 +102,9 @@ const CollaborationCard: React.FC = () => {
             className="p-1 rounded hover:bg-[var(--btn-secondary-bg)] disabled:opacity-50"
             title="Refresh moderators"
           >
-            <Loader2 className={`w-3 h-3 text-[var(--text-secondary)] ${refreshing ? "animate-spin" : ""}`} />
+            <Loader2
+              className={`w-3 h-3 text-[var(--text-secondary)] ${refreshing ? "animate-spin" : ""}`}
+            />
           </button>
           {streamTogetherUrl && (
             <button
@@ -113,7 +133,11 @@ const CollaborationCard: React.FC = () => {
             disabled={adding || !newModUsername.trim()}
             className="p-1 bg-[var(--primary-color)] rounded hover:bg-[#772ce8] disabled:opacity-50"
           >
-            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+            {adding ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <UserPlus className="w-4 h-4" />
+            )}
           </button>
         </div>
 
@@ -130,8 +154,14 @@ const CollaborationCard: React.FC = () => {
         </div>
 
         {/* Moderator list */}
-        {loading && <div className="text-center text-[var(--text-secondary)] text-sm">Loading moderators...</div>}
-        {error && <div className="text-center text-red-400 text-sm">{error}</div>}
+        {loading && (
+          <div className="text-center text-[var(--text-secondary)] text-sm">
+            Loading moderators...
+          </div>
+        )}
+        {error && (
+          <div className="text-center text-red-400 text-sm">{error}</div>
+        )}
         {!loading && filteredModerators.length === 0 && (
           <div className="text-center text-[var(--text-secondary)] text-sm">
             {searchTerm ? "No matching moderators" : "No moderators yet"}
@@ -145,7 +175,9 @@ const CollaborationCard: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <Shield className="w-3 h-3 text-[#9147ff]" />
-                <span className="text-sm text-[var(--text-primary)]">{mod.user_name}</span>
+                <span className="text-sm text-[var(--text-primary)]">
+                  {mod.user_name}
+                </span>
                 <span className="text-[10px] bg-[var(--btn-secondary-bg)] px-1 rounded text-[var(--text-secondary)]">
                   Moderator
                 </span>
@@ -155,7 +187,11 @@ const CollaborationCard: React.FC = () => {
                 disabled={removingId === mod.user_id}
                 className="text-red-400 hover:text-red-300 disabled:opacity-50"
               >
-                {removingId === mod.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {removingId === mod.user_id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
               </button>
             </div>
           ))}
