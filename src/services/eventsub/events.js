@@ -1,9 +1,9 @@
 // src/main/services/eventsub/events.js
 const { notificationStore } = require("../notification-store");
-const { streamManagerService } = require("../stream-manager");
 const { logger } = require("../../utils/logger");
 const { sendToRenderers } = require("./ipc-sender");
 const EventEmitter = require("events");
+const { streamManagerService } = require("../stream-manager");
 
 class EventSubEvents extends EventEmitter {
   constructor() {
@@ -38,7 +38,19 @@ class EventSubEvents extends EventEmitter {
             gameId: eventData.game_id,
           },
         });
-        streamManagerService.setStreamStartTime(Date.parse(eventData.started_at));
+        if (
+          streamManagerService &&
+          typeof streamManagerService.clearStreamStartTime === "function"
+        ) {
+          streamManagerService.setStreamStartTime(
+            Date.parse(eventData.started_at),
+          );
+        } else {
+          logger.warn(
+            "[EventSub] Cannot clear stream start time – service not ready",
+          );
+        }
+
         break;
 
       case "stream.offline":
@@ -47,7 +59,16 @@ class EventSubEvents extends EventEmitter {
           broadcasterName: eventData.broadcaster_user_login,
         });
         this.emit("eventsub:stream-offline", eventData);
-        streamManagerService.clearStreamStartTime();
+        if (
+          streamManagerService &&
+          typeof streamManagerService.clearStreamStartTime === "function"
+        ) {
+          streamManagerService.clearStreamStartTime();
+        } else {
+          logger.warn(
+            "[EventSub] Cannot clear stream start time – service not ready",
+          );
+        }
         break;
 
       case "channel.follow":
@@ -131,9 +152,15 @@ class EventSubEvents extends EventEmitter {
       case "session_welcome":
         connection.setSessionId(message.payload.session.id);
         connection.setConnected(true);
-        logger.info(`[EventSub] WebSocket connected, session: ${connection.getSessionId()}`);
-        sendToRenderers("eventsub:connected", { sessionId: connection.getSessionId() });
-        subscriptions.ensureEssentialSubscriptions().catch(err => logger.error(err));
+        logger.info(
+          `[EventSub] WebSocket connected, session: ${connection.getSessionId()}`,
+        );
+        sendToRenderers("eventsub:connected", {
+          sessionId: connection.getSessionId(),
+        });
+        subscriptions
+          .ensureEssentialSubscriptions()
+          .catch((err) => logger.error(err));
         break;
 
       case "session_keepalive":
@@ -145,12 +172,18 @@ class EventSubEvents extends EventEmitter {
         break;
 
       case "session_reconnect":
-        logger.warn("[EventSub] Reconnect requested, new URL:", message.payload.session.reconnect_url);
+        logger.warn(
+          "[EventSub] Reconnect requested, new URL:",
+          message.payload.session.reconnect_url,
+        );
         // TODO: implement reconnect using the new URL
         break;
 
       case "revocation":
-        logger.warn("[EventSub] Subscription revoked:", message.payload.subscription);
+        logger.warn(
+          "[EventSub] Subscription revoked:",
+          message.payload.subscription,
+        );
         subscriptions.handleRevocation(message.payload.subscription.id);
         break;
 

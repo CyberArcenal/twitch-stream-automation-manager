@@ -1,20 +1,11 @@
 // src/main/ipc/core/stream-manager/index.ipc.js
-//@ts-check
 const { ipcMain } = require("electron");
 const { settingsService } = require("../../../../services/settings");
-const {
-  streamManagerService,
-} = require("../../../../services/stream-manager");
+const { streamManagerService } = require("../../../../services/stream-manager");
 const { logger } = require("../../../../utils/logger");
-const {
-  obsDetectionService,
-} = require("../../../../services/obs-detection");
-const {
-  automationService,
-} = require("../../../../services/automation");
-const {
-  obsWebSocketService,
-} = require("../../../../services/obs-websocket");
+const { obsDetectionService } = require("../../../../services/obs-detection");
+const { automationService } = require("../../../../services/automation");
+const { obsWebSocketService } = require("../../../../services/obs-websocket");
 const { languagesService } = require("../../../../services/languages");
 const { twitchApiService } = require("../../../../services/twitch-api");
 
@@ -118,10 +109,7 @@ async function handleStreamManagerRequest(event, { method, params = {} }) {
       automationService.stop();
       return true;
     case "getAutomationStatus":
-      return {
-        running: automationService.running,
-        config: automationService.config,
-      };
+      return automationService.getConfig();
     case "obsConnect":
       try {
         const result = await obsWebSocketService.connect(

@@ -8,9 +8,8 @@ class ModerationSettings {
       links: true,
       maxCapsPercent: 70,
       maxEmojis: 5,
-      blockedWords: [],
+      // Hindi na nag-iimbak ng blockedWords/blockedBadges dito
       trustedUsers: [],
-      blockedBadges: [],
       repeatWindowSeconds: 10,
       repeatCountThreshold: 3,
     };
@@ -22,46 +21,68 @@ class ModerationSettings {
 
   load() {
     const autoMod = settingsService.get("autoModeration") || {};
+    const autoConfig = settingsService.get("automationConfig") || {};
+
     logger.debug("[AutoModSettings] Loading settings", autoMod);
 
     this.rules = {
       links: autoMod.links !== undefined ? autoMod.links : true,
       maxCapsPercent: autoMod.maxCapsPercent || 70,
       maxEmojis: autoMod.maxEmojis || 5,
-      blockedWords: autoMod.blockedWords || [],
+      // ✅ Kunin ang blocked words at badges mula sa automationConfig (iisang source of truth)
+      blockedWords: autoConfig.blockedTerms || [],
+      blockedBadges: autoConfig.blockedBadges || [],
       trustedUsers: autoMod.trustedUsers || [],
-      blockedBadges: autoMod.blockedBadges || [],
       repeatWindowSeconds: autoMod.repeatWindowSeconds ?? 10,
       repeatCountThreshold: autoMod.repeatCountThreshold ?? 3,
     };
     this.enabled = autoMod.enabled || false;
     this.level = autoMod.level || "basic";
     this.autoDeleteMessage = autoMod.autoDeleteMessage || false;
-    this.autoTimeoutUser = autoMod.autoTimeoutUser !== undefined ? autoMod.autoTimeoutUser : true;
+    this.autoTimeoutUser =
+      autoMod.autoTimeoutUser !== undefined ? autoMod.autoTimeoutUser : true;
 
-    logger.info(`[AutoMod] Settings loaded: enabled=${this.enabled}, level=${this.level}`);
+    logger.info(
+      `[AutoMod] Settings loaded: enabled=${this.enabled}, level=${this.level}`,
+    );
   }
 
   save() {
+    // ✅ Huwag nang mag-save ng blockedWords/blockedBadges dito – nasa automationConfig na sila
     const data = {
       enabled: this.enabled,
       level: this.level,
       links: this.rules.links,
       maxCapsPercent: this.rules.maxCapsPercent,
       maxEmojis: this.rules.maxEmojis,
-      blockedWords: this.rules.blockedWords,
       trustedUsers: this.rules.trustedUsers,
-      blockedBadges: this.rules.blockedBadges,
-      autoDeleteMessage: this.autoDeleteMessage,
-      autoTimeoutUser: this.autoTimeoutUser,
       repeatWindowSeconds: this.rules.repeatWindowSeconds,
       repeatCountThreshold: this.rules.repeatCountThreshold,
+      autoDeleteMessage: this.autoDeleteMessage,
+      autoTimeoutUser: this.autoTimeoutUser,
     };
     settingsService.set("autoModeration", data);
-    logger.debug("[AutoModSettings] Settings saved");
+    logger.debug(
+      "[AutoModSettings] Settings saved (blocked words/badges are stored in automationConfig)",
+    );
   }
 
   updateRules(newRules) {
+    // Kung ang newRules ay naglalaman ng blockedWords o blockedBadges,
+    // kailangan din i‑update ang automationConfig.
+    if (newRules.blockedWords !== undefined) {
+      const autoConfig = settingsService.get("automationConfig") || {};
+      autoConfig.blockedTerms = newRules.blockedWords;
+      settingsService.set("automationConfig", autoConfig);
+      delete newRules.blockedWords; // huwag ilagay sa autoModeration
+    }
+    if (newRules.blockedBadges !== undefined) {
+      const autoConfig = settingsService.get("automationConfig") || {};
+      autoConfig.blockedBadges = newRules.blockedBadges;
+      settingsService.set("automationConfig", autoConfig);
+      delete newRules.blockedBadges;
+    }
+    // I‑update ang iba pang rules
     this.rules = { ...this.rules, ...newRules };
     this.save();
   }

@@ -20,7 +20,7 @@ async function handleStreamSettingsRequest(event, payload) {
 
 ipcMain.handle('stream-settings', async (event, payload) => {
   try {
-    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+    logger.debug(`[IPC] request: ${JSON.stringify(payload)}`);
     const result = await handleStreamSettingsRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

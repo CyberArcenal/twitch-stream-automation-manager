@@ -28,7 +28,7 @@ async function handleWhisperRequest(event, payload) {
 
 ipcMain.handle('whisper', async (event, payload) => {
   try {
-    logger.debug(`[IPC] request: ${JSON.stringify(event)} - ${JSON.stringify(payload)}`);
+    logger.debug(`[IPC] request: ${JSON.stringify(payload)}`);
     const result = await handleWhisperRequest(event, payload);
     return { status: true, message: 'OK', data: result };
   } catch (err) {

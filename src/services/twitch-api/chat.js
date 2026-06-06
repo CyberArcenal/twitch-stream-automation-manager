@@ -22,6 +22,9 @@ function createChatModule(client) {
       });
       const result = await client.fetchTwitch(`chat/settings?${params}`, {
         method: "PATCH",
+         headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(settings),
       });
       logger.info(`[TwitchApi] updateChatSettings - success`);

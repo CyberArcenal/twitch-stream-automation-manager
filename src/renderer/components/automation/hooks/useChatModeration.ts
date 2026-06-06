@@ -43,6 +43,7 @@ export const useChatModeration = () => {
   useEffect(() => {
     const load = async () => {
       const res = await streamManagerAPI.getAutomationStatus();
+
       if (res.status && res.data?.config) {
         setAutoSlowMode(res.data.config.autoSlowMode ?? false);
         setSlowModeSpamThreshold(res.data.config.slowModeSpamThreshold ?? 5);

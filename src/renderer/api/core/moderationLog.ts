@@ -8,6 +8,8 @@ export interface ModerationLogEntry {
   targetUserName: string;
   duration: number | null;
   reason: string | null;
+  category: 'moderation' | 'automation';
+  message: string;
   timestamp: string;
   undone: boolean;
   undoneAt: string | null;

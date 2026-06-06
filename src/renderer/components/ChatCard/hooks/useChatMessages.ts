@@ -135,19 +135,6 @@ export const useChatMessages = (channelName?: string, currentUser?: string) => {
     setIsSending(true);
     try {
       await chatAPI.send(text, replyToId);
-      const localMsg: ChatMessage = {
-        id: `local-${Date.now()}`,
-        messageId: `local-${Date.now()}`,
-        channel: channelName,
-        user: currentUser || "You",
-        message: text,
-        badges: [],
-        emotes: null,
-        timestamp: new Date().toISOString(),
-        isFromMe: true,
-        replyParentMsgId: replyToId,
-      };
-      setMessages((prev) => [...prev, localMsg].slice(-200));
       return true;
     } catch (err) {
       dialogs.error("Failed to send message.");
