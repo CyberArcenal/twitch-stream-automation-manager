@@ -1,7 +1,7 @@
 // src/main/services/eventsub.service.js
 // @ts-ignore
-const { twitchApiService } = require("./twitch-api");
-const { twitchAuthService } = require("./twitch-auth.service");
+const { twitchApiService } = require("./twitch-api.service");
+const { twitchAuthService } = require("./twitch-auth");
 const { settingsService } = require("./settings.service");
 const { BrowserWindow } = require("electron");
 const WebSocket = require("ws");

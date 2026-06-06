@@ -1,5 +1,5 @@
 // src/main/services/twitch-api/client.js
-const { twitchAuthService } = require("../twitch-auth.service");
+const { twitchAuthService } = require("../twitch-auth");
 const { CLIENT_ID, API_BASE } = require("../../shared/config");
 const { logger } = require("../../utils/logger");
 

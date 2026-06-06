@@ -18,7 +18,7 @@ const url = require("url");
 
 // ===================== SERVICES =====================
 const { settingsService } = require("../services/settings.service");
-const { twitchAuthService } = require("../services/twitch-auth.service");
+const { twitchAuthService } = require("../services/twitch-auth");
 const { twitchChatService } = require("../services/twitch-chat.service");
 const { obsWebSocketService } = require("../services/obs-websocket.service.js");
 const { startLogCleanupScheduler } = require("../scheduler/logCleanupScheduler.js");

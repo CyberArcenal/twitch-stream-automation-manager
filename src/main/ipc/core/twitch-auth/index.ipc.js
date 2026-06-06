@@ -1,7 +1,7 @@
 // src/main/ipc/core/twitch-auth/index.ipc.js (modified)
 //@ts-check
 const { ipcMain } = require("electron");
-const { twitchAuthService } = require("../../../../services/twitch-auth.service");
+const { twitchAuthService } = require("../../../../services/twitch-auth");
 const { logger } = require("../../../../utils/logger");
 
 async function handleAuthRequest(event, payload) {
