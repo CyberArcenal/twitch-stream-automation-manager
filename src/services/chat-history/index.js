@@ -1,17 +1,17 @@
 // src/main/services/chat-history.js
 //@ts-check
-const Store = require('electron-store');
-const { logger } = require('../../utils/logger');
-const { BrowserWindow } = require('electron');
+const Store = require("electron-store");
+const { logger } = require("../../utils/logger");
+const { BrowserWindow } = require("electron");
 
 class ChatHistoryService {
   constructor() {
-    this.store = new Store({ name: 'chatHistory' });
+    this.store = new Store({ name: "chatHistory" });
     this.maxMessagesPerChannel = 10000; // keep last 10k messages per channel
     this.retentionDays = 7; // delete messages older than 7 days
   }
 
- _sendToRenderers(channel, data) {
+  _sendToRenderers(channel, data) {
     try {
       const windows = BrowserWindow.getAllWindows();
       windows.forEach((win) => {
@@ -65,10 +65,12 @@ class ChatHistoryService {
   _pruneOldMessages(messages, key) {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - this.retentionDays);
-    const filtered = messages.filter(m => new Date(m.timestamp) >= cutoff);
+    const filtered = messages.filter((m) => new Date(m.timestamp) >= cutoff);
     if (filtered.length !== messages.length) {
       this.store.set(key, filtered);
-      logger.debug(`[ChatHistory] Pruned ${messages.length - filtered.length} old messages for ${key}`);
+      logger.debug(
+        `[ChatHistory] Pruned ${messages.length - filtered.length} old messages for ${key}`,
+      );
     }
   }
 
@@ -82,10 +84,22 @@ class ChatHistoryService {
   getMessagesInRange(channel, startDate, endDate) {
     const key = `messages_${channel}`;
     const messages = this.store.get(key, []);
-    return messages.filter(m => {
+    return messages.filter((m) => {
       const ts = new Date(m.timestamp);
       return ts >= startDate && ts <= endDate;
     });
+  }
+
+  getMessageById(messageId) {
+    const allKeys = this.store.store;
+    for (const key of Object.keys(allKeys)) {
+      if (key.startsWith("messages_")) {
+        const messages = this.store.get(key, []);
+        const found = messages.find((msg) => msg.id === messageId);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   /**
@@ -103,7 +117,7 @@ class ChatHistoryService {
     const hourlyCounts = {};
     for (let i = 0; i < 24; i++) hourlyCounts[i] = 0;
 
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       const hour = new Date(msg.timestamp).getHours();
       hourlyCounts[hour]++;
     });
@@ -124,15 +138,19 @@ class ChatHistoryService {
     const messages = this.getMessagesInRange(channel, startDate, endDate);
 
     const dailyMap = new Map();
-    messages.forEach(msg => {
-      const date = new Date(msg.timestamp).toISOString().split('T')[0];
+    messages.forEach((msg) => {
+      const date = new Date(msg.timestamp).toISOString().split("T")[0];
       dailyMap.set(date, (dailyMap.get(date) || 0) + 1);
     });
 
     // Fill missing dates with 0
     const result = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const dateStr = d.toISOString().split("T")[0];
       result.push({ date: dateStr, count: dailyMap.get(dateStr) || 0 });
     }
     return result;
@@ -146,10 +164,10 @@ class ChatHistoryService {
 
   clearAllHistory() {
     const allKeys = this.store.store;
-    Object.keys(allKeys).forEach(key => {
-      if (key.startsWith('messages_')) this.store.delete(key);
+    Object.keys(allKeys).forEach((key) => {
+      if (key.startsWith("messages_")) this.store.delete(key);
     });
-    logger.info('[ChatHistory] Cleared all chat history');
+    logger.info("[ChatHistory] Cleared all chat history");
   }
 }
 

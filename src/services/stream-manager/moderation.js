@@ -1,8 +1,10 @@
 // src/main/services/stream-manager/moderation.js
+//@ts-check
 const { twitchApiService } = require("../twitch-api");
 const { logger } = require("../../utils/logger");
 const { moderationLogService } = require("../moderation-log");
 const { LogCategory } = require("../log");
+const { chatHistoryService } = require("../chat-history");
 
 class ModerationManager {
   async banUser(broadcasterId, moderatorId, userName) {
@@ -111,6 +113,28 @@ class ModerationManager {
   }
 
   async deleteMessage(broadcasterId, moderatorId, messageId) {
+    // 1. Hanapin ang message sa chat history
+    let targetUserId = null;
+    let targetUserName = "unknown";
+
+    try {
+      const message = chatHistoryService.getMessageById?.(messageId);
+      if (message) {
+        targetUserName = message.user || "unknown";
+        targetUserId = message.userId || null;
+      } else {
+        logger.warn(
+          `[ModerationManager] Message ${messageId} not found in history, using fallback`,
+        );
+      }
+    } catch (err) {
+      logger.error(
+        `[ModerationManager] Failed to look up message ${messageId}:`,
+        err,
+      );
+    }
+
+    // 2. I-delete ang message sa Twitch
     const params = new URLSearchParams({
       broadcaster_id: broadcasterId,
       moderator_id: moderatorId,
@@ -120,11 +144,12 @@ class ModerationManager {
       method: "DELETE",
     });
 
+    // 3. Mag-log gamit ang nakuha na username/userId
     moderationLogService.addLog(
       "delete",
       broadcasterId,
-      null,
-      "unknown",
+      targetUserId,
+      targetUserName,
       null,
       "Message deleted manually",
       LogCategory.MODERATION,
