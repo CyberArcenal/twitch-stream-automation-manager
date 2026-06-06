@@ -1,6 +1,6 @@
 //@ts-check
 const { ipcMain } = require('electron');
-const { twitchApiService } = require('../../../../services/twitch-api.service');
+const { twitchApiService } = require('../../../../services/twitch-api');
 const { logger } = require('../../../../utils/logger');
 
 async function handleStreamSettingsRequest(event, payload) {

@@ -1,6 +1,6 @@
 // src/main/services/user.service.js
 //@ts-check
-const { twitchApiService } = require('./twitch-api.service');
+const { twitchApiService } = require('./twitch-api');
 const { settingsService } = require('./settings.service');
 
 class UserService {

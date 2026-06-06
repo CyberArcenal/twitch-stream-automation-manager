@@ -1,6 +1,6 @@
 // src/main/services/search.service.js
 //@ts-check
-const { twitchApiService } = require('./twitch-api.service');
+const { twitchApiService } = require('./twitch-api');
 
 class SearchService {
   /**

@@ -1,5 +1,5 @@
 const { ChatClient } = require("@twurple/chat");
-const { twitchApiService } = require("../twitch-api.service");
+const { twitchApiService } = require("../twitch-api");
 const { logger } = require("../../utils/logger");
 const { sendToRenderers } = require("./chat-utils");
 

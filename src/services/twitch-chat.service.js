@@ -6,7 +6,7 @@ const { RefreshingAuthProvider } = require("@twurple/auth");
 const { settingsService } = require("./settings.service");
 
 const { twitchAuthService } = require("./twitch-auth.service");
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 
 const { CLIENT_ID, CLIENT_SECRET, SCOPES } = require("../shared/config");
 const { BrowserWindow } = require("electron");

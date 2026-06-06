@@ -1,7 +1,7 @@
 // src/main/services/chat-commands.service.js
 const { twitchChatService } = require("./twitch-chat.service");
 const { streamManagerService } = require("./stream-manager.service");
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 const { settingsService } = require("./settings.service");
 const { logger } = require("../utils/logger");
 const Store = require("electron-store");

@@ -1,6 +1,6 @@
 // src/main/services/analytics-collector.service.js
 //@ts-check
-const { twitchApiService } = require("./twitch-api.service");
+const { twitchApiService } = require("./twitch-api");
 const { followsService } = require("./follows.service");
 const { clipsService } = require("./clips.service");
 const { settingsService } = require("./settings.service");
