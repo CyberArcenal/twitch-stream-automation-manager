@@ -2,7 +2,7 @@
 
 A powerful Electron‑based desktop application that helps Twitch streamers manage their channel with automation, moderation, analytics, and much more – all from a single, modern interface.
 
-<!-- ![Screenshot Placeholder](https://via.placeholder.com/800x400?text=Twitch+Stream+Manager) -->
+![Screenshot Placeholder](https://github.com/CyberArcenal/twitch-stream-automation-manager/blob/main/public/thumbnail.png?raw=true)
 
 ## ✨ Features
 
